@@ -6,7 +6,6 @@
   <style>
     html, body {
       margin: 0;
-      padding: 0;
       background: #111;
       color: #fff;
       font-family: sans-serif;
@@ -45,10 +44,19 @@
       position: fixed;
       top: 0;
       left: 0;
-      height: 3px;
+      height: 4px;
       background: #88f;
       width: 0%;
-      transition: width 0.1s ease;
+      z-index: 20;
+    }
+
+    #status {
+      position: fixed;
+      top: 0;
+      right: 0;
+      padding: 0.4rem 1rem;
+      font-size: 0.9rem;
+      background: rgba(0, 0, 0, 0.6);
       z-index: 20;
     }
   </style>
@@ -58,10 +66,12 @@
   <label>Light Angle: <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5" /></label>
   <label>Noise Scale: <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006" /></label>
   <label>Color Blend: <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2" /></label>
-  <button onclick="generate()">Generate</button>
+  <button onclick="startGeneration()">Generate</button>
   <button onclick="exportPNG()">Export PNG</button>
 </div>
+
 <div id="progress"></div>
+<div id="status">Idle</div>
 <canvas id="canvas"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
@@ -69,8 +79,17 @@
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const progress = document.getElementById("progress");
+  const status = document.getElementById("status");
 
   const simplex = new SimplexNoise();
+
+  const palette = [
+    { h: 290, s: 20, l: 85 },
+    { h: 180, s: 20, l: 85 },
+    { h: 60,  s: 20, l: 90 },
+    { h: 330, s: 20, l: 88 },
+    { h: 0,   s: 0,  l: 95 }
+  ];
 
   function hslToRgb(h, s, l) {
     s /= 100;
@@ -80,14 +99,6 @@
     const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
     return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
   }
-
-  const palette = [
-    { h: 290, s: 20, l: 85 },
-    { h: 180, s: 20, l: 85 },
-    { h: 60,  s: 20, l: 90 },
-    { h: 330, s: 20, l: 88 },
-    { h: 0,   s: 0,  l: 95 }
-  ];
 
   function blendPalette(value, sharpness = 1.2) {
     const scaled = value * (palette.length - 1);
@@ -104,9 +115,15 @@
     return hslToRgb(h, s, l);
   }
 
-  async function generate() {
+  let renderTask = null;
+
+  function startGeneration() {
+    if (renderTask) return;
+
     const width = canvas.width = window.innerWidth;
     const height = canvas.height = window.innerHeight;
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
 
     const scale = parseFloat(document.getElementById("scale").value);
     const lightAngle = parseFloat(document.getElementById("lightAngle").value);
@@ -117,36 +134,40 @@
       y: Math.sin(lightAngle * 2 * Math.PI)
     };
 
-    const imgData = ctx.createImageData(width, height);
-    const data = imgData.data;
+    let y = 0;
+    status.innerText = "Rendering...";
+    progress.style.width = "0%";
 
-    for (let y = 0; y < height; y++) {
+    renderTask = function renderLine() {
       for (let x = 0; x < width; x++) {
         const nx = x / width - 0.5;
         const ny = y / height - 0.5;
         const angleInfluence = nx * lightVec.x + ny * lightVec.y;
-
         const noise = simplex.noise2D(x * scale, y * scale);
         const value = (noise + angleInfluence * 1.5 + 1) / 2;
 
         const [r, g, b] = blendPalette(value, blendSharpness);
-
         const i = (y * width + x) * 4;
-        data[i] = r;
+        data[i + 0] = r;
         data[i + 1] = g;
         data[i + 2] = b;
         data[i + 3] = 255;
       }
 
-      if (y % 20 === 0) {
-        progress.style.width = `${(y / height) * 100}%`;
-        await new Promise(r => requestAnimationFrame(r));
-      }
-    }
+      y++;
+      progress.style.width = `${(y / height) * 100}%`;
 
-    ctx.putImageData(imgData, 0, 0);
-    progress.style.width = `100%`;
-    setTimeout(() => progress.style.width = "0%", 400);
+      if (y < height) {
+        requestAnimationFrame(renderTask);
+      } else {
+        ctx.putImageData(imageData, 0, 0);
+        status.innerText = "Complete";
+        setTimeout(() => status.innerText = "Idle", 2000);
+        renderTask = null;
+      }
+    };
+
+    requestAnimationFrame(renderTask);
   }
 
   function exportPNG() {
@@ -156,7 +177,8 @@
     link.click();
   }
 
-  generate();
+  // Start on load
+  startGeneration();
 </script>
 </body>
 </html>
