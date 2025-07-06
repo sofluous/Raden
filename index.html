@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Mother of Pearl Generator</title>
   <style>
     html, body {
-      margin: 0; padding: 0;
+      margin: 0;
       background: #111;
       color: #fff;
       font-family: sans-serif;
@@ -13,12 +13,11 @@
     }
     canvas {
       display: block;
-      margin: 0 auto;
     }
     #controls {
       position: fixed;
       top: 10px; left: 10px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.6);
       padding: 1rem;
       border-radius: 8px;
       z-index: 10;
@@ -34,18 +33,27 @@
       margin-top: 0.5rem;
       padding: 4px 10px;
     }
+    #progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: #88f;
+      width: 0%;
+      transition: width 0.1s ease;
+      z-index: 20;
+    }
   </style>
 </head>
 <body>
-
 <div id="controls">
-  <label>Light Angle: <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5"></label>
-  <label>Noise Scale: <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006"></label>
-  <label>Color Blend: <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2"></label>
+  <label>Light Angle: <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5" /></label>
+  <label>Noise Scale: <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006" /></label>
+  <label>Color Blend: <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2" /></label>
   <button onclick="generate()">Generate</button>
   <button onclick="exportPNG()">Export PNG</button>
 </div>
-
+<div id="progress"></div>
 <canvas id="canvas"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
@@ -55,20 +63,22 @@
   let width = canvas.width = window.innerWidth;
   let height = canvas.height = window.innerHeight;
 
+  const progress = document.getElementById("progress");
+
   const simplex = new SimplexNoise();
 
   const palette = [
-    { h: 290, s: 20, l: 85 }, // lavender
-    { h: 180, s: 20, l: 85 }, // pale teal
-    { h: 60,  s: 20, l: 90 }, // soft yellow
-    { h: 330, s: 20, l: 88 }, // rose
-    { h: 0,   s: 0,  l: 95 }  // pearl white
+    { h: 290, s: 20, l: 85 },
+    { h: 180, s: 20, l: 85 },
+    { h: 60,  s: 20, l: 90 },
+    { h: 330, s: 20, l: 88 },
+    { h: 0,   s: 0,  l: 95 }
   ];
 
   function blendPalette(value, sharpness = 1.2) {
     const scaled = value * (palette.length - 1);
     const index = Math.floor(scaled);
-    const frac = (scaled - index) ** sharpness;
+    const frac = Math.pow(scaled - index, sharpness);
 
     const c1 = palette[index % palette.length];
     const c2 = palette[(index + 1) % palette.length];
@@ -77,10 +87,19 @@
     const s = c1.s + (c2.s - c1.s) * frac;
     const l = c1.l + (c2.l - c1.l) * frac;
 
-    return `hsl(${h}, ${s}%, ${l}%)`;
+    return hslToRgb(h, s, l);
   }
 
-  function generate() {
+  function hslToRgb(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+  }
+
+  async function generate() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
 
@@ -100,16 +119,30 @@
       for (let x = 0; x < width; x++) {
         const nx = x / width - 0.5;
         const ny = y / height - 0.5;
-
         const angleInfluence = nx * lightVec.x + ny * lightVec.y;
-        const n = simplex.noise2D(x * scale, y * scale);
-        const value = (n + angleInfluence * 1.5 + 1) / 2; // normalize to [0,1]
 
-        const color = blendPalette(value, blendSharpness);
-        ctx.fillStyle = color;
-        ctx.fillRect(x, y, 1, 1);
+        const n = simplex.noise2D(x * scale, y * scale);
+        const value = (n + angleInfluence * 1.5 + 1) / 2;
+
+        const [r, g, b] = blendPalette(value, blendSharpness);
+
+        const index = (y * width + x) * 4;
+        data[index + 0] = r;
+        data[index + 1] = g;
+        data[index + 2] = b;
+        data[index + 3] = 255;
+      }
+
+      // Progress update
+      if (y % 10 === 0) {
+        progress.style.width = `${(y / height) * 100}%`;
+        await new Promise(r => requestAnimationFrame(r));
       }
     }
+
+    ctx.putImageData(imgData, 0, 0);
+    progress.style.width = `100%`;
+    setTimeout(() => (progress.style.width = `0%`), 500);
   }
 
   function exportPNG() {
