@@ -1,1 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mother of Pearl Generator</title>
+  <style>
+    body { margin: 0; background: #111; color: white; font-family: sans-serif; }
+    canvas { display: block; margin: auto; }
+    #controls { position: absolute; top: 10px; left: 10px; z-index: 2; background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; }
+    button, input { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button onclick="generate()">Generate</button>
+    <label>Color Shift <input type="range" min="0" max="1" step="0.01" id="colorShift"></label><br>
+    <label>Export <button onclick="exportPNG()">PNG</button></label>
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    const simplex = new SimplexNoise();
+
+    function generate() {
+      const shift = parseFloat(document.getElementById("colorShift").value);
+      ctx.clearRect(0, 0, width, height);
+
+      const scale = 0.005;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let value = simplex.noise2D(x * scale, y * scale);
+          let hue = (value * 360 + shift * 100) % 360;
+          ctx.fillStyle = `hsl(${hue}, 50%, ${50 + value * 20}%)`;
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+
+    function exportPNG() {
+      const link = document.createElement('a');
+      link.download = 'mother_of_pearl.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    generate(); // initial render
+  </script>
+</body>
+</html>
 
