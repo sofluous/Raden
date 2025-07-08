@@ -1,187 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Mother of Pearl Generator</title>
-  <style>
-    html, body {
-      margin: 0;
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
-      overflow: hidden;
-    }
-    canvas { display: block; }
-    #controls {
-      position: fixed;
-      top: 10px; left: 10px;
-      background: rgba(0,0,0,0.6);
-      padding: 1rem;
-      border-radius: 8px;
-      z-index: 10;
-      max-height: 95vh;
-      overflow-y: auto;
-    }
-    label { display: block; margin: 0.3rem 0; }
-    input[type="range"] { width: 150px; }
-    select { width: 160px; margin-top: 0.2rem; }
-    button { margin-top: 0.5rem; padding: 4px 10px; }
-    #progress {
-      position: fixed;
-      top: 0; left: 0;
-      height: 4px;
-      background: #88f;
-      width: 0%;
-      z-index: 20;
-    }
-    #status {
-      position: fixed;
-      top: 0; right: 0;
-      padding: 0.4rem 1rem;
-      font-size: 0.9rem;
-      background: rgba(0,0,0,0.6);
-      z-index: 20;
-    }
-  </style>
-</head>
-<body>
-<div id="controls">
-  <label>Light Angle: <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5"></label>
-  <label>Noise Scale: <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006"></label>
-  <label>Color Blend: <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2"></label>
-  <label>Layer Length: <input type="range" id="layerLength" min="0" max="2" step="0.01" value="1"></label>
-  <label>Color Intensity: <input type="range" id="intensity" min="0" max="200" step="1" value="100"></label>
-  <label>Color Range: <input type="range" id="range" min="0.1" max="1.5" step="0.1" value="1.0"></label>
-  <label>Flow Mode:
-    <select id="flowMode">
-      <option value="circular">Circular</option>
-      <option value="linear">Linear</option>
-    </select>
-  </label>
-  <button onclick="startGeneration()">Generate</button>
-  <button onclick="exportPNG()">Export PNG</button>
-</div>
-<div id="progress"></div>
-<div id="status">Idle</div>
-<canvas id="canvas"></canvas>
-
-<script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const progress = document.getElementById("progress");
-const status = document.getElementById("status");
-
-const simplex = new SimplexNoise();
-
-const palette = [
-  { h: 290, s: 20, l: 85 },
-  { h: 180, s: 20, l: 85 },
-  { h: 60,  s: 20, l: 90 },
-  { h: 330, s: 20, l: 88 },
-  { h: 0,   s: 0,  l: 95 }
-];
-
-function hslToRgb(h, s, l) {
-  s /= 100; l /= 100;
-  const k = n => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
-}
-
-function blendPalette(value, sharpness = 1.2, range = 1.0, intensity = 100) {
-  value = Math.min(1, Math.max(0, value)) * range;
-  const scaled = value * (palette.length - 1);
-  const index = Math.floor(scaled);
-  const frac = Math.pow(scaled - index, sharpness);
-  const c1 = palette[index % palette.length];
-  const c2 = palette[(index + 1) % palette.length];
-  const h = c1.h + (c2.h - c1.h) * frac;
-  const s = (c1.s + (c2.s - c1.s) * frac) * (intensity / 100);
-  const l = c1.l + (c2.l - c1.l) * frac;
-  return hslToRgb(h, s, l);
-}
-
-let renderTask = null;
-
-function startGeneration() {
-  if (renderTask) return;
-  const width = canvas.width = window.innerWidth;
-  const height = canvas.height = window.innerHeight;
-  const cx = width / 2;
-  const cy = height / 2;
-  const imageData = ctx.createImageData(width, height);
-  const data = imageData.data;
-
-  const scale = parseFloat(document.getElementById("scale").value);
-  const lightAngle = parseFloat(document.getElementById("lightAngle").value);
-  const blendSharpness = parseFloat(document.getElementById("blend").value);
-  const layerLength = parseFloat(document.getElementById("layerLength").value);
-  const colorIntensity = parseFloat(document.getElementById("intensity").value);
-  const colorRange = parseFloat(document.getElementById("range").value);
-  const flowMode = document.getElementById("flowMode").value;
-
-  const lightVec = {
-    x: Math.cos(lightAngle * 2 * Math.PI),
-    y: Math.sin(lightAngle * 2 * Math.PI)
-  };
-
-  let y = 0;
-  const rowsPerFrame = 10;
-  status.innerText = "Rendering...";
-  progress.style.width = "0%";
-
-  function renderChunk() {
-    const endY = Math.min(y + rowsPerFrame, height);
-    for (; y < endY; y++) {
-      for (let x = 0; x < width; x++) {
-        const nx = x / width - 0.5;
-        const ny = y / height - 0.5;
-        const angleInfluence = nx * lightVec.x + ny * lightVec.y;
-
-        let px = x;
-        let py = y;
-
-        if (flowMode === 'circular') {
-          const dx = x - cx;
-          const dy = y - cy;
-          const theta = Math.atan2(dy, dx);
-          px += Math.cos(theta) * layerLength * 40;
-          py += Math.sin(theta) * layerLength * 40;
-        } else if (flowMode === 'linear') {
-          px += layerLength * 40;
+    <meta charset="UTF-8" />
+    <title>Mother of Pearl Generator</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: sans-serif;
+            overflow: hidden;
         }
 
-        const noise = simplex.noise2D(px * scale, py * scale);
-        const value = (noise + angleInfluence * 1.5 + 1) / 2;
-        const [r, g, b] = blendPalette(value, blendSharpness, colorRange, colorIntensity);
-        const i = (y * width + x) * 4;
-        data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = 255;
-      }
-    }
-    progress.style.width = `${(y / height) * 100}%`;
-    if (y < height) {
-      requestAnimationFrame(renderChunk);
-    } else {
-      ctx.putImageData(imageData, 0, 0);
-      status.innerText = "Complete";
-      setTimeout(() => status.innerText = "Idle", 1500);
-      renderTask = null;
-    }
-  }
-  renderTask = renderChunk;
-  requestAnimationFrame(renderChunk);
-}
+        canvas {
+            display: block;
+        }
 
-function exportPNG() {
-  const link = document.createElement("a");
-  link.download = "mother_of_pearl.png";
-  link.href = canvas.toDataURL("image/png");
-  link.click();
-}
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 1rem;
+            border-radius: 8px;
+            z-index: 10;
+            max-height: 95vh;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.4rem 0.8rem;
+            align-items: center;
+        }
 
-startGeneration();
-</script>
+        #controls label {
+            grid-column: 1 / span 2;
+            display: contents;
+        }
+
+        #controls input[type="range"],
+        #controls input[type="number"],
+        #controls select {
+            grid-column: 2;
+            width: 150px;
+        }
+
+        #controls span.label {
+            grid-column: 1;
+        }
+
+        #controls .button-row {
+            grid-column: 1 / span 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        #controls .export-row {
+            grid-column: 1 / span 2;
+            margin-top: 0.5rem;
+        }
+
+        button {
+            padding: 4px 10px;
+        }
+
+        #progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: #88f;
+            width: 0%;
+            z-index: 20;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="controls">
+        <span class="label">Red Boost:</span><input type="range" id="boostR" min="0" max="2" step="0.01" value="1">
+        <span class="label">Green Boost:</span><input type="range" id="boostG" min="0" max="2" step="0.01" value="1">
+        <span class="label">Blue Boost:</span><input type="range" id="boostB" min="0" max="2" step="0.01" value="1">
+        <span class="label">Light Angle:</span><input type="range" id="lightAngle" min="0" max="1" step="0.01"
+            value="0.5">
+        <span class="label">Noise Scale:</span><input type="range" id="scale" min="0.001" max="0.02" step="0.001"
+            value="0.006">
+        <span class="label">Color Blend:</span><input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2">
+        <span class="label">Layer Length:</span><input type="range" id="layerLength" min="0" max="2" step="0.01"
+            value="1">
+        <span class="label">Color Intensity:</span><input type="range" id="intensity" min="0" max="200" step="1"
+            value="100">
+        <span class="label">Color Range:</span><input type="range" id="range" min="0.1" max="1.5" step="0.1"
+            value="1.0">
+        <span class="label">Flow Mode:</span>
+        <select id="flowMode">
+            <option value="circular">Circular</option>
+            <option value="linear">Linear</option>
+        </select>
+        <span class="label">Resolution Preset:</span>
+        <select id="resolutionPreset">
+            <option value="">Auto (Window Size)</option>
+            <option value="1920x1080">1920 × 1080 (HD)</option>
+            <option value="1080x1080">1080 × 1080 (Square)</option>
+            <option value="3840x2160">3840 × 2160 (4K)</option>
+            <option value="custom">Custom</option>
+        </select>
+
+        <span class="label">Render Width:</span><input type="number" id="renderWidth" min="1" value=""
+            placeholder="Auto">
+        <span class="label">Render Height:</span><input type="number" id="renderHeight" min="1" value=""
+            placeholder="Auto">
+        <span class="label">Seed:</span><input type="number" id="seed" placeholder="Random">
+        <div class="button-row">
+            <button onclick="startGeneration()">Generate</button>
+            <div id="status">Idle</div>
+        </div>
+        <div class="export-row">
+            <button onclick="exportPNG()">Export PNG</button>
+        </div>
+    </div>
+    <div id="progress"></div>
+    <canvas id="canvas"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
+    <script>
+
+        function seededRandom(seed) {
+            let x = Math.sin(seed) * 10000;
+            return () => {
+                x = Math.sin(x) * 10000;
+                return x - Math.floor(x);
+            };
+        }
+
+        function createSeededSimplex(seed) {
+            const rng = seededRandom(seed);
+            return new SimplexNoise(rng);
+        }
+
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const progress = document.getElementById("progress");
+        const status = document.getElementById("status");
+
+        let simplex;
+        let renderTask = null;
+
+        function hslToRgb(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const k = n => (n + h / 30) % 12;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+            return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+        }
+
+        const palette = [
+            { h: 290, s: 20, l: 85 },
+            { h: 180, s: 20, l: 85 },
+            { h: 60, s: 20, l: 90 },
+            { h: 330, s: 20, l: 88 },
+            { h: 0, s: 0, l: 95 }
+        ];
+        
+        document.getElementById("resolutionPreset").addEventListener("change", () => {
+            const preset = document.getElementById("resolutionPreset").value;
+            const wInput = document.getElementById("renderWidth");
+            const hInput = document.getElementById("renderHeight");
+
+            if (preset && preset !== "custom") {
+                const [w, h] = preset.split("x").map(Number);
+                wInput.value = w;
+                hInput.value = h;
+            } else {
+                wInput.value = "";
+                hInput.value = "";
+            }
+        });
+
+        function startGeneration() {
+            if (renderTask) return;
+
+            const widthInput = document.getElementById("renderWidth").value;
+            const heightInput = document.getElementById("renderHeight").value;
+            const width = canvas.width = widthInput ? parseInt(widthInput) : window.innerWidth;
+            const height = canvas.height = heightInput ? parseInt(heightInput) : window.innerHeight;
+
+            const seedInput = document.getElementById("seed").value;
+            const seed = seedInput ? parseInt(seedInput) : Math.floor(Math.random() * 100000);
+            simplex = createSeededSimplex(seed);
+            document.getElementById("seed").value = seed; // store it visibly
+
+            const cx = width / 2;
+            const cy = height / 2;
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+
+            const scale = parseFloat(document.getElementById("scale").value);
+            const lightAngle = parseFloat(document.getElementById("lightAngle").value);
+            const blendSharpness = parseFloat(document.getElementById("blend").value);
+            const layerLength = parseFloat(document.getElementById("layerLength").value);
+            const colorIntensity = parseFloat(document.getElementById("intensity").value);
+            const colorRange = parseFloat(document.getElementById("range").value);
+            const flowMode = document.getElementById("flowMode").value;
+
+            const boostR = parseFloat(document.getElementById("boostR").value);
+            const boostG = parseFloat(document.getElementById("boostG").value);
+            const boostB = parseFloat(document.getElementById("boostB").value);
+
+            const lightVec = {
+                x: Math.cos(lightAngle * 2 * Math.PI),
+                y: Math.sin(lightAngle * 2 * Math.PI)
+            };
+
+            let y = 0;
+            const rowsPerFrame = 10;
+            status.innerText = "Rendering...";
+            progress.style.width = "0%";
+
+            function renderChunk() {
+                const endY = Math.min(y + rowsPerFrame, height);
+                for (; y < endY; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const nx = x / width - 0.5;
+                        const ny = y / height - 0.5;
+                        const angleInfluence = nx * lightVec.x + ny * lightVec.y;
+
+                        let px = x;
+                        let py = y;
+
+                        if (flowMode === 'circular') {
+                            const dx = x - cx;
+                            const dy = y - cy;
+                            const theta = Math.atan2(dy, dx);
+                            px += Math.cos(theta) * layerLength * 40;
+                            py += Math.sin(theta) * layerLength * 40;
+                        } else if (flowMode === 'linear') {
+                            px += layerLength * 40;
+                        }
+
+                        const noise = simplex.noise2D(px * scale, py * scale);
+                        const value = (noise + angleInfluence * 1.5 + 1) / 2;
+
+                        const valueClamped = Math.min(1, Math.max(0, value)) * colorRange;
+                        const scaled = valueClamped * 4;
+                        const index = Math.min(Math.floor(scaled), palette.length - 2);
+                        const frac = Math.pow(scaled - index, blendSharpness);
+
+                        const c1 = palette[index % palette.length];
+                        const c2 = palette[(index + 1) % palette.length];
+
+                        const h = c1.h + (c2.h - c1.h) * frac;
+                        const s = (c1.s + (c2.s - c1.s) * frac) * (colorIntensity / 100);
+                        const l = c1.l + (c2.l - c1.l) * frac;
+                        const [r, g, b] = hslToRgb(h, s, l);
+
+                        const i = (y * width + x) * 4;
+                        const rAdj = Math.min(255, r * boostR);
+                        const gAdj = Math.min(255, g * boostG);
+                        const bAdj = Math.min(255, b * boostB);
+
+                        data[i] = rAdj;
+                        data[i + 1] = gAdj;
+                        data[i + 2] = bAdj;
+                        data[i + 3] = 255;
+                    }
+                }
+                progress.style.width = `${(y / height) * 100}%`;
+                if (y < height) {
+                    requestAnimationFrame(renderChunk);
+                } else {
+                    ctx.putImageData(imageData, 0, 0);
+                    status.innerText = "Complete";
+                    setTimeout(() => status.innerText = "Idle", 1500);
+                    renderTask = null;
+                }
+            }
+            renderTask = renderChunk;
+            requestAnimationFrame(renderChunk);
+        }
+
+        function exportPNG() {
+            const link = document.createElement("a");
+            link.download = "mother_of_pearl.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+
+
+        window.onload = () => {
+            startGeneration();
+        };    </script>
 </body>
+
 </html>
