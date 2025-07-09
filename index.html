@@ -302,6 +302,13 @@
         const generateBtn = document.querySelector(
             'button[onclick="startGeneration()"]'
         );
+        // 🔧 Cached DOM elements for live updates or toggles
+        const boostRInput = document.getElementById("boostR");
+        const boostGInput = document.getElementById("boostG");
+        const boostBInput = document.getElementById("boostB");
+        const grainToggle = document.getElementById("grainToggle");
+        const highlightStrengthInput = document.getElementById("highlightStrength");
+
 
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -402,17 +409,17 @@
 
             const config = getRenderConfig(); // ✅ This line is missing in your erroring version
 
-
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
-                generateBtn.disabled = false;
-            }
             if (!Array.isArray(palette) || palette.length < 2) {
                 console.error("Palette must be an array with at least 2 colors.");
                 status.innerText = "❌ Palette error";
                 status.className = "status error";
                 return;
+            }
+
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                generateBtn.disabled = false;
             }
 
             if (renderTask) return;
@@ -553,9 +560,10 @@
                     ctx.globalAlpha = 1.0;
                     ctx.filter = "none";
 
-                    if (document.getElementById("grainToggle").checked) {
+                    if (grainToggle.checked) {
                         applyGrainOverlay(ctx, config.width, config.height);
                     }
+
 
                     originalImageData = new ImageData(
                         new Uint8ClampedArray(imageData.data),
@@ -582,9 +590,10 @@
         function adjustColorBoosts() {
             if (!originalImageData) return;
 
-            const boostR = parseFloat(document.getElementById("boostR").value);
-            const boostG = parseFloat(document.getElementById("boostG").value);
-            const boostB = parseFloat(document.getElementById("boostB").value);
+            const boostR = parseFloat(boostRInput.value);
+            const boostG = parseFloat(boostGInput.value);
+            const boostB = parseFloat(boostBInput.value);
+
 
             const width = originalImageData.width;
             const height = originalImageData.height;
@@ -613,9 +622,8 @@
             const newImageData = ctx.createImageData(width, height);
             const newData = newImageData.data;
 
-            const highlightStrength = parseFloat(
-                document.getElementById("highlightStrength").value
-            );
+            const highlightStrength = parseFloat(highlightStrengthInput.value);
+
 
             const lightVec = {
                 x: Math.cos(lightAngle * 2 * Math.PI),
