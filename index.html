@@ -84,8 +84,6 @@
             width: 60px;
         }
 
-
-
         #status {
             font-size: 0.9rem;
             padding: 2px 6px;
@@ -119,7 +117,6 @@
             color: #fff;
         }
 
-
         /* Idle state */
         #status.idle {
             background: #222;
@@ -150,7 +147,6 @@
             }
         }
 
-
         #progress {
             position: fixed;
             top: 0;
@@ -177,6 +173,11 @@
             color: #aaa;
             font-weight: normal;
         }
+
+        #controls .pending-change {
+            outline: 2px solid #ff8;
+            box-shadow: 0 0 6px #ff08;
+        }
     </style>
 </head>
 
@@ -185,7 +186,7 @@
         <!-- 1. SEED & RESOLUTION -->
         <div class="section">
             <span class="label">Seed:</span>
-            <input type="number" id="seed" placeholder="(random)">
+            <input type="number" id="seed" placeholder="(random)" />
             <h3>Resolution</h3>
 
             <span class="label">Preset:</span>
@@ -199,57 +200,58 @@
 
             <span class="label">Dimensions:</span>
             <div class="res-inputs">
-                <input type="number" id="renderWidth" min="1" placeholder="Width">
+                <input type="number" id="renderWidth" min="1" placeholder="Width" />
                 <span>×</span>
-                <input type="number" id="renderHeight" min="1" placeholder="Height">
+                <input type="number" id="renderHeight" min="1" placeholder="Height" />
             </div>
         </div>
-
 
         <!-- 2. PATTERN GEOMETRY -->
         <div class="section">
             <h3>Pattern Geometry</h3>
             <span class="label">Noise Scale:</span><input type="range" id="scale" min="0.001" max="0.02" step="0.001"
-                value="0.006">
-            <span class="label">Noise Layers:</span><input type="number" id="layers" min="1" max="5" step="1" value="3">
+                value="0.006" data-live="false" />
+            <span class="label">Noise Layers:</span><input type="number" id="layers" min="1" max="5" step="1" value="3"
+                data-live="false" />
             <span class="label">Flow Mode:</span>
-            <select id="flowMode">
+            <select id="flowMode" data-live="false">
                 <option value="circular">Circular</option>
                 <option value="linear">Linear</option>
             </select>
             <span class="label">Layer Length:</span><input type="range" id="layerLength" min="0" max="2" step="0.01"
-                value="1">
+                value="1" data-live="false" />
         </div>
 
         <!-- 3. COLOR APPEARANCE -->
         <div class="section">
             <h3>Color Appearance</h3>
             <span class="label">Color Range:</span><input type="range" id="range" min="0.1" max="1.5" step="0.1"
-                value="1.0">
-            <span class="label">Blend:</span><input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2">
+                value="1.0" data-live="false" />
+            <span class="label">Blend:</span><input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2"
+                data-live="false" />
             <span class="label">Color Intensity:</span><input type="range" id="intensity" min="0" max="200" step="1"
-                value="100">
+                value="100" data-live="false" />
         </div>
 
         <!-- 4. LIGHTING -->
         <div class="section">
             <h3>Lighting</h3>
             <span class="label">Light Angle:</span><input type="range" id="lightAngle" min="0" max="1" step="0.01"
-                value="0.5">
+                value="0.5" data-live="false" />
             <span class="label">Highlight Strength:</span><input type="range" id="highlightStrength" min="0" max="2"
-                step="0.01" value="0.5">
+                step="0.01" value="0.5" data-live="false" />
         </div>
 
         <!-- 5. POST-PROCESSING -->
         <div class="section">
             <h3>Post-Processing</h3>
             <span class="label">Red Boost:</span><input type="range" id="boostR" min="0" max="2" step="0.01" value="1"
-                oninput="adjustColorBoosts()" data-live="true">
+                oninput="adjustColorBoosts()" data-live="true" />
             <span class="label">Green Boost:</span><input type="range" id="boostG" min="0" max="2" step="0.01" value="1"
-                oninput="adjustColorBoosts()" data-live="true">
+                oninput="adjustColorBoosts()" data-live="true" />
             <span class="label">Blue Boost:</span><input type="range" id="boostB" min="0" max="2" step="0.01" value="1"
-                oninput="adjustColorBoosts()" data-live="true">
-            <span class="label">Grain Overlay:</span><input type="checkbox" id="grainToggle" checked>
+                oninput="adjustColorBoosts()" data-live="true" />
+            <span class="label">Grain Overlay:</span><input type="checkbox" id="grainToggle" checked />
         </div>
 
         <!-- 6. ANIMATION -->
@@ -266,20 +268,18 @@
         <!-- 7. ACTIONS -->
         <div class="section">
             <div class="button-row">
-                <button onclick="startGeneration()">Generate</button>
                 <div id="status" class="status idle">💤 Idle</div>
+                <button onclick="startGeneration()">Generate</button>
             </div>
             <div class="export-row">
                 <button onclick="exportPNG()">Export PNG</button>
             </div>
         </div>
-
     </div>
     <div id="progress"></div>
     <canvas id="canvas"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
     <script>
-
         function seededRandom(seed) {
             let x = Math.sin(seed) * 10000;
             return () => {
@@ -292,7 +292,16 @@
             const rng = seededRandom(seed);
             return new SimplexNoise(rng);
         }
-        const generateBtn = document.querySelector('button[onclick="startGeneration()"]');
+
+        function getInput(id, asInteger = false) {
+            const val = document.getElementById(id).value;
+            return asInteger ? parseInt(val, 10) : parseFloat(val);
+        }
+
+
+        const generateBtn = document.querySelector(
+            'button[onclick="startGeneration()"]'
+        );
 
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -307,15 +316,18 @@
         let originalImageData = null;
         let animationId = null;
 
-
-
         function hslToRgb(h, s, l) {
             s /= 100;
             l /= 100;
-            const k = n => (n + h / 30) % 12;
+            const k = (n) => (n + h / 30) % 12;
             const a = s * Math.min(l, 1 - l);
-            const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-            return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+            const f = (n) =>
+                l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+            return [
+                Math.round(f(0) * 255),
+                Math.round(f(8) * 255),
+                Math.round(f(4) * 255),
+            ];
         }
 
         const palette = [
@@ -323,7 +335,7 @@
             { h: 180, s: 20, l: 85 },
             { h: 60, s: 20, l: 90 },
             { h: 330, s: 20, l: 88 },
-            { h: 0, s: 0, l: 95 }
+            { h: 0, s: 0, l: 95 },
         ];
 
         document.getElementById("resolutionPreset").addEventListener("change", () => {
@@ -333,13 +345,20 @@
 
             if (preset && preset !== "custom") {
                 const [w, h] = preset.split("x").map(Number);
-                wInput.value = w;
-                hInput.value = h;
+                if (parseInt(wInput.value) !== w || parseInt(hInput.value) !== h) {
+                    wInput.value = w;
+                    hInput.value = h;
+                    wInput.classList.add("pending-change");
+                    hInput.classList.add("pending-change");
+                }
             } else {
                 wInput.value = "";
                 hInput.value = "";
+                wInput.classList.add("pending-change");
+                hInput.classList.add("pending-change");
             }
         });
+
 
         function applyGrainOverlay(ctx, width, height) {
             const grainImage = ctx.getImageData(0, 0, width, height);
@@ -347,65 +366,94 @@
 
             for (let i = 0; i < d.length; i += 4) {
                 const grain = Math.floor((Math.random() - 0.5) * 20); // range -10 to +10
-                d[i] = Math.min(255, Math.max(0, d[i] + grain));     // R
+                d[i] = Math.min(255, Math.max(0, d[i] + grain)); // R
                 d[i + 1] = Math.min(255, Math.max(0, d[i + 1] + grain)); // G
                 d[i + 2] = Math.min(255, Math.max(0, d[i + 2] + grain)); // B
             }
 
             ctx.putImageData(grainImage, 0, 0);
         }
+        function getRenderConfig() {
+            const seed = getInput("seed", true);
+
+            return {
+                width: getInput("renderWidth", true) || window.innerWidth,
+                height: getInput("renderHeight", true) || window.innerHeight,
+                seed,
+                layers: getInput("layers", true),
+                scale: getInput("scale"),
+                blend: getInput("blend"),
+                layerLength: getInput("layerLength"),
+                colorIntensity: getInput("intensity"),   // 🔁 FIXED NAME
+                colorRange: getInput("range"),           // 🔁 FIXED NAME
+                flowMode: document.getElementById("flowMode").value,
+                highlightStrength: getInput("highlightStrength"),
+                lightAngle: getInput("lightAngle"),
+                animateFlow: document.getElementById("animateFlow").value,
+                boostR: getInput("boostR"),
+                boostG: getInput("boostG"),
+                boostB: getInput("boostB"),
+                grain: document.getElementById("grainToggle").checked
+            };
+        }
 
         function startGeneration(force = false) {
             if (renderTask || (animationId && !force)) return;
+
+            const config = getRenderConfig(); // ✅ This line is missing in your erroring version
+
 
             if (animationId) {
                 cancelAnimationFrame(animationId);
                 animationId = null;
                 generateBtn.disabled = false;
             }
-
+            if (!Array.isArray(palette) || palette.length < 2) {
+                console.error("Palette must be an array with at least 2 colors.");
+                status.innerText = "❌ Palette error";
+                status.className = "status error";
+                return;
+            }
 
             if (renderTask) return;
 
-            const widthInput = document.getElementById("renderWidth").value;
-            const heightInput = document.getElementById("renderHeight").value;
-            const width = canvas.width = widthInput ? parseInt(widthInput) : window.innerWidth;
-            const height = canvas.height = heightInput ? parseInt(heightInput) : window.innerHeight;
-            offscreenCanvas.width = width;
-            offscreenCanvas.height = height;
+            document.querySelectorAll('.pending-change').forEach(el => {
+                el.classList.remove('pending-change');
+            });
 
+            canvas.width = config.width;
+            canvas.height = config.height;
+            offscreenCanvas.width = config.width;
+            offscreenCanvas.height = config.height;
 
-            const seedInput = document.getElementById("seed").value;
-            const seed = seedInput ? parseInt(seedInput) : Math.floor(Math.random() * 100000);
-            simplex = createSeededSimplex(seed);
-            document.getElementById("seed").value = seed; // store it visibly
+            simplex = createSeededSimplex(config.seed);
 
-            const layers = parseInt(document.getElementById("layers").value);
+            const layers = config.layers;
 
-
-            const cx = width / 2;
-            const cy = height / 2;
-            const imageData = offscreenCtx.createImageData(width, height);
+            const cx = config.width / 2;
+            const cy = config.height / 2;
+            const imageData = offscreenCtx.createImageData(config.width, config.height);
             const data = imageData.data;
 
-            const scale = parseFloat(document.getElementById("scale").value);
-            const lightAngle = parseFloat(document.getElementById("lightAngle").value);
-            const blendSharpness = parseFloat(document.getElementById("blend").value);
-            const layerLength = parseFloat(document.getElementById("layerLength").value);
-            const colorIntensity = parseFloat(document.getElementById("intensity").value);
-            const colorRange = parseFloat(document.getElementById("range").value);
-            const flowMode = document.getElementById("flowMode").value;
-            const highlightStrength = parseFloat(document.getElementById("highlightStrength").value);
-            const animateFlow = document.getElementById("animateFlow").value;
+            const scale = config.scale;
+            const blendSharpness = config.blend;
+            const layerLength = config.layerLength;
+            const colorIntensity = config.colorIntensity;
+            const colorRange = config.colorRange;
+            const highlightStrength = config.highlightStrength;
+            const lightAngle = config.lightAngle;
 
+            const flowMode = config.flowMode;
+            const animateFlow = config.animateFlow;
 
-            const boostR = parseFloat(document.getElementById("boostR").value);
-            const boostG = parseFloat(document.getElementById("boostG").value);
-            const boostB = parseFloat(document.getElementById("boostB").value);
+            const boostR = config.boostR;
+            const boostG = config.boostG;
+            const boostB = config.boostB;
+
 
             const lightVec = {
                 x: Math.cos(lightAngle * 2 * Math.PI),
-                y: Math.sin(lightAngle * 2 * Math.PI)
+                y: Math.sin(lightAngle * 2 * Math.PI),
             };
 
             let y = 0;
@@ -417,27 +465,29 @@
             progress.style.width = "0%";
 
             function renderChunk() {
-                const endY = Math.min(y + rowsPerFrame, height);
+                const endY = Math.min(y + rowsPerFrame, config.height);
                 for (; y < endY; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const nx = x / width - 0.5;
-                        const ny = y / height - 0.5;
+                    for (let x = 0; x < config.width; x++) {
+                        const nx = x / config.width - 0.5;
+                        const ny = y / config.height - 0.5;
                         const angleInfluence = nx * lightVec.x + ny * lightVec.y;
                         // Add highlight banding using light direction
                         const bandFreq = 10;
-                        const band = Math.sin((nx * lightVec.y - ny * lightVec.x) * bandFreq * Math.PI);
+                        const band = Math.sin(
+                            (nx * lightVec.y - ny * lightVec.x) * bandFreq * Math.PI
+                        );
                         const highlightBoost = band * highlightStrength;
 
                         let px = x;
                         let py = y;
 
-                        if (flowMode === 'circular') {
+                        if (flowMode === "circular") {
                             const dx = x - cx;
                             const dy = y - cy;
                             const theta = Math.atan2(dy, dx);
                             px += Math.cos(theta) * layerLength * 40;
                             py += Math.sin(theta) * layerLength * 40;
-                        } else if (flowMode === 'linear') {
+                        } else if (flowMode === "linear") {
                             px += layerLength * 40;
                         }
 
@@ -450,11 +500,12 @@
                             totalAmp += amp;
                         }
                         const noise = total / totalAmp;
-                        const value = (noise + angleInfluence * 1.5 + highlightBoost + 1) / 2;
+                        const value =
+                            (noise + angleInfluence * 1.5 + highlightBoost + 1) / 2;
 
                         const valueClamped = Math.min(1, Math.max(0, value)) * colorRange;
                         const scaled = valueClamped * 4;
-                        const index = Math.min(Math.floor(scaled), palette.length - 2);
+                        const index = Math.max(0, Math.min(Math.floor(scaled), palette.length - 2));
                         const frac = Math.pow(scaled - index, blendSharpness);
 
                         const c1 = palette[index % palette.length];
@@ -471,7 +522,7 @@
 
                         const [r, g, b] = hslToRgb(h, s, l);
 
-                        const i = (y * width + x) * 4;
+                        const i = (y * config.width + x) * 4;
                         const rAdj = Math.min(255, r * boostR);
                         const gAdj = Math.min(255, g * boostG);
                         const bAdj = Math.min(255, b * boostB);
@@ -482,28 +533,28 @@
                         data[i + 3] = 255;
                     }
                 }
-                progress.style.width = `${(y / height) * 100}%`;
-                if (y < height) {
+                progress.style.width = `${(y / config.height) * 100}%`;
+                if (y < config.height) {
                     requestAnimationFrame(renderChunk);
                 } else {
                     offscreenCtx.putImageData(imageData, 0, 0);
 
                     // Apply a soft blur before compositing
-                    ctx.clearRect(0, 0, width, height);
+                    ctx.clearRect(0, 0, config.width, config.height);
                     ctx.globalAlpha = 1;
                     ctx.drawImage(offscreenCanvas, 0, 0);
 
                     // Overlay blurred glow layer
                     ctx.globalAlpha = 0.2;
-                    ctx.filter = 'blur(8px)';
+                    ctx.filter = "blur(8px)";
                     ctx.drawImage(offscreenCanvas, 0, 0);
 
                     // Reset effects
                     ctx.globalAlpha = 1.0;
-                    ctx.filter = 'none';
+                    ctx.filter = "none";
 
                     if (document.getElementById("grainToggle").checked) {
-                        applyGrainOverlay(ctx, width, height);
+                        applyGrainOverlay(ctx, config.width, config.height);
                     }
 
                     originalImageData = new ImageData(
@@ -515,7 +566,6 @@
                     status.innerText = "✅ Complete";
                     status.className = "status complete";
 
-
                     setTimeout(() => {
                         status.innerText = "💤 Idle";
                         status.className = "status idle";
@@ -523,13 +573,12 @@
                     }, 500);
 
                     renderTask = null;
-
-
                 }
             }
             renderTask = renderChunk;
             requestAnimationFrame(renderChunk);
         }
+
         function adjustColorBoosts() {
             if (!originalImageData) return;
 
@@ -545,10 +594,10 @@
             const newData = newImageData.data;
 
             for (let i = 0; i < originalData.length; i += 4) {
-                newData[i] = Math.min(255, originalData[i] * boostR);     // R
+                newData[i] = Math.min(255, originalData[i] * boostR); // R
                 newData[i + 1] = Math.min(255, originalData[i + 1] * boostG); // G
                 newData[i + 2] = Math.min(255, originalData[i + 2] * boostB); // B
-                newData[i + 3] = originalData[i + 3];                         // A
+                newData[i + 3] = originalData[i + 3]; // A
             }
 
             ctx.putImageData(newImageData, 0, 0);
@@ -564,11 +613,13 @@
             const newImageData = ctx.createImageData(width, height);
             const newData = newImageData.data;
 
-            const highlightStrength = parseFloat(document.getElementById("highlightStrength").value);
+            const highlightStrength = parseFloat(
+                document.getElementById("highlightStrength").value
+            );
 
             const lightVec = {
                 x: Math.cos(lightAngle * 2 * Math.PI),
-                y: Math.sin(lightAngle * 2 * Math.PI)
+                y: Math.sin(lightAngle * 2 * Math.PI),
             };
 
             for (let y = 0; y < height; y++) {
@@ -578,7 +629,9 @@
                     const nx = x / width - 0.5;
                     const ny = y / height - 0.5;
                     const bandFreq = 10;
-                    const band = Math.sin((nx * lightVec.y - ny * lightVec.x) * bandFreq * Math.PI);
+                    const band = Math.sin(
+                        (nx * lightVec.y - ny * lightVec.x) * bandFreq * Math.PI
+                    );
                     const highlight = band * highlightStrength;
 
                     newData[i] = Math.min(255, data[i] + highlight * 255);
@@ -601,6 +654,15 @@
         document.addEventListener("DOMContentLoaded", () => {
             startGeneration();
         });
+        document
+            .querySelectorAll("#controls input, #controls select")
+            .forEach((el) => {
+                if (el.dataset.live !== "true") {
+                    el.addEventListener("input", () => {
+                        el.classList.add("pending-change");
+                    });
+                }
+            });
     </script>
 </body>
 
