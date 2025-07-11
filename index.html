@@ -44,6 +44,9 @@
         #controls select {
             grid-column: 2;
             width: 150px;
+            position: relative;
+            padding-right: 1.5em;
+            /* reserve space for reset icon */
         }
 
         #controls input[data-live="true"] {
@@ -82,6 +85,22 @@
 
         #controls .res-inputs input[type="number"] {
             width: 60px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
+            align-items: center;
+            gap: 0.4rem;
+            position: relative;
+        }
+
+        .input-wrapper input[type="range"],
+        .input-wrapper select,
+        .input-wrapper input[type="number"] {
+            min-width: 0;
+            width: 100%;
         }
 
         #status {
@@ -168,15 +187,45 @@
 
         #controls .section h3 {
             grid-column: 1 / span 2;
-            font-size: 1rem;
-            margin: 0 0 0.4rem 0;
+            font-size: 1.4rem;
+            margin: 1rem 0 .5rem 0;
             color: #aaa;
             font-weight: normal;
         }
 
-        #controls .pending-change {
-            outline: 2px solid #ff8;
-            box-shadow: 0 0 6px #ff08;
+        #controls .label::before {
+            content: "●";
+            display: inline-block;
+            width: 1em;
+            margin-right: 0.3em;
+            text-align: center;
+            visibility: hidden;
+            color: #ff8;
+            font-size: 0.9em;
+            vertical-align: middle;
+        }
+
+        #controls .label.pending-dot::before {
+            visibility: visible;
+        }
+
+        .reset-btn {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: #ccc;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .reset-btn:hover {
+            color: #fff;
         }
     </style>
 </head>
@@ -186,85 +235,120 @@
         <!-- 1. SEED & RESOLUTION -->
         <div class="section">
             <span class="label">Seed:</span>
-            <input type="number" id="seed" placeholder="(random)" />
+            <div class="input-wrapper">
+                <input type="number" id="seed" placeholder="(random)" />
+            </div>
             <h3>Resolution</h3>
-
             <span class="label">Preset:</span>
-            <select id="resolutionPreset">
-                <option value="">Auto (Window Size)</option>
-                <option value="1920x1080">HD (1920×1080)</option>
-                <option value="1080x1080">Square (1080×1080)</option>
-                <option value="3840x2160">4K (3840×2160)</option>
-                <option value="custom">Custom</option>
-            </select>
-
+            <div class="input-wrapper">
+                <select id="resolutionPreset">
+                    <option value="">Auto (Window Size)</option>
+                    <option value="1920x1080">HD (1920×1080)</option>
+                    <option value="1080x1080">Square (1080×1080)</option>
+                    <option value="3840x2160">4K (3840×2160)</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
             <span class="label">Dimensions:</span>
-            <div class="res-inputs">
-                <input type="number" id="renderWidth" min="1" placeholder="Width" />
-                <span>×</span>
-                <input type="number" id="renderHeight" min="1" placeholder="Height" />
+            <div class="input-wrapper">
+                <div class="res-inputs">
+                    <input type="number" id="renderWidth" min="1" placeholder="Width" />
+                    <span>×</span>
+                    <input type="number" id="renderHeight" min="1" placeholder="Height" />
+                </div>
             </div>
         </div>
 
         <!-- 2. PATTERN GEOMETRY -->
         <div class="section">
             <h3>Pattern Geometry</h3>
-            <span class="label">Noise Scale:</span><input type="range" id="scale" min="0.001" max="0.02" step="0.001"
-                value="0.006" data-live="false" />
-            <span class="label">Noise Layers:</span><input type="number" id="layers" min="1" max="5" step="1" value="3"
-                data-live="false" />
+            <span class="label">Noise Scale:</span>
+            <div class="input-wrapper">
+                <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006" data-live="false" />
+            </div>
+            <span class="label">Noise Layers:</span>
+            <div class="input-wrapper">
+                <input type="number" id="layers" min="1" max="5" step="1" value="3" data-live="false" />
+            </div>
             <span class="label">Flow Mode:</span>
-            <select id="flowMode" data-live="false">
-                <option value="circular">Circular</option>
-                <option value="linear">Linear</option>
-            </select>
-            <span class="label">Layer Length:</span><input type="range" id="layerLength" min="0" max="2" step="0.01"
-                value="1" data-live="false" />
+            <div class="input-wrapper">
+                <select id="flowMode" data-live="false">
+                    <option value="circular">Circular</option>
+                    <option value="linear">Linear</option>
+                </select>
+            </div>
+            <span class="label">Layer Length:</span>
+            <div class="input-wrapper">
+                <input type="range" id="layerLength" min="0" max="2" step="0.01" value="1" data-live="false" />
+            </div>
         </div>
 
         <!-- 3. COLOR APPEARANCE -->
         <div class="section">
             <h3>Color Appearance</h3>
-            <span class="label">Color Range:</span><input type="range" id="range" min="0.1" max="1.5" step="0.1"
-                value="1.0" data-live="false" />
-            <span class="label">Blend:</span><input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2"
-                data-live="false" />
-            <span class="label">Color Intensity:</span><input type="range" id="intensity" min="0" max="200" step="1"
-                value="100" data-live="false" />
+            <span class="label">Color Range:</span>
+            <div class="input-wrapper">
+                <input type="range" id="range" min="0.1" max="1.5" step="0.1" value="1.0" data-live="false" />
+            </div>
+            <span class="label">Blend:</span>
+            <div class="input-wrapper">
+                <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2" data-live="false" />
+            </div>
+            <span class="label">Color Intensity:</span>
+            <div class="input-wrapper">
+                <input type="range" id="intensity" min="0" max="200" step="1" value="100" data-live="false" />
+            </div>
         </div>
 
         <!-- 4. LIGHTING -->
         <div class="section">
             <h3>Lighting</h3>
-            <span class="label">Light Angle:</span><input type="range" id="lightAngle" min="0" max="1" step="0.01"
-                value="0.5" data-live="false" />
-            <span class="label">Highlight Strength:</span><input type="range" id="highlightStrength" min="0" max="2"
-                step="0.01" value="0.5" data-live="false" />
+            <span class="label">Light Angle:</span>
+            <div class="input-wrapper">
+                <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5" data-live="false" />
+            </div>
+            <span class="label">Highlight Strength:</span>
+            <div class="input-wrapper">
+                <input type="range" id="highlightStrength" min="0" max="2" step="0.01" value="0.5" data-live="false" />
+            </div>
         </div>
 
         <!-- 5. POST-PROCESSING -->
         <div class="section">
             <h3>Post-Processing</h3>
-            <span class="label">Red Boost:</span><input type="range" id="boostR" min="0" max="2" step="0.01" value="1"
-                oninput="adjustColorBoosts()" data-live="true" />
-            <span class="label">Green Boost:</span><input type="range" id="boostG" min="0" max="2" step="0.01" value="1"
-                oninput="adjustColorBoosts()" data-live="true" />
-            <span class="label">Blue Boost:</span><input type="range" id="boostB" min="0" max="2" step="0.01" value="1"
-                oninput="adjustColorBoosts()" data-live="true" />
-            <span class="label">Grain Overlay:</span><input type="checkbox" id="grainToggle" checked />
-        </div>
+            <span class="label">Red Boost:</span>
+            <div class="input-wrapper">
+                <input type="range" id="boostR" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
+                    data-live="true" />
+            </div>
+            <span class="label">Green Boost:</span>
+            <div class="input-wrapper">
+                <input type="range" id="boostG" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
+                    data-live="true" />
+            </div>
+            <span class="label">Blue Boost:</span>
+            <div class="input-wrapper">
+                <input type="range" id="boostB" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
+                    data-live="true" />
+            </div>
+            <span class="label">Grain Overlay:</span>
+            <div class="input-wrapper">
+                <input type="checkbox" id="grainToggle" checked />
+            </div>
 
-        <!-- 6. ANIMATION -->
-        <div class="section">
-            <h3>Animation</h3>
-            <span class="label">Animate Flow:</span>
-            <select id="animateFlow" disabled>
-                <option value="none">None</option>
-                <option value="light">Light Sweep</option>
-                <option value="layers">Wave Layers</option>
-            </select>
+            <!-- 6. ANIMATION -->
+            <div class="section">
+                <h3>Animation</h3>
+                <span class="label">Animate Flow:</span>
+                <div class="input-wrapper">
+                    <select id="animateFlow" disabled>
+                        <option value="none">None</option>
+                        <option value="light">Light Sweep</option>
+                        <option value="layers">Wave Layers</option>
+                    </select>
+                </div>
+            </div>
         </div>
-
         <!-- 7. ACTIONS -->
         <div class="section">
             <div class="button-row">
@@ -500,7 +584,13 @@
 
             document.querySelectorAll('.pending-change').forEach(el => {
                 el.classList.remove('pending-change');
+                const label = el.previousElementSibling;
+                if (label && label.classList.contains('label')) {
+                    label.classList.remove('pending-dot');
+                }
             });
+            document.querySelectorAll('.reset-btn').forEach(btn => btn.remove());
+            updatePendingStatus();
 
             canvas.width = config.width;
             canvas.height = config.height;
@@ -606,10 +696,29 @@
                     }, 500);
 
                     renderTask = null;
+                    // Save current values as "applied"
+                    document.querySelectorAll('#controls input, #controls select').forEach(el => {
+                        if (el.dataset.live !== "true") {
+                            el.dataset.applied = el.value;
+                        }
+                    });
+
                 }
             }
             renderTask = renderChunk;
             requestAnimationFrame(renderChunk);
+        }
+
+        function updatePendingStatus() {
+            const pendingCount = document.querySelectorAll('.pending-change').length;
+
+            if (status.classList.contains('idle')) {
+                if (pendingCount > 0) {
+                    status.innerText = `💤 Idle — ${pendingCount} change${pendingCount > 1 ? 's' : ''} not applied`;
+                } else {
+                    status.innerText = "💤 Idle";
+                }
+            }
         }
 
         function adjustColorBoosts() {
@@ -681,17 +790,46 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            updatePendingStatus();
             startGeneration();
         });
-        document
-            .querySelectorAll("#controls input, #controls select")
-            .forEach((el) => {
-                if (el.dataset.live !== "true") {
-                    el.addEventListener("input", () => {
-                        el.classList.add("pending-change");
-                    });
-                }
-            });
+        document.querySelectorAll("#controls input, #controls select").forEach((el) => {
+            if (el.dataset.live !== "true") {
+                el.addEventListener("input", () => {
+                    el.classList.add("pending-change");
+
+                    const label = el.previousElementSibling;
+                    if (label && label.classList.contains("label")) {
+                        label.classList.add("pending-dot");
+                    }
+
+                    const wrapper = el.closest(".input-wrapper");
+                    if (wrapper && !wrapper.querySelector(".reset-btn")) {
+                        const btn = document.createElement("button");
+                        btn.innerText = "⟲";
+                        btn.className = "reset-btn";
+                        btn.title = "Revert to last applied";
+
+                        btn.onclick = (e) => {
+                            e.preventDefault();
+                            el.value = el.dataset.applied || "";
+                            el.classList.remove("pending-change");
+
+                            const label = wrapper.previousElementSibling;
+                            if (label && label.classList.contains("label")) {
+                                label.classList.remove("pending-dot");
+                            }
+
+                            btn.remove();
+                            updatePendingStatus();
+                        };
+                        wrapper.appendChild(btn);
+                    }
+                    updatePendingStatus();
+                });
+
+            }
+        });
     </script>
 </body>
 
