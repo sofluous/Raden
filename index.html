@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <head>
     <meta charset="UTF-8" />
     <title>Mother of Pearl Generator</title>
     <style>
         html,
+
+        :root {
+            --font-base: 'Inter', sans-serif;
+
+        }
+
         body {
             margin: 0;
             background: #111;
             color: #fff;
-            font-family: sans-serif;
+            font-family: var(--font-base);
             overflow: hidden;
         }
 
@@ -28,92 +35,142 @@
             z-index: 10;
             max-height: 95vh;
             overflow-y: auto;
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 0.4rem 0.8rem;
-            align-items: center;
-        }
-
-        #controls label {
-            grid-column: 1 / span 2;
-            display: contents;
-        }
-
-        #controls input[type="range"],
-        #controls input[type="number"],
-        #controls select {
-            grid-column: 2;
-            width: 150px;
-            position: relative;
-            padding-right: 1.5em;
-            /* reserve space for reset icon */
-        }
-
-        #controls input[data-live="true"] {
-            border: 1px solid #8f8;
-            box-shadow: 0 0 3px #8f8a;
-        }
-
-        #controls span.label {
-            grid-column: 1;
-        }
-
-        #controls .button-row {
-            grid-column: 1 / span 2;
+            width: auto;
+            max-width: 100%;
+            min-width: 300px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: .4rem;
+            overflow-x: hidden;
+        }
+
+        /* Section container */
+        #controls .section {
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
-            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.4rem;
         }
 
-        #controls .export-row {
-            grid-column: 1 / span 2;
-            margin-top: 0.5rem;
+        #controls .section h3 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #aaa;
+            font-weight: normal;
         }
 
-        button {
-            padding: 4px 10px;
+        /* Horizontal rule (optional visual divider) */
+        .section hr {
+            border: none;
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
         }
 
-        #controls .res-inputs {
+        /* Layout: one control row */
+        .control-row {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-            grid-column: 2;
-        }
-
-        #controls .res-inputs input[type="number"] {
-            width: 60px;
-        }
-
-        .input-wrapper {
-            display: flex;
-            flex: 1 1 auto;
-            min-width: 0;
-            align-items: center;
-            gap: 0.4rem;
-            position: relative;
-        }
-
-        .input-wrapper input[type="range"],
-        .input-wrapper select,
-        .input-wrapper input[type="number"] {
-            min-width: 0;
+            gap: 0.5rem;
             width: 100%;
         }
 
-        #status {
-            font-size: 0.9rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            min-width: 70px;
-            text-align: center;
-            transition: background 0.3s, color 0.3s;
+        /* Label column */
+        .control-label {
+            width: 10rem;
+            text-align: left;
+            font-size: 1rem;
+            position: relative;
+            word-break: break-word;
+            white-space: normal;
         }
 
+        /* Input wrapper column */
+        .control-input {
+            display: flex;
+            min-width: 0;
+            flex: 1 0 150px;
+            max-width: 150px;
+        }
+
+        .control-icons {
+            width: 1.5rem;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Input elements */
+        .control-input input[type="range"],
+        .control-input input[type="number"],
+        .control-input select {
+            width: 100%;
+            max-width: 150px;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .res-inputs {
+            display: flex;
+            gap: 0.25rem;
+            width: 100%;
+            max-width: 150px;
+            box-sizing: border-box;
+        }
+
+        .res-inputs input {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .res-inputs span {
+            line-height: 1;
+            padding: 0 0.25rem;
+        }
+
+        /* Visual cue for dynamic inputs */
+        input[data-live="true"] {
+
+        }
+
+        /* Pending dot system */
+        .control-label::before {
+            content: "●";
+            display: inline-block;
+            width: 1em;
+            margin-right: 0.3em;
+            text-align: center;
+            visibility: hidden;
+            color: #ff8;
+            font-size: 1em;
+            vertical-align: middle;
+        }
+
+        .control-label.pending-dot::before {
+            visibility: visible;
+        }
+
+        /* Reset button next to sliders */
+        .reset-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: #ccc;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .reset-btn:hover {
+            color: #fff;
+        }
+
+        /* Status pill */
         #controls .status {
-            font-size: 0.9rem;
+            font-size: 1rem;
             padding: 2px 8px;
             border-radius: 6px;
             display: inline-block;
@@ -136,14 +193,52 @@
             color: #fff;
         }
 
-        /* Idle state */
+        /* Progress bar */
+        #progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: #88f;
+            width: 0%;
+            z-index: 20;
+        }
+
+        /* Export + button row (bottom aligned) */
+        .button-row,
+        .export-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        button {
+            padding: 4px 10px;
+            font-size: 1rem;
+        }
+
+        /* Animated status */
+        #status {
+            font-size: 1rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 70px;
+            max-width: 100%;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background 0.3s, color 0.3s;
+        }
+
         #status.idle {
             background: #222;
             color: #ccc;
             border: 1px solid #444;
         }
 
-        /* Rendering state */
         #status.rendering {
             background: #448;
             color: #fff;
@@ -151,7 +246,6 @@
             animation: pulse 1s infinite ease-in-out;
         }
 
-        /* Pulse animation */
         @keyframes pulse {
             0% {
                 box-shadow: 0 0 5px #88f8;
@@ -165,68 +259,6 @@
                 box-shadow: 0 0 5px #88f8;
             }
         }
-
-        #progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 4px;
-            background: #88f;
-            width: 0%;
-            z-index: 20;
-        }
-
-        #controls .section {
-            grid-column: 1 / span 2;
-            display: contents;
-            /* NEW: this preserves grid behavior */
-            margin-top: 1rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #controls .section h3 {
-            grid-column: 1 / span 2;
-            font-size: 1.4rem;
-            margin: 1rem 0 .5rem 0;
-            color: #aaa;
-            font-weight: normal;
-        }
-
-        #controls .label::before {
-            content: "●";
-            display: inline-block;
-            width: 1em;
-            margin-right: 0.3em;
-            text-align: center;
-            visibility: hidden;
-            color: #ff8;
-            font-size: 0.9em;
-            vertical-align: middle;
-        }
-
-        #controls .label.pending-dot::before {
-            visibility: visible;
-        }
-
-        .reset-btn {
-            position: absolute;
-            right: 4px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            font-size: 1rem;
-            color: #ccc;
-            cursor: pointer;
-            padding: 0;
-            margin: 0;
-            line-height: 1;
-        }
-
-        .reset-btn:hover {
-            color: #fff;
-        }
     </style>
 </head>
 
@@ -234,131 +266,222 @@
     <div id="controls">
         <!-- 1. SEED & RESOLUTION -->
         <div class="section">
-            <span class="label">Seed:</span>
-            <div class="input-wrapper">
-                <input type="number" id="seed" placeholder="(random)" />
-            </div>
-            <h3>Resolution</h3>
-            <span class="label">Preset:</span>
-            <div class="input-wrapper">
-                <select id="resolutionPreset">
-                    <option value="">Auto (Window Size)</option>
-                    <option value="1920x1080">HD (1920×1080)</option>
-                    <option value="1080x1080">Square (1080×1080)</option>
-                    <option value="3840x2160">4K (3840×2160)</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <span class="label">Dimensions:</span>
-            <div class="input-wrapper">
-                <div class="res-inputs">
-                    <input type="number" id="renderWidth" min="1" placeholder="Width" />
-                    <span>×</span>
-                    <input type="number" id="renderHeight" min="1" placeholder="Height" />
+            <h3>Seed + Resolution</h3>
+
+            <div class="control-row">
+                <div class="control-label">Seed:</div>
+                <div class="control-input">
+                    <input type="number" id="seed" placeholder="(random)" />
                 </div>
+                <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-label">Preset:</div>
+                <div class="control-input">
+                    <select id="resolutionPreset">
+                        <option value="">Auto (Window Size)</option>
+                        <option value="1920x1080">HD (1920×1080)</option>
+                        <option value="1080x1080">Square (1080×1080)</option>
+                        <option value="3840x2160">4K (3840×2160)</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-label">Dimensions:</div>
+                <div class="control-input">
+                    <div class="res-inputs">
+                        <input type="number" id="renderWidth" min="1" placeholder="Width" />
+                        <span>×</span>
+                        <input type="number" id="renderHeight" min="1" placeholder="Height" />
+                    </div>
+                </div>
+                <div class="control-icons"></div>
             </div>
         </div>
+
 
         <!-- 2. PATTERN GEOMETRY -->
         <div class="section">
             <h3>Pattern Geometry</h3>
-            <span class="label">Noise Scale:</span>
-            <div class="input-wrapper">
-                <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Noise Scale:</div>
+                <div class="control-input">
+                    <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006"
+                        data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <span class="label">Noise Layers:</span>
-            <div class="input-wrapper">
-                <input type="number" id="layers" min="1" max="5" step="1" value="3" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Noise Layers:</div>
+                <div class="control-input">
+                    <input type="number" id="layers" min="1" max="5" step="1" value="3" data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <span class="label">Flow Mode:</span>
-            <div class="input-wrapper">
-                <select id="flowMode" data-live="false">
-                    <option value="circular">Circular</option>
-                    <option value="linear">Linear</option>
-                </select>
+
+            <div class="control-row">
+                <div class="control-label">Flow Mode:</div>
+                <div class="control-input">
+                    <select id="flowMode" data-live="false">
+                        <option value="circular">Circular</option>
+                        <option value="linear">Linear</option>
+                    </select>
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <span class="label">Layer Length:</span>
-            <div class="input-wrapper">
-                <input type="range" id="layerLength" min="0" max="2" step="0.01" value="1" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Layer Length:</div>
+                <div class="control-input">
+                    <input type="range" id="layerLength" min="0" max="2" step="0.01" value="1" data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
         </div>
 
         <!-- 3. COLOR APPEARANCE -->
         <div class="section">
             <h3>Color Appearance</h3>
-            <span class="label">Color Range:</span>
-            <div class="input-wrapper">
-                <input type="range" id="range" min="0.1" max="1.5" step="0.1" value="1.0" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Color Range:</div>
+                <div class="control-input">
+                    <input type="range" id="range" min="0.1" max="1.5" step="0.1" value="1.0" data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <span class="label">Blend:</span>
-            <div class="input-wrapper">
-                <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Blend:</div>
+                <div class="control-input">
+                    <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2" data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <span class="label">Color Intensity:</span>
-            <div class="input-wrapper">
-                <input type="range" id="intensity" min="0" max="200" step="1" value="100" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Color Intensity:</div>
+                <div class="control-input">
+                    <input type="range" id="intensity" min="0" max="200" step="1" value="100" data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
         </div>
+
 
         <!-- 4. LIGHTING -->
         <div class="section">
             <h3>Lighting</h3>
-            <span class="label">Light Angle:</span>
-            <div class="input-wrapper">
-                <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Light Angle:</div>
+                <div class="control-input">
+                    <input type="range" id="lightAngle" min="0" max="1" step="0.01" value="0.5" data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <span class="label">Highlight Strength:</span>
-            <div class="input-wrapper">
-                <input type="range" id="highlightStrength" min="0" max="2" step="0.01" value="0.5" data-live="false" />
+
+            <div class="control-row">
+                <div class="control-label">Highlight Strength:</div>
+                <div class="control-input">
+                    <input type="range" id="highlightStrength" min="0" max="2" step="0.01" value="0.5"
+                        data-live="false" />
+                </div>
+                <div class="control-icons"></div>
             </div>
         </div>
+
 
         <!-- 5. POST-PROCESSING -->
         <div class="section">
             <h3>Post-Processing</h3>
-            <span class="label">Red Boost:</span>
-            <div class="input-wrapper">
-                <input type="range" id="boostR" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
-                    data-live="true" />
-            </div>
-            <span class="label">Green Boost:</span>
-            <div class="input-wrapper">
-                <input type="range" id="boostG" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
-                    data-live="true" />
-            </div>
-            <span class="label">Blue Boost:</span>
-            <div class="input-wrapper">
-                <input type="range" id="boostB" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
-                    data-live="true" />
-            </div>
-            <span class="label">Grain Overlay:</span>
-            <div class="input-wrapper">
-                <input type="checkbox" id="grainToggle" checked />
+
+            <div class="control-row">
+                <div class="control-label">Red Boost:</div>
+                <div class="control-input">
+                    <input type="range" id="boostR" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
+                        data-live="true" />
+                </div>
+                <div class="control-icons"></div>
             </div>
 
-            <!-- 6. ANIMATION -->
-            <div class="section">
-                <h3>Animation</h3>
-                <span class="label">Animate Flow:</span>
-                <div class="input-wrapper">
+            <div class="control-row">
+                <div class="control-label">Green Boost:</div>
+                <div class="control-input">
+                    <input type="range" id="boostG" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
+                        data-live="true" />
+                </div>
+                <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-label">Blue Boost:</div>
+                <div class="control-input">
+                    <input type="range" id="boostB" min="0" max="2" step="0.01" value="1" oninput="adjustColorBoosts()"
+                        data-live="true" />
+                </div>
+                <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-label">Grain Overlay:</div>
+                <div class="control-input">
+                    <input type="checkbox" id="grainToggle" checked />
+                </div>
+                <div class="control-icons"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Animation</h3>
+
+            <div class="control-row">
+                <div class="control-label">Animate Flow:</div>
+                <div class="control-input">
                     <select id="animateFlow" disabled>
                         <option value="none">None</option>
                         <option value="light">Light Sweep</option>
                         <option value="layers">Wave Layers</option>
                     </select>
                 </div>
+                <div class="control-icons"></div>
             </div>
         </div>
+
         <!-- 7. ACTIONS -->
-        <div class="section">
-            <div class="button-row">
-                <div id="status" class="status idle">💤 Idle</div>
-                <button onclick="startGeneration()">Generate</button>
+        <hr width="100%" size="2">
+        <div class="section section-actions">
+            <div class="control-row status-row">
+                <div class="control-label status-label">Status:</div>
+                <div class="control-input">
+                    <div id="status" class="status idle">💤 Idle</div>
+                </div>
+                <div class="control-icons"></div>
             </div>
-            <div class="export-row">
-                <button onclick="exportPNG()">Export PNG</button>
+
+            <div class="control-row">
+                <div class="control-label"></div>
+                <div class="control-input">
+                    <button onclick="startGeneration()">Generate</button>
+                </div>
+                <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-label"></div>
+                <div class="control-input">
+                    <button onclick="exportPNG()">Export PNG</button>
+                </div>
+                <div class="control-icons"></div>
             </div>
         </div>
+
     </div>
     <div id="progress"></div>
     <canvas id="canvas"></canvas>
@@ -584,11 +707,14 @@
 
             document.querySelectorAll('.pending-change').forEach(el => {
                 el.classList.remove('pending-change');
-                const label = el.previousElementSibling;
-                if (label && label.classList.contains('label')) {
-                    label.classList.remove('pending-dot');
+
+                const controlRow = el.closest(".control-row");
+                if (controlRow) {
+                    const label = controlRow.querySelector(".control-label");
+                    if (label) label.classList.remove("pending-dot");
                 }
             });
+
             document.querySelectorAll('.reset-btn').forEach(btn => btn.remove());
             updatePendingStatus();
 
@@ -798,13 +924,16 @@
                 el.addEventListener("input", () => {
                     el.classList.add("pending-change");
 
-                    const label = el.previousElementSibling;
-                    if (label && label.classList.contains("label")) {
+                    const controlRow = el.closest(".control-row");
+                    if (!controlRow) return;
+
+                    const label = controlRow.querySelector(".control-label");
+                    if (label) {
                         label.classList.add("pending-dot");
                     }
 
-                    const wrapper = el.closest(".input-wrapper");
-                    if (wrapper && !wrapper.querySelector(".reset-btn")) {
+                    const icons = controlRow.querySelector(".control-icons");
+                    if (icons && !icons.querySelector(".reset-btn")) {
                         const btn = document.createElement("button");
                         btn.innerText = "⟲";
                         btn.className = "reset-btn";
@@ -815,19 +944,20 @@
                             el.value = el.dataset.applied || "";
                             el.classList.remove("pending-change");
 
-                            const label = wrapper.previousElementSibling;
-                            if (label && label.classList.contains("label")) {
+                            const label = controlRow.querySelector(".control-label");
+                            if (label) {
                                 label.classList.remove("pending-dot");
                             }
 
                             btn.remove();
                             updatePendingStatus();
                         };
-                        wrapper.appendChild(btn);
+
+                        icons.appendChild(btn);
                     }
+
                     updatePendingStatus();
                 });
-
             }
         });
     </script>
