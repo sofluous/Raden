@@ -1035,7 +1035,41 @@
             requestAnimationFrame(renderChunk);
         }
 
-        // ✅ Fix crash if missing topoNoiseType
+        function generateRisograph(force = false) {
+            const width = canvas.width;
+            const height = canvas.height;
+
+            const dotSize = parseInt(document.getElementById("risoDotSize").value);
+            const threshold = parseInt(document.getElementById("risoThreshold").value);
+
+            // Read pixel data from existing canvas content
+            const imageData = ctx.getImageData(0, 0, width, height).data;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            for (let y = 0; y < height; y += dotSize) {
+                for (let x = 0; x < width; x += dotSize) {
+                    const i = (y * width + x) * 4;
+                    const r = imageData[i];
+                    const g = imageData[i + 1];
+                    const b = imageData[i + 2];
+
+                    // Calculate perceived brightness (standard grayscale conversion)
+                    const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                    if (brightness < threshold) {
+                        ctx.fillStyle = "#000";
+                        ctx.beginPath();
+                        ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            status.innerText = "✅ Riso Rendered";
+            status.className = "status complete";
+        }
         function generateTopography(force = false) {
             const width = canvas.width;
             const height = canvas.height;
