@@ -342,12 +342,13 @@
             </div>
         </div>
         <div id="control-scroll">
-            <div class="section" data-mode="motherOfPearl,risograph">
+
+            <div class="section" data-mode="all">
                 <div class="control-row">
                     <div class="control-label">Mode</div>
                     <div class="control-input">
                         <select id="modeSelector">
-                            <option value="motherOfPearl" selected>Mother of Pearl</option>
+                            <option value="motherofpearl">Mother of Pearl</option>
                             <option value="risograph">Risograph</option>
                             <option value="topography">Topography</option>
                         </select>
@@ -356,12 +357,12 @@
                 </div>
             </div>
             <!-- 1. SEED & RESOLUTION -->
-            <div class="section" data-mode="motherOfPearl,risograph">
+            <div class="section" data-mode="all">
                 <h3>Seed + Resolution</h3>
                 <div class="control-row">
                     <div class="control-label">Seed:</div>
                     <div class="control-input">
-                        <input type="number" id="seed" placeholder="(random)" />
+                        <input id="seed" placeholder="(random)" type="number" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
@@ -395,8 +396,20 @@
 
 
             <!-- 2. PATTERN GEOMETRY -->
-            <div class="section" data-mode="motherOfPearl,risograph">
+
+            <div class="section" data-mode="all">
                 <h3>Pattern Geometry</h3>
+                <div class="control-row">
+                    <div class="control-label">Noise Type</div>
+                    <div class="control-input">
+                        <select id="topoNoiseType">
+                            <option value="simplex">Simplex</option>
+                            <option value="value">Value</option>
+                            <option value="perlin">Perlin</option>
+                        </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
 
                 <div class="control-row">
                     <div class="control-label">Noise Scale:</div>
@@ -436,7 +449,7 @@
             </div>
 
             <!-- 3. COLOR APPEARANCE -->
-            <div class="section" data-mode="motherOfPearl,risograph">
+            <div class="section" data-mode="motherofpearl,risograph">
                 <h3>Color Appearance</h3>
 
                 <div class="control-row">
@@ -466,7 +479,7 @@
 
 
             <!-- 4. LIGHTING -->
-            <div class="section" data-mode="motherOfPearl">
+            <div class="section" data-mode="motherofpearl">
                 <h3>Lighting</h3>
 
                 <div class="control-row">
@@ -489,7 +502,7 @@
 
 
             <!-- 5. POST-PROCESSING -->
-            <div class="section" data-mode="motherOfPearl,risograph">
+            <div class="section" data-mode="motherofpearl,risograph">
                 <h3>Post-Processing</h3>
 
                 <div class="control-row">
@@ -528,7 +541,7 @@
                 </div>
             </div>
 
-            <div class="section" data-mode="motherOfPearl">
+            <div class="section" data-mode="motherofpearl">
                 <h3>Animation</h3>
 
                 <div class="control-row">
@@ -544,7 +557,62 @@
                 </div>
             </div>
 
-            <!-- 7. ACTIONS -->
+            <!-- 8. ACTIONS -->
+            <div class="section" data-mode="risograph">
+                <h3>Risograph Controls</h3>
+
+                <div class="control-row">
+                    <div class="control-label">Dot Size:</div>
+                    <div class="control-input">
+                        <input type="range" id="risoDotSize" min="1" max="50" value="10">
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Threshold:</div>
+                    <div class="control-input">
+                        <input type="range" id="risoThreshold" min="0" max="255" value="128">
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            <!-- 9. ACTIONS -->
+            <div class="section" data-mode="topography">
+                <h3>Topography</h3>
+                <div class="control-row">
+                    <div class="control-label">Noise Type:</div>
+                    <div class="control-input">
+                        <select id="topoNoiseType">
+                            <option value="simplex">Simplex</option>
+                            <option value="value">Value (if implemented)</option>
+                        </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Bands:</div>
+                    <div class="control-input">
+                        <input type="number" id="topoBandCount" min="2" max="20" step="1" value="8" data-live="false">
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Mode:</div>
+                    <div class="control-input">
+                        <select id="topoRenderMode" data-live="false">
+                            <option value="lines">Lines Only</option>
+                            <option value="fill">Band Fill</option>
+                            <option value="gradient">Smooth Gradient</option>
+                        </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
 
         </div>
 
@@ -634,6 +702,28 @@
             return total / totalAmp;
         }
 
+        function getNoiseFunction() {
+            const type = document.getElementById("noiseType")?.value || "white";
+
+            if (type === "white") {
+                return (x, y) => Math.random(); // chaotic noise
+            } else if (type === "value") {
+                return (x, y) => {
+                    const sx = Math.floor(x * 1000) % 1000;
+                    const sy = Math.floor(y * 1000) % 1000;
+                    const seed = (sx + sy * 57);
+                    return fract(Math.sin(seed) * 43758.5453); // deterministic hash
+                };
+            }
+
+            // Placeholder — you'd implement real Perlin/Simplex later
+            return (x, y) => Math.random();
+        }
+
+        function fract(n) {
+            return n - Math.floor(n);
+        }
+
         function getLiveRenderOverrides() {
             return {
                 boostR: parseFloat(boostRInput.value),
@@ -697,15 +787,25 @@
         ];
 
         function updateVisibleSections(mode) {
-            document.querySelectorAll('#controls .section').forEach(section => {
-                const modes = (section.dataset.mode || "").split(',').map(m => m.trim());
-                if (modes.length === 0 || modes.includes(mode)) {
-                    section.style.display = "";
-                } else {
-                    section.style.display = "none";
-                }
+            const allSections = document.querySelectorAll("#controls .section");
+            allSections.forEach(section => {
+                const modes = section.dataset.mode
+                    ? section.dataset.mode.split(",").map(s => s.trim())
+                    : ["all"];
+                const shouldShow = modes.includes("all") || modes.includes(mode);
+                section.style.display = shouldShow ? "" : "none";
+            });
+
+            const allRows = document.querySelectorAll("#controls .control-row");
+            allRows.forEach(row => {
+                const modes = row.dataset.mode
+                    ? row.dataset.mode.split(",").map(s => s.trim())
+                    : ["all"];
+                const shouldShow = modes.includes("all") || modes.includes(mode);
+                row.style.display = shouldShow ? "" : "none";
             });
         }
+
 
         document.getElementById("resolutionPreset").addEventListener("change", () => {
             const preset = document.getElementById("resolutionPreset").value;
@@ -767,6 +867,25 @@
         }
 
         function startGeneration(force = false) {
+            const mode = document.getElementById("modeSelector").value;
+
+            switch (mode) {
+                case "motherofpearl":
+                    generateMotherOfPearl(force);
+                    break;
+                case "risograph":
+                    generateRisograph(force);
+                    break;
+                case "topography":
+                    generateTopography(force);
+                    break;
+                default:
+                    console.warn("Unknown mode:", mode);
+                    break;
+            }
+        }
+
+        function generateMotherOfPearl(force = false) {
             if (renderTask || (animationId && !force)) return;
 
             const config = getRenderConfig(); // ✅ This line is missing in your erroring version
@@ -916,6 +1035,57 @@
             requestAnimationFrame(renderChunk);
         }
 
+        // ✅ Fix crash if missing topoNoiseType
+        function generateTopography(force = false) {
+            const width = canvas.width;
+            const height = canvas.height;
+
+            const bandCount = getInput("topoBandCount", true);
+            const renderMode = document.getElementById("topoRenderMode").value;
+            const noiseType = document.getElementById("topoNoiseType").value;
+
+            const config = getRenderConfig();
+            simplex = createSeededSimplex(config.seed);
+
+            canvas.width = config.width;
+            canvas.height = config.height;
+
+            const imageData = ctx.createImageData(config.width, config.height);
+            const data = imageData.data;
+
+            for (let y = 0; y < config.height; y++) {
+                for (let x = 0; x < config.width; x++) {
+                    const i = (y * config.width + x) * 4;
+
+                    const noise = getNoiseValue(x, y, config.layers, config.scale, simplex);
+                    const normalized = (noise + 1) / 2; // 0 to 1
+                    const bandIndex = Math.floor(normalized * bandCount);
+
+                    let color = 255;
+
+                    if (renderMode === "lines") {
+                        const right = getNoiseValue(x + 1, y, config.layers, config.scale, simplex);
+                        const down = getNoiseValue(x, y + 1, config.layers, config.scale, simplex);
+                        const bandRight = Math.floor((right + 1) / 2 * bandCount);
+                        const bandDown = Math.floor((down + 1) / 2 * bandCount);
+
+                        color = (bandIndex !== bandRight || bandIndex !== bandDown) ? 0 : 255;
+                    } else if (renderMode === "fill") {
+                        color = Math.floor((bandIndex / bandCount) * 255);
+                    } else if (renderMode === "gradient") {
+                        color = Math.floor(normalized * 255);
+                    }
+
+                    data[i] = data[i + 1] = data[i + 2] = color;
+                    data[i + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            status.innerText = "✅ Topography Rendered";
+            status.className = "status complete";
+        }
+
         function updatePendingStatus() {
             const pendingCount = document.querySelectorAll('.pending-change').length;
 
@@ -1000,8 +1170,10 @@
             updatePendingStatus();
             startGeneration();
             const mode = document.getElementById("modeSelector").value;
+            document.body.setAttribute("data-mode", mode);
             updateVisibleSections(mode);
         });
+
         document.getElementById("modeSelector").addEventListener("change", (e) => {
             const mode = e.target.value;
             document.body.setAttribute("data-mode", mode);
