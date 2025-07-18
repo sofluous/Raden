@@ -397,9 +397,9 @@
 
             <!-- 2. PATTERN GEOMETRY -->
 
-            <div class="section" data-mode="all">
+            <div class="section" data-mode="motherofpearl,topography">
                 <h3>Pattern Geometry</h3>
-                <div class="control-row">
+                <div class="control-row" data-mode="motherofpearl,topography">
                     <div class="control-label">Noise Type</div>
                     <div class="control-input">
                         <select id="topoNoiseType">
@@ -411,7 +411,7 @@
                     <div class="control-icons"></div>
                 </div>
 
-                <div class="control-row">
+                <div class="control-row" data-mode="motherofpearl,topography">
                     <div class="control-label">Noise Scale:</div>
                     <div class="control-input">
                         <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006"
@@ -420,7 +420,7 @@
                     <div class="control-icons"></div>
                 </div>
 
-                <div class="control-row">
+                <div class="control-row" data-mode="motherofpearl,topography">
                     <div class="control-label">Noise Layers:</div>
                     <div class="control-input">
                         <input type="number" id="layers" min="1" max="5" step="1" value="3" data-live="false" />
@@ -428,7 +428,7 @@
                     <div class="control-icons"></div>
                 </div>
 
-                <div class="control-row">
+                <div class="control-row" data-mode="motherofpearl">
                     <div class="control-label">Flow Mode:</div>
                     <div class="control-input">
                         <select id="flowMode" data-live="false">
@@ -439,7 +439,7 @@
                     <div class="control-icons"></div>
                 </div>
 
-                <div class="control-row">
+                <div class="control-row" data-mode="motherofpearl">
                     <div class="control-label">Layer Length:</div>
                     <div class="control-input">
                         <input type="range" id="layerLength" min="0" max="2" step="0.01" value="1" data-live="false" />
@@ -449,7 +449,7 @@
             </div>
 
             <!-- 3. COLOR APPEARANCE -->
-            <div class="section" data-mode="motherofpearl,risograph">
+            <div class="section" data-mode="motherofpearl">
                 <h3>Color Appearance</h3>
 
                 <div class="control-row">
@@ -501,46 +501,6 @@
             </div>
 
 
-            <!-- 5. POST-PROCESSING -->
-            <div class="section" data-mode="motherofpearl,risograph">
-                <h3>Post-Processing</h3>
-
-                <div class="control-row">
-                    <div class="control-label">Red Boost:</div>
-                    <div class="control-input">
-                        <input type="range" id="boostR" min="0" max="2" step="0.01" value="1"
-                            oninput="adjustColorBoosts()" data-live="true" />
-                    </div>
-                    <div class="control-icons"></div>
-                </div>
-
-                <div class="control-row">
-                    <div class="control-label">Green Boost:</div>
-                    <div class="control-input">
-                        <input type="range" id="boostG" min="0" max="2" step="0.01" value="1"
-                            oninput="adjustColorBoosts()" data-live="true" />
-                    </div>
-                    <div class="control-icons"></div>
-                </div>
-
-                <div class="control-row">
-                    <div class="control-label">Blue Boost:</div>
-                    <div class="control-input">
-                        <input type="range" id="boostB" min="0" max="2" step="0.01" value="1"
-                            oninput="adjustColorBoosts()" data-live="true" />
-                    </div>
-                    <div class="control-icons"></div>
-                </div>
-
-                <div class="control-row">
-                    <div class="control-label">Grain Overlay:</div>
-                    <div class="control-input">
-                        <input type="checkbox" id="grainToggle" checked />
-                    </div>
-                    <div class="control-icons"></div>
-                </div>
-            </div>
-
             <div class="section" data-mode="motherofpearl">
                 <h3>Animation</h3>
 
@@ -581,16 +541,6 @@
             <!-- 9. ACTIONS -->
             <div class="section" data-mode="topography">
                 <h3>Topography</h3>
-                <div class="control-row">
-                    <div class="control-label">Noise Type:</div>
-                    <div class="control-input">
-                        <select id="topoNoiseType">
-                            <option value="simplex">Simplex</option>
-                            <option value="value">Value (if implemented)</option>
-                        </select>
-                    </div>
-                    <div class="control-icons"></div>
-                </div>
 
                 <div class="control-row">
                     <div class="control-label">Bands:</div>
@@ -612,7 +562,45 @@
                     <div class="control-icons"></div>
                 </div>
             </div>
+            <!-- 5. POST-PROCESSING -->
+            <div class="section" data-mode="all">
+                <h3>Post-Processing</h3>
 
+                <div class="control-row">
+                    <div class="control-label">Red Boost:</div>
+                    <div class="control-input">
+                        <input type="range" id="boostR" min="0" max="2" step="0.01" value="1"
+                            oninput="adjustColorBoosts()" data-live="true" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Green Boost:</div>
+                    <div class="control-input">
+                        <input type="range" id="boostG" min="0" max="2" step="0.01" value="1"
+                            oninput="adjustColorBoosts()" data-live="true" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Blue Boost:</div>
+                    <div class="control-input">
+                        <input type="range" id="boostB" min="0" max="2" step="0.01" value="1"
+                            oninput="adjustColorBoosts()" data-live="true" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Grain Overlay:</div>
+                    <div class="control-input">
+                        <input type="checkbox" id="grainToggle" checked />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
 
         </div>
 
@@ -806,7 +794,6 @@
             });
         }
 
-
         document.getElementById("resolutionPreset").addEventListener("change", () => {
             const preset = document.getElementById("resolutionPreset").value;
             const wInput = document.getElementById("renderWidth");
@@ -827,7 +814,6 @@
                 hInput.classList.add("pending-change");
             }
         });
-
 
         function applyGrainOverlay(ctx, width, height) {
             const grainImage = ctx.getImageData(0, 0, width, height);
@@ -859,6 +845,8 @@
                 highlightStrength: getInput("highlightStrength"),
                 lightAngle: getInput("lightAngle"),
                 animateFlow: document.getElementById("animateFlow").value,
+                dotSize: getInput("risoDotSize", true),
+                threshold: getInput("risoThreshold", true),
                 boostR: getInput("boostR"),
                 boostG: getInput("boostG"),
                 boostB: getInput("boostB"),
@@ -886,6 +874,10 @@
         }
 
         function generateMotherOfPearl(force = false) {
+            clearPendingIndicators(); // ✅ add this
+            clearPendingIndicators();
+
+
             if (renderTask || (animationId && !force)) return;
 
             const config = getRenderConfig(); // ✅ This line is missing in your erroring version
@@ -904,19 +896,6 @@
             }
 
             if (renderTask) return;
-
-            document.querySelectorAll('.pending-change').forEach(el => {
-                el.classList.remove('pending-change');
-
-                const controlRow = el.closest(".control-row");
-                if (controlRow) {
-                    const label = controlRow.querySelector(".control-label");
-                    if (label) label.classList.remove("pending-dot");
-                }
-            });
-
-            document.querySelectorAll('.reset-btn').forEach(btn => btn.remove());
-            updatePendingStatus();
 
             canvas.width = config.width;
             canvas.height = config.height;
@@ -1036,11 +1015,14 @@
         }
 
         function generateRisograph(force = false) {
+            clearPendingIndicators(); // ✅ add this
+
             const width = canvas.width;
             const height = canvas.height;
 
-            const dotSize = parseInt(document.getElementById("risoDotSize").value);
-            const threshold = parseInt(document.getElementById("risoThreshold").value);
+            const config = getRenderConfig();
+            const dotSize = config.dotSize;
+            const threshold = config.threshold;
 
             // Read pixel data from existing canvas content
             const imageData = ctx.getImageData(0, 0, width, height).data;
@@ -1066,11 +1048,23 @@
                     }
                 }
             }
+            originalImageData = ctx.getImageData(0, 0, config.width, config.height);
 
-            status.innerText = "✅ Riso Rendered";
-            status.className = "status complete";
+            const { boostR, boostG, boostB, grain } = getLiveRenderOverrides();
+            adjustColorBoosts();
+            if (grain) applyGrainOverlay(ctx, config.width, config.height);
+
+            setTimeout(() => {
+                status.innerText = "✅ Riso Rendered";
+                status.className = "status complete";
+            }, 800);
+
         }
+
         function generateTopography(force = false) {
+            clearPendingIndicators(); // ✅ add this
+            generateBtn.disabled = true;
+
             const width = canvas.width;
             const height = canvas.height;
 
@@ -1116,8 +1110,33 @@
             }
 
             ctx.putImageData(imageData, 0, 0);
-            status.innerText = "✅ Topography Rendered";
+
+            originalImageData = new ImageData(
+                new Uint8ClampedArray(imageData.data),
+                imageData.width,
+                imageData.height
+            );
+
+            const { boostR, boostG, boostB, grain } = getLiveRenderOverrides();
+
+            // Reapply boosts:
+            adjustColorBoosts();
+
+            // Reapply grain:
+            if (grain) {
+                applyGrainOverlay(ctx, config.width, config.height);
+            }
+
+            status.innerText = `✅ Topography Rendered — ${bandCount} Bands, Mode: ${renderMode}`;
             status.className = "status complete";
+
+            originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+            setTimeout(() => {
+                status.innerText = "💤 Idle";
+                status.className = "status idle";
+                generateBtn.disabled = false;
+            }, 800);
+
         }
 
         function updatePendingStatus() {
@@ -1131,6 +1150,23 @@
                 }
             }
         }
+
+        function clearPendingIndicators() {
+            document.querySelectorAll('.pending-change').forEach(el => {
+                el.classList.remove('pending-change');
+
+                const controlRow = el.closest(".control-row");
+                if (controlRow) {
+                    const label = controlRow.querySelector(".control-label");
+                    if (label) label.classList.remove("pending-dot");
+                }
+            });
+
+            document.querySelectorAll('.reset-btn').forEach(btn => btn.remove());
+
+            updatePendingStatus();
+        }
+
 
         function adjustColorBoosts() {
             if (!originalImageData) return;
@@ -1195,7 +1231,8 @@
 
         function exportPNG() {
             const link = document.createElement("a");
-            link.download = "mother_of_pearl.png";
+            const mode = document.getElementById("modeSelector").value;
+            link.download = `${mode}_output.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
         }
