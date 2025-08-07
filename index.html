@@ -272,6 +272,25 @@
             font-size: var(--text-size-md);
         }
 
+        #debugPanel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.85);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 8px;
+            max-width: 300px;
+            max-height: 100vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            pointer-events: none;
+            z-index: 1000;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         /* Animated status */
         #status {
             font-size: var(--text-size-md);
@@ -338,6 +357,8 @@
         <div id="control-header">
             <div class="export-row">
                 <button onclick="exportPNG()">Export PNG</button>
+                <button onclick="toggleDebugPanel()">🛠 Debug Info</button>
+
                 <!-- Add other export buttons if needed -->
             </div>
         </div>
@@ -359,7 +380,7 @@
             <!-- 1. SEED & RESOLUTION -->
             <div class="section" data-mode="all">
                 <h3>Seed + Resolution</h3>
-                <div class="control-row">
+                <div class="control-row" data-mode="motherofpearl, topography">
                     <div class="control-label">Seed:</div>
                     <div class="control-input">
                         <input id="seed" placeholder="(random)" type="number" />
@@ -397,12 +418,13 @@
 
             <!-- 2. PATTERN GEOMETRY -->
 
-            <div class="section" data-mode="motherofpearl,topography">
+            <div class="section" data-mode="motherofpearl, topography">
                 <h3>Pattern Geometry</h3>
-                <div class="control-row" data-mode="motherofpearl,topography">
+                <div class="control-row" data-mode="topography">
                     <div class="control-label">Noise Type</div>
                     <div class="control-input">
                         <select id="topoNoiseType">
+                            <option value="white">White</option>
                             <option value="simplex">Simplex</option>
                             <option value="value">Value</option>
                             <option value="perlin">Perlin</option>
@@ -411,7 +433,7 @@
                     <div class="control-icons"></div>
                 </div>
 
-                <div class="control-row" data-mode="motherofpearl,topography">
+                <div class="control-row" data-mode="motherofpearl, topography">
                     <div class="control-label">Noise Scale:</div>
                     <div class="control-input">
                         <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006"
@@ -420,7 +442,7 @@
                     <div class="control-icons"></div>
                 </div>
 
-                <div class="control-row" data-mode="motherofpearl,topography">
+                <div class="control-row" data-mode="motherofpearl, topography">
                     <div class="control-label">Noise Layers:</div>
                     <div class="control-input">
                         <input type="number" id="layers" min="1" max="5" step="1" value="3" data-live="false" />
@@ -609,10 +631,47 @@
             <button onclick="startGeneration()">Generate</button>
         </div>
     </div>
+
+    <div id="debugPanel">
+    </div>
+
     <div id="progress"></div>
     <canvas id="canvas"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
     <script>
+
+        let debugVisible = true;
+
+        function showDebugInfo(config, extras = {}) {
+            const panel = document.getElementById("debugPanel");
+            if (!panel) return;
+
+            if (!debugVisible) {
+                panel.style.display = "none";
+                return;
+            }
+
+            let info = `🛠️ Debug Info\n`;
+            for (const [key, val] of Object.entries(config)) {
+                info += `${key}: ${val}\n`;
+            }
+
+            for (const [key, val] of Object.entries(extras)) {
+                info += `${key}: ${val}\n`;
+            }
+
+            panel.innerText = info;
+            panel.style.display = "block";
+        }
+
+        function toggleDebugPanel() {
+            debugVisible = !debugVisible;
+            const panel = document.getElementById("debugPanel");
+            if (panel) {
+                panel.style.display = debugVisible ? "block" : "none";
+            }
+        }
+
         function seededRandom(seed) {
             let x = Math.sin(seed) * 10000;
             return () => {
@@ -690,22 +749,38 @@
             return total / totalAmp;
         }
 
-        function getNoiseFunction() {
-            const type = document.getElementById("noiseType")?.value || "white";
-
-            if (type === "white") {
-                return (x, y) => Math.random(); // chaotic noise
-            } else if (type === "value") {
-                return (x, y) => {
-                    const sx = Math.floor(x * 1000) % 1000;
-                    const sy = Math.floor(y * 1000) % 1000;
-                    const seed = (sx + sy * 57);
-                    return fract(Math.sin(seed) * 43758.5453); // deterministic hash
-                };
+        function getNoiseFunction(type, simplex) {
+            switch (type) {
+                case "simplex":
+                    return (x, y) => simplex.noise2D(x, y); // Already in [-1, 1]
+                case "white":
+                    return (x, y) => Math.random() * 2 - 1;
+                case "value":
+                    return (x, y) => {
+                        const sx = Math.floor(x * 1000) % 1000;
+                        const sy = Math.floor(y * 1000) % 1000;
+                        const seed = (sx + sy * 57);
+                        return (Math.sin(seed) * 43758.5453) % 1 * 2 - 1;
+                    };
+                default:
+                    return (x, y) => 0;
             }
+        }
 
-            // Placeholder — you'd implement real Perlin/Simplex later
-            return (x, y) => Math.random();
+        function getCombinedNoiseFunction(baseFn, layers, scale) {
+            return (x, y) => {
+                let total = 0;
+                let amp = 1;
+                let freq = 1;
+                let max = 0;
+                for (let i = 0; i < layers; i++) {
+                    total += baseFn(x * freq * scale, y * freq * scale) * amp;
+                    max += amp;
+                    amp *= 0.5;
+                    freq *= 2;
+                }
+                return total / max;
+            };
         }
 
         function fract(n) {
@@ -875,8 +950,6 @@
 
         function generateMotherOfPearl(force = false) {
             clearPendingIndicators(); // ✅ add this
-            clearPendingIndicators();
-
 
             if (renderTask || (animationId && !force)) return;
 
@@ -931,6 +1004,9 @@
                 x: Math.cos(lightAngle * 2 * Math.PI),
                 y: Math.sin(lightAngle * 2 * Math.PI),
             };
+
+            showDebugInfo(config);
+
 
             let y = 0;
             const rowsPerFrame = 10;
@@ -1062,18 +1138,21 @@
         }
 
         function generateTopography(force = false) {
-            clearPendingIndicators(); // ✅ add this
+            clearPendingIndicators();
             generateBtn.disabled = true;
 
-            const width = canvas.width;
-            const height = canvas.height;
-
+            const config = getRenderConfig();
             const bandCount = getInput("topoBandCount", true);
             const renderMode = document.getElementById("topoRenderMode").value;
             const noiseType = document.getElementById("topoNoiseType").value;
 
-            const config = getRenderConfig();
             simplex = createSeededSimplex(config.seed);
+            const baseNoise = getNoiseFunction(noiseType, simplex);
+            const effectiveScale = 1000 * config.scale;
+
+            const noiseFunc = getCombinedNoiseFunction(baseNoise, config.layers, effectiveScale);
+
+            showDebugInfo(config, { effectiveScale });
 
             canvas.width = config.width;
             canvas.height = config.height;
@@ -1084,24 +1163,24 @@
             for (let y = 0; y < config.height; y++) {
                 for (let x = 0; x < config.width; x++) {
                     const i = (y * config.width + x) * 4;
+                    const nx = x / config.width;
+                    const ny = y / config.height;
 
-                    const noise = getNoiseValue(x, y, config.layers, config.scale, simplex);
-                    const normalized = (noise + 1) / 2; // 0 to 1
-                    const bandIndex = Math.floor(normalized * bandCount);
+                    const value = (noiseFunc(nx, ny) + 1) / 2; // Normalize to [0,1]
+                    const band = Math.floor(value * bandCount);
 
                     let color = 255;
-
                     if (renderMode === "lines") {
-                        const right = getNoiseValue(x + 1, y, config.layers, config.scale, simplex);
-                        const down = getNoiseValue(x, y + 1, config.layers, config.scale, simplex);
-                        const bandRight = Math.floor((right + 1) / 2 * bandCount);
-                        const bandDown = Math.floor((down + 1) / 2 * bandCount);
-
-                        color = (bandIndex !== bandRight || bandIndex !== bandDown) ? 0 : 255;
+                        // Check neighbors and highlight if band changes
+                        const vRight = (noiseFunc((x + 1) / config.width, ny) + 1) / 2;
+                        const vDown = (noiseFunc(nx, (y + 1) / config.height) + 1) / 2;
+                        const bRight = Math.floor(vRight * bandCount);
+                        const bDown = Math.floor(vDown * bandCount);
+                        color = (band !== bRight || band !== bDown) ? 0 : 255;
                     } else if (renderMode === "fill") {
-                        color = Math.floor((bandIndex / bandCount) * 255);
+                        color = Math.floor((band / (bandCount - 1)) * 255);
                     } else if (renderMode === "gradient") {
-                        color = Math.floor(normalized * 255);
+                        color = Math.floor(value * 255);
                     }
 
                     data[i] = data[i + 1] = data[i + 2] = color;
@@ -1110,33 +1189,22 @@
             }
 
             ctx.putImageData(imageData, 0, 0);
+            originalImageData = ctx.getImageData(0, 0, config.width, config.height);
 
-            originalImageData = new ImageData(
-                new Uint8ClampedArray(imageData.data),
-                imageData.width,
-                imageData.height
-            );
 
-            const { boostR, boostG, boostB, grain } = getLiveRenderOverrides();
-
-            // Reapply boosts:
+            // Post-processing
+            const { grain } = getLiveRenderOverrides();
+            if (grain) applyGrainOverlay(ctx, config.width, config.height);
             adjustColorBoosts();
-
-            // Reapply grain:
-            if (grain) {
-                applyGrainOverlay(ctx, config.width, config.height);
-            }
 
             status.innerText = `✅ Topography Rendered — ${bandCount} Bands, Mode: ${renderMode}`;
             status.className = "status complete";
 
-            originalImageData = ctx.getImageData(0, 0, config.width, config.height);
             setTimeout(() => {
                 status.innerText = "💤 Idle";
                 status.className = "status idle";
                 generateBtn.disabled = false;
             }, 800);
-
         }
 
         function updatePendingStatus() {
