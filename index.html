@@ -1,353 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
+<html lang="en" data-theme="steel-night">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mother of Pearl Generator</title>
+    <link rel="stylesheet" href="./theme.css" />
     <style>
-        html,
-
         :root {
-            --font-base: 'Inter', sans-serif;
+            --raden-panel-width: 360px;
+            --raden-grid-gap: var(--ds-space-3);
+            --raden-frame-pad: var(--ds-space-3);
+            --raden-section-gap: var(--ds-space-3);
+            --raden-row-gap: var(--ds-space-2);
+            --raden-row-label-width: 10rem;
+        }
 
-            --menu-height: 32px;
-            --space-xs: 0.25rem;
-            --space-sm: 0.5rem;
-            --space-md: 0.8rem;
-            --space-lg: 1rem;
-            --space-xl: 3rem;
-
-            /* Text */
-            --color-text-primary: #ffffff;
-            --color-text-secondary: #aaaaaa;
-            --color-text-inverse: #000000;
-            --text-size-sm: 0.5rem;
-            --text-size-md: .875rem;
-            --text-size-lg: 1.2rem;
-            --text-size-xl: 3rem;
-            --text-weight-regular: 400;
-            --text-weight-bold: 600;
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
-            margin: 0;
-            background: #111;
-            color: #fff;
-            font-family: var(--font-base);
-            overflow-x: hidden;
-        }
-
-        canvas {
-            display: block;
+            display: grid;
+            grid-template-columns: var(--raden-panel-width) 1fr;
+            gap: var(--raden-grid-gap);
+            padding: var(--raden-frame-pad);
+            background:
+                radial-gradient(700px 500px at 82% -10%, color-mix(in oklab, var(--ds-accent) 18%, transparent), transparent 70%),
+                radial-gradient(800px 600px at -10% 110%, color-mix(in oklab, var(--ds-info) 14%, transparent), transparent 66%),
+                var(--ds-bg);
+            color: var(--ds-text);
+            font-family: var(--ds-font-sans);
         }
 
         #controls {
-            position: fixed;
-            top: 0px;
-            bottom: 0px;
-            display: flex;
-            flex-direction: column;
-            width: max-content;
-            min-width: 300px;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 10;
-            overflow: hidden;
-            transition: opacity 0.2s ease;
-
-            /* Prevent scrollbars on outer shell */
-        }
-
-        #controls .section[style*="display: none"] {
-            opacity: 0;
-            pointer-events: none;
-            height: 0;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            min-height: 0;
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-card-border);
+            border-radius: var(--ds-card-radius);
+            background: color-mix(in oklab, var(--ds-bg-elevated) 88%, transparent);
+            box-shadow: var(--ds-card-shadow);
+            backdrop-filter: blur(8px);
         }
 
         #control-header {
-            padding: var(--text-size-lg);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            gap: var(--ds-space-3);
+            padding: var(--ds-space-4);
+            border-bottom: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
         }
 
-        /* Scrollable middle: Controls */
         #control-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 var(--space-md);
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-md);
+            min-height: 0;
+            overflow: auto;
+            display: grid;
+            gap: var(--raden-section-gap);
+            padding: var(--ds-space-3);
         }
 
-        /* Fixed bottom: Status and generate */
-        #control-footer {
-            padding: var(--space-lg);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: var(--space-md);
-        }
-
-        /* Button consistency */
-        #control-footer button,
-        #control-header button {
-            padding: 4px 10px;
-            font-size: var(--text-size-md);
-        }
-
-        /* Section container */
         #controls .section {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-md);
-            padding-top: var(--space-sm);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: var(--space-lg);
+            display: grid;
+            gap: var(--raden-row-gap);
+            padding: var(--ds-space-3);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: color-mix(in oklab, var(--ds-bg-raised) 86%, transparent);
         }
 
         #controls .section h3 {
-            font-size: var(--text-size-lg);
             margin: 0;
-            color: #aaa;
-            font-weight: normal;
+            font-size: var(--ds-fs-2);
+            letter-spacing: var(--ds-label-spacing);
+            text-transform: var(--ds-label-transform);
+            color: var(--ds-text-muted);
+            font-weight: 600;
         }
 
-        /* Horizontal rule (optional visual divider) */
-        .section hr {
-            border: none;
-            border-top: 2px solid rgba(255, 255, 255, 0.2);
+        #controls .section[hidden] {
+            display: none;
         }
 
-        /* Layout: one control row */
         .control-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(130px, var(--raden-row-label-width)) minmax(0, 1fr) auto;
             align-items: center;
-            gap: var(--space-sm);
-            width: 100%;
+            gap: var(--ds-space-2);
+            min-width: 0;
         }
 
-        /* Label column */
         .control-label {
-            width: 10rem;
-            text-align: left;
-            font-size: var(--text-size-md);
             position: relative;
-            word-break: break-word;
-            white-space: normal;
+            font-size: var(--ds-fs-1);
+            letter-spacing: var(--ds-label-spacing);
+            text-transform: var(--ds-label-transform);
+            color: var(--ds-text-muted);
         }
 
-        /* Input wrapper column */
-        .control-input {
-            display: flex;
-            min-width: 0;
-            flex: 1 0 150px;
-            max-width: 150px;
-        }
-
-        .control-icons {
-            width: var(--space-lg);
-            flex-shrink: 0;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        /* Input elements */
-        .control-input input[type="range"],
-        .control-input input[type="number"],
-        .control-input select {
-            width: 100%;
-            max-width: 150px;
-            min-width: 0;
-            box-sizing: border-box;
-        }
-
-        .res-inputs {
-            display: flex;
-            gap: var(--space-xs);
-            width: 100%;
-            max-width: 150px;
-            box-sizing: border-box;
-        }
-
-        .res-inputs input {
-            flex: 1;
-            min-width: 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .res-inputs span {
-            line-height: 1;
-            padding: 0 var(--space-xs);
-        }
-
-        /* Visual cue for dynamic inputs 
-        input[data-live="true"] {}*/
-
-        /* Pending dot system */
         .control-label::before {
-            content: "●";
-            display: inline-block;
-            width: 1em;
-            margin-right: 0.3em;
-            text-align: center;
-            visibility: hidden;
-            color: #ff8;
-            font-size: var(--text-size-md);
-            vertical-align: middle;
+            content: "•";
+            color: var(--ds-warning);
+            margin-right: 6px;
+            opacity: 0;
+            transition: opacity var(--ds-dur-fast) var(--ds-ease-standard);
         }
 
         .control-label.pending-dot::before {
-            visibility: visible;
+            opacity: 1;
         }
 
-        /* Reset button next to sliders */
+        .control-input {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .control-icons {
+            display: flex;
+            justify-content: flex-end;
+            min-width: var(--ds-control-h-sm);
+        }
+
+        .control-input input[type="number"],
+        .control-input select {
+            width: 100%;
+            min-height: var(--ds-control-h);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
+            border-radius: var(--ds-radius-2);
+            background: var(--ds-input-bg);
+            color: var(--ds-input-text);
+            font: inherit;
+            padding: var(--ds-space-2) var(--ds-space-3);
+        }
+
+        .control-input input[type="range"] {
+            width: 100%;
+            accent-color: var(--ds-accent);
+        }
+
+        .control-input input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--ds-accent);
+        }
+
+        .res-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: var(--ds-space-1);
+            width: 100%;
+        }
+
+        .res-inputs span {
+            color: var(--ds-text-muted);
+        }
+
+        .pending-change {
+            border-color: var(--ds-warning) !important;
+            box-shadow: 0 0 0 1px color-mix(in oklab, var(--ds-warning) 45%, transparent);
+        }
+
         .reset-btn {
-            background: none;
-            border: none;
-            font-size: var(--text-size-md);
-            color: #ccc;
+            width: var(--ds-control-h-sm);
+            min-height: var(--ds-control-h-sm);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-btn-border);
+            border-radius: var(--ds-radius-2);
+            background: var(--ds-btn-bg);
+            color: var(--ds-btn-text);
             cursor: pointer;
+            font: inherit;
+            font-size: var(--ds-fs-1);
             padding: 0;
-            margin: 0;
-            line-height: 1;
         }
 
         .reset-btn:hover {
-            color: #fff;
+            background: var(--ds-btn-bg-hover);
+            border-color: var(--ds-border-strong);
         }
 
-        /* Status pill */
-        #controls .status {
-            font-size: var(--text-size-md);
-            padding: 2px 8px;
-            border-radius: 6px;
-            display: inline-block;
-            font-weight: bold;
-            color: #fff;
+        .export-row {
+            display: flex;
+            gap: var(--ds-space-2);
+            flex-wrap: wrap;
         }
 
-        #controls .status.idle {
-            background-color: #444;
-            color: #ccc;
+        .theme-row {
+            display: grid;
+            gap: 6px;
         }
 
-        #controls .status.rendering {
-            background-color: #2255aa;
-            color: #fff;
+        .theme-row label {
+            font-size: var(--ds-fs-1);
+            letter-spacing: var(--ds-label-spacing);
+            text-transform: var(--ds-label-transform);
+            color: var(--ds-text-muted);
         }
 
-        #controls .status.complete {
-            background-color: #2d8030;
-            color: #fff;
+        #themeSelect {
+            width: 100%;
+            min-height: var(--ds-control-h);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
+            border-radius: var(--ds-radius-2);
+            background: var(--ds-input-bg);
+            color: var(--ds-input-text);
+            font: inherit;
+            padding: var(--ds-space-2) var(--ds-space-3);
         }
 
-        /* Progress bar */
+        #control-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ds-space-2);
+            padding: var(--ds-space-3);
+            border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        }
+
+        #status {
+            max-width: 68%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: var(--ds-radius-pill);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            padding: 4px 10px;
+            font-size: var(--ds-fs-1);
+            color: var(--ds-text-muted);
+        }
+
+        #status[data-state="rendering"] {
+            color: var(--ds-info);
+            border-color: color-mix(in oklab, var(--ds-info) 62%, var(--ds-border));
+            background: color-mix(in oklab, var(--ds-info) 16%, transparent);
+        }
+
+        #status[data-state="complete"] {
+            color: var(--ds-success);
+            border-color: color-mix(in oklab, var(--ds-success) 62%, var(--ds-border));
+            background: color-mix(in oklab, var(--ds-success) 16%, transparent);
+        }
+
+        #status[data-state="error"] {
+            color: var(--ds-danger);
+            border-color: color-mix(in oklab, var(--ds-danger) 62%, var(--ds-border));
+            background: color-mix(in oklab, var(--ds-danger) 16%, transparent);
+        }
+
         #progress {
             position: fixed;
             top: 0;
             left: 0;
-            height: 4px;
-            background: #88f;
+            height: 3px;
             width: 0%;
-            z-index: 20;
+            background: linear-gradient(90deg, var(--ds-accent), var(--ds-focus));
+            z-index: var(--ds-z-toast);
+            transition: width var(--ds-dur-fast) linear;
         }
 
-        /* Export + button row (bottom aligned) */
-        .button-row,
-        .export-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: var(--space-md);
+        #canvas {
             width: 100%;
-        }
-
-        button {
-            padding: 4px 10px;
-            font-size: var(--text-size-md);
+            height: 100%;
+            display: block;
+            border-radius: var(--ds-card-radius);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            box-shadow: var(--ds-card-shadow);
+            background: var(--ds-bg-raised);
+            min-width: 0;
+            min-height: 0;
         }
 
         #debugPanel {
             position: fixed;
-            top: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.85);
-            color: #0f0;
-            font-family: monospace;
-            font-size: 12px;
-            padding: 8px;
-            max-width: 300px;
-            max-height: 100vh;
-            overflow-y: auto;
-            white-space: pre-wrap;
+            top: var(--ds-space-3);
+            right: var(--ds-space-3);
+            width: min(340px, 45vw);
+            max-height: calc(100vh - (2 * var(--ds-space-3)));
+            overflow: auto;
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: color-mix(in oklab, var(--ds-bg-elevated) 88%, transparent);
+            color: var(--ds-text);
+            font-family: var(--ds-font-mono);
+            font-size: var(--ds-fs-1);
             line-height: 1.4;
+            padding: var(--ds-space-3);
             pointer-events: none;
-            z-index: 1000;
-            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: calc(var(--ds-z-toast) - 1);
+            white-space: pre-wrap;
         }
 
-        /* Animated status */
-        #status {
-            font-size: var(--text-size-md);
-            padding: 2px 6px;
-            border-radius: 4px;
-            min-width: 70px;
-            max-width: 100%;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: background 0.3s, color 0.3s;
-        }
-
-        #status.idle {
-            background: #222;
-            color: #ccc;
-            border: 1px solid #444;
-        }
-
-        #status.rendering {
-            background: #448;
-            color: #fff;
-            border: 1px solid #88f;
-            animation: pulse 1s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 5px #88f8;
+        @media (max-width: 980px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(0, 1fr) minmax(240px, 45vh);
             }
 
-            50% {
-                box-shadow: 0 0 12px #88f;
+            #canvas {
+                grid-row: 1;
             }
 
-            100% {
-                box-shadow: 0 0 5px #88f8;
+            #controls {
+                grid-row: 2;
             }
-        }
-
-        #control-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #control-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        #control-scroll::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.2);
-            /* adjust color as needed */
-            border-radius: 4px;
-        }
-
-        #control-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(255, 255, 255, 0.4);
         }
     </style>
 </head>
@@ -356,13 +313,24 @@
     <div id="controls">
         <div id="control-header">
             <div class="export-row">
-                <button onclick="exportPNG()">Export PNG</button>
-                <button onclick="toggleDebugPanel()">🛠 Debug Info</button>
-
-                <!-- Add other export buttons if needed -->
+                <button class="ds-btn" onclick="exportPNG()">Export PNG</button>
+                <button id="toggleDebugBtn" class="ds-btn" onclick="toggleDebugPanel()">Debug Panel</button>
+            </div>
+            <div class="theme-row">
+                <label for="themeSelect">Theme</label>
+                <select id="themeSelect">
+                    <option value="steel-night">Steel Night</option>
+                    <option value="paper-mint">Paper Mint</option>
+                    <option value="amber-terminal">Amber Terminal</option>
+                    <option value="neon-grid">Neon Grid</option>
+                    <option value="mono-slate">Mono Slate</option>
+                    <option value="tech-grid">Tech Grid</option>
+                    <option value="skeuo-panel">Skeuo Panel</option>
+                    <option value="industrial-terminal">Industrial Terminal</option>
+                </select>
             </div>
         </div>
-        <div id="control-scroll">
+        <div id="control-scroll" class="ds-scroll">
 
             <div class="section" data-mode="all">
                 <div class="control-row">
@@ -393,9 +361,9 @@
                     <div class="control-input">
                         <select id="resolutionPreset">
                             <option value="">Auto (Window Size)</option>
-                            <option value="1920x1080">HD (1920×1080)</option>
-                            <option value="1080x1080">Square (1080×1080)</option>
-                            <option value="3840x2160">4K (3840×2160)</option>
+                            <option value="1920x1080">HD (1920x1080)</option>
+                            <option value="1080x1080">Square (1080x1080)</option>
+                            <option value="3840x2160">4K (3840x2160)</option>
                             <option value="custom">Custom</option>
                         </select>
                     </div>
@@ -407,7 +375,7 @@
                     <div class="control-input">
                         <div class="res-inputs">
                             <input type="number" id="renderWidth" min="1" placeholder="Width" />
-                            <span>×</span>
+                            <span>x</span>
                             <input type="number" id="renderHeight" min="1" placeholder="Height" />
                         </div>
                     </div>
@@ -625,10 +593,9 @@
             </div>
 
         </div>
-
         <div id="control-footer">
-            <div id="status" class="status idle">💤 Idle</div>
-            <button onclick="startGeneration()">Generate</button>
+            <div id="status" data-state="idle">Idle</div>
+            <button id="generateBtn" class="ds-btn ds-btn-primary" onclick="startGeneration()">Generate</button>
         </div>
     </div>
 
@@ -651,7 +618,7 @@
                 return;
             }
 
-            let info = `🛠️ Debug Info\n`;
+            let info = "Debug Info\n";
             for (const [key, val] of Object.entries(config)) {
                 info += `${key}: ${val}\n`;
             }
@@ -667,8 +634,12 @@
         function toggleDebugPanel() {
             debugVisible = !debugVisible;
             const panel = document.getElementById("debugPanel");
+            const toggleBtn = document.getElementById("toggleDebugBtn");
             if (panel) {
                 panel.style.display = debugVisible ? "block" : "none";
+            }
+            if (toggleBtn) {
+                toggleBtn.textContent = debugVisible ? "Hide Debug" : "Show Debug";
             }
         }
 
@@ -691,15 +662,14 @@
         }
 
 
-        const generateBtn = document.querySelector(
-            'button[onclick="startGeneration()"]'
-        );
-        // 🔧 Cached DOM elements for live updates or toggles
+        const generateBtn = document.getElementById("generateBtn");
+        // Cached DOM elements for live updates or toggles
         const boostRInput = document.getElementById("boostR");
         const boostGInput = document.getElementById("boostG");
         const boostBInput = document.getElementById("boostB");
         const grainToggle = document.getElementById("grainToggle");
         const highlightStrengthInput = document.getElementById("highlightStrength");
+        const themeSelect = document.getElementById("themeSelect");
 
 
         const canvas = document.getElementById("canvas");
@@ -709,6 +679,11 @@
 
         const progress = document.getElementById("progress");
         const status = document.getElementById("status");
+
+        function setStatus(state, message) {
+            status.dataset.state = state;
+            status.textContent = message;
+        }
 
         let simplex;
         let renderTask = null;
@@ -856,7 +831,7 @@
                     ? section.dataset.mode.split(",").map(s => s.trim())
                     : ["all"];
                 const shouldShow = modes.includes("all") || modes.includes(mode);
-                section.style.display = shouldShow ? "" : "none";
+                section.hidden = !shouldShow;
             });
 
             const allRows = document.querySelectorAll("#controls .control-row");
@@ -865,8 +840,19 @@
                     ? row.dataset.mode.split(",").map(s => s.trim())
                     : ["all"];
                 const shouldShow = modes.includes("all") || modes.includes(mode);
-                row.style.display = shouldShow ? "" : "none";
+                row.hidden = !shouldShow;
             });
+        }
+
+        function markControlPending(el) {
+            el.classList.add("pending-change");
+            const controlRow = el.closest(".control-row");
+            if (!controlRow) return;
+
+            const label = controlRow.querySelector(".control-label");
+            if (label) {
+                label.classList.add("pending-dot");
+            }
         }
 
         document.getElementById("resolutionPreset").addEventListener("change", () => {
@@ -879,15 +865,16 @@
                 if (parseInt(wInput.value) !== w || parseInt(hInput.value) !== h) {
                     wInput.value = w;
                     hInput.value = h;
-                    wInput.classList.add("pending-change");
-                    hInput.classList.add("pending-change");
+                    markControlPending(wInput);
+                    markControlPending(hInput);
                 }
             } else {
                 wInput.value = "";
                 hInput.value = "";
-                wInput.classList.add("pending-change");
-                hInput.classList.add("pending-change");
+                markControlPending(wInput);
+                markControlPending(hInput);
             }
+            updatePendingStatus();
         });
 
         function applyGrainOverlay(ctx, width, height) {
@@ -914,8 +901,8 @@
                 scale: getInput("scale"),
                 blend: getInput("blend"),
                 layerLength: getInput("layerLength"),
-                colorIntensity: getInput("intensity"),   // 🔁 FIXED NAME
-                colorRange: getInput("range"),           // 🔁 FIXED NAME
+                colorIntensity: getInput("intensity"),
+                colorRange: getInput("range"),
                 flowMode: document.getElementById("flowMode").value,
                 highlightStrength: getInput("highlightStrength"),
                 lightAngle: getInput("lightAngle"),
@@ -949,16 +936,15 @@
         }
 
         function generateMotherOfPearl(force = false) {
-            clearPendingIndicators(); // ✅ add this
+            clearPendingIndicators();
 
             if (renderTask || (animationId && !force)) return;
 
-            const config = getRenderConfig(); // ✅ This line is missing in your erroring version
+            const config = getRenderConfig();
 
             if (!Array.isArray(palette) || palette.length < 2) {
                 console.error("Palette must be an array with at least 2 colors.");
-                status.innerText = "❌ Palette error";
-                status.className = "status error";
+                setStatus("error", "Palette error");
                 return;
             }
 
@@ -1010,8 +996,7 @@
 
             let y = 0;
             const rowsPerFrame = 10;
-            status.innerText = "⏳ Rendering...";
-            status.className = "status rendering";
+            setStatus("rendering", "Rendering...");
             generateBtn.disabled = true;
 
             progress.style.width = "0%";
@@ -1067,12 +1052,10 @@
                         imageData.height
                     );
 
-                    status.innerText = "✅ Complete";
-                    status.className = "status complete";
+                    setStatus("complete", "Complete");
 
                     setTimeout(() => {
-                        status.innerText = "💤 Idle";
-                        status.className = "status idle";
+                        setStatus("idle", "Idle");
                         generateBtn.disabled = false;
                     }, 500);
 
@@ -1080,7 +1063,7 @@
                     // Save current values as "applied"
                     document.querySelectorAll('#controls input, #controls select').forEach(el => {
                         if (el.dataset.live !== "true") {
-                            el.dataset.applied = el.value;
+                            el.dataset.applied = el.type === "checkbox" ? String(el.checked) : el.value;
                         }
                     });
 
@@ -1091,7 +1074,8 @@
         }
 
         function generateRisograph(force = false) {
-            clearPendingIndicators(); // ✅ add this
+            clearPendingIndicators();
+            generateBtn.disabled = true;
 
             const width = canvas.width;
             const height = canvas.height;
@@ -1131,8 +1115,9 @@
             if (grain) applyGrainOverlay(ctx, config.width, config.height);
 
             setTimeout(() => {
-                status.innerText = "✅ Riso Rendered";
-                status.className = "status complete";
+                setStatus("complete", "Riso rendered");
+                generateBtn.disabled = false;
+                setTimeout(() => setStatus("idle", "Idle"), 500);
             }, 800);
 
         }
@@ -1197,12 +1182,10 @@
             if (grain) applyGrainOverlay(ctx, config.width, config.height);
             adjustColorBoosts();
 
-            status.innerText = `✅ Topography Rendered — ${bandCount} Bands, Mode: ${renderMode}`;
-            status.className = "status complete";
+            setStatus("complete", `Topography rendered: ${bandCount} bands, ${renderMode}`);
 
             setTimeout(() => {
-                status.innerText = "💤 Idle";
-                status.className = "status idle";
+                setStatus("idle", "Idle");
                 generateBtn.disabled = false;
             }, 800);
         }
@@ -1210,18 +1193,21 @@
         function updatePendingStatus() {
             const pendingCount = document.querySelectorAll('.pending-change').length;
 
-            if (status.classList.contains('idle')) {
+            if (status.dataset.state === "idle") {
                 if (pendingCount > 0) {
-                    status.innerText = `💤 Idle — ${pendingCount} change${pendingCount > 1 ? 's' : ''} not applied`;
+                    setStatus("idle", `Idle: ${pendingCount} change${pendingCount > 1 ? "s" : ""} not applied`);
                 } else {
-                    status.innerText = "💤 Idle";
+                    setStatus("idle", "Idle");
                 }
             }
         }
 
         function clearPendingIndicators() {
-            document.querySelectorAll('.pending-change').forEach(el => {
+            document.querySelectorAll('#controls input, #controls select').forEach(el => {
                 el.classList.remove('pending-change');
+                if (el.dataset.live !== "true") {
+                    el.dataset.applied = el.type === "checkbox" ? String(el.checked) : el.value;
+                }
 
                 const controlRow = el.closest(".control-row");
                 if (controlRow) {
@@ -1306,11 +1292,23 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            updatePendingStatus();
-            startGeneration();
             const mode = document.getElementById("modeSelector").value;
             document.body.setAttribute("data-mode", mode);
             updateVisibleSections(mode);
+            setStatus("idle", "Idle");
+
+            const savedTheme = localStorage.getItem("raden-theme") || document.documentElement.dataset.theme || "steel-night";
+            document.documentElement.dataset.theme = savedTheme;
+            if (themeSelect) themeSelect.value = savedTheme;
+
+            document.querySelectorAll("#controls input, #controls select").forEach((el) => {
+                if (el.dataset.live !== "true") {
+                    el.dataset.applied = el.type === "checkbox" ? String(el.checked) : el.value;
+                }
+            });
+
+            updatePendingStatus();
+            startGeneration();
         });
 
         document.getElementById("modeSelector").addEventListener("change", (e) => {
@@ -1321,29 +1319,35 @@
             // Later: Show/hide relevant controls based on mode
         });
 
+        if (themeSelect) {
+            themeSelect.addEventListener("change", (e) => {
+                const selectedTheme = e.target.value;
+                document.documentElement.dataset.theme = selectedTheme;
+                localStorage.setItem("raden-theme", selectedTheme);
+            });
+        }
+
         document.querySelectorAll("#controls input, #controls select").forEach((el) => {
             if (el.dataset.live !== "true") {
                 el.addEventListener("input", () => {
-                    el.classList.add("pending-change");
+                    markControlPending(el);
 
                     const controlRow = el.closest(".control-row");
                     if (!controlRow) return;
-
-                    const label = controlRow.querySelector(".control-label");
-                    if (label) {
-                        label.classList.add("pending-dot");
-                    }
-
                     const icons = controlRow.querySelector(".control-icons");
                     if (icons && !icons.querySelector(".reset-btn")) {
                         const btn = document.createElement("button");
-                        btn.innerText = "⟲";
+                        btn.innerText = "R";
                         btn.className = "reset-btn";
                         btn.title = "Revert to last applied";
 
                         btn.onclick = (e) => {
                             e.preventDefault();
-                            el.value = el.dataset.applied || "";
+                            if (el.type === "checkbox") {
+                                el.checked = el.dataset.applied === "true";
+                            } else {
+                                el.value = el.dataset.applied || "";
+                            }
                             el.classList.remove("pending-change");
 
                             const label = controlRow.querySelector(".control-label");
@@ -1366,3 +1370,5 @@
 </body>
 
 </html>
+
+
