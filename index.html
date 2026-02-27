@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mother of Pearl Generator</title>
+    <title>Raden - Texture Generator v1.2.1</title>
     <link rel="stylesheet" href="./theme.css" />
     <style>
         :root {
-            --raden-panel-width: 360px;
+            --raden-panel-width: 480px;
             --raden-grid-gap: var(--ds-space-3);
             --raden-frame-pad: var(--ds-space-3);
             --raden-section-gap: var(--ds-space-3);
             --raden-row-gap: var(--ds-space-2);
-            --raden-row-label-width: 10rem;
+            --raden-row-label-width: 11.5rem;
         }
 
         html,
@@ -38,7 +38,7 @@
 
         #controls {
             display: grid;
-            grid-template-rows: auto minmax(0, 1fr) auto;
+            grid-template-rows: auto minmax(0, 1fr) auto auto;
             min-height: 0;
             border: var(--ds-border-w) var(--ds-border-style) var(--ds-card-border);
             border-radius: var(--ds-card-radius);
@@ -56,15 +56,113 @@
 
         #control-scroll {
             min-height: 0;
-            overflow: auto;
-            display: grid;
-            gap: var(--raden-section-gap);
+            overflow-y: scroll;
+            overflow-x: hidden;
+            scrollbar-gutter: stable both-edges;
+            display: block;
             padding: var(--ds-space-3);
+        }
+
+        .panel-tabs-wrap {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: var(--ds-space-2);
+            align-items: center;
+        }
+
+        .panel-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: var(--ds-space-2);
+        }
+
+        .panel-tab-btn {
+            min-height: var(--ds-control-h-sm);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: var(--ds-btn-bg);
+            color: var(--ds-text-muted);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .panel-tab-btn.is-active {
+            border-color: var(--ds-accent);
+            background: color-mix(in oklab, var(--ds-accent) 18%, var(--ds-btn-bg));
+            color: var(--ds-text);
+        }
+
+        .panel-settings-btn {
+            min-height: var(--ds-control-h-sm);
+            min-width: var(--ds-control-h-sm);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: var(--ds-btn-bg);
+            color: var(--ds-text-muted);
+            font: inherit;
+            cursor: pointer;
+            padding: 0 var(--ds-space-2);
+        }
+
+        .panel-settings-btn[aria-expanded="true"] {
+            border-color: var(--ds-accent);
+            color: var(--ds-text);
+            background: color-mix(in oklab, var(--ds-accent) 15%, var(--ds-btn-bg));
+        }
+
+        .settings-menu {
+            position: absolute;
+            top: calc(100% + var(--ds-space-2));
+            right: 0;
+            width: min(280px, calc(100% - var(--ds-space-2)));
+            display: grid;
+            gap: var(--ds-space-2);
+            padding: var(--ds-space-2);
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: color-mix(in oklab, var(--ds-bg-elevated) 96%, transparent);
+            box-shadow: var(--ds-card-shadow);
+            z-index: calc(var(--ds-z-toast) - 1);
+        }
+
+        .settings-menu[hidden] {
+            display: none;
+        }
+
+        .settings-row {
+            display: grid;
+            gap: 6px;
+        }
+
+        .settings-row label {
+            font-size: var(--ds-fs-1);
+            letter-spacing: var(--ds-label-spacing);
+            text-transform: var(--ds-label-transform);
+            color: var(--ds-text-muted);
+        }
+
+        #settingsMenu .ds-btn {
+            width: 100%;
+        }
+
+        .panel-tab {
+            display: flex;
+            flex-direction: column;
+            gap: var(--raden-section-gap);
+            align-content: flex-start;
+            justify-content: flex-start;
+            height: max-content;
+        }
+
+        .panel-tab[hidden] {
+            display: none;
         }
 
         #controls .section {
             display: grid;
             gap: var(--raden-row-gap);
+            align-content: flex-start;
             padding: var(--ds-space-3);
             border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
             border-radius: var(--ds-radius-2);
@@ -135,6 +233,10 @@
             padding: var(--ds-space-2) var(--ds-space-3);
         }
 
+        .control-input select {
+            text-overflow: ellipsis;
+        }
+
         .control-input input[type="range"] {
             width: 100%;
             accent-color: var(--ds-accent);
@@ -185,18 +287,36 @@
             display: flex;
             gap: var(--ds-space-2);
             flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
-        .theme-row {
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: var(--ds-space-2);
+        }
+
+        .gallery-tile {
             display: grid;
             gap: 6px;
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: color-mix(in oklab, var(--ds-bg-raised) 90%, transparent);
+            padding: 6px;
         }
 
-        .theme-row label {
-            font-size: var(--ds-fs-1);
-            letter-spacing: var(--ds-label-spacing);
-            text-transform: var(--ds-label-transform);
-            color: var(--ds-text-muted);
+        .gallery-tile img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 6px;
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        }
+
+        .gallery-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
         }
 
         #themeSelect {
@@ -213,9 +333,24 @@
         #control-footer {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             gap: var(--ds-space-2);
             padding: var(--ds-space-3);
+            border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        }
+
+        .generate-actions {
+            display: flex;
+            gap: var(--ds-space-2);
+            flex-wrap: wrap;
+        }
+
+        #control-actions {
+            display: flex;
+            gap: var(--ds-space-2);
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            padding: var(--ds-space-2) var(--ds-space-3);
             border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
         }
 
@@ -312,25 +447,33 @@
 <body>
     <div id="controls">
         <div id="control-header">
-            <div class="export-row">
-                <button class="ds-btn" onclick="exportPNG()">Export PNG</button>
-                <button id="toggleDebugBtn" class="ds-btn" onclick="toggleDebugPanel()">Debug Panel</button>
-            </div>
-            <div class="theme-row">
-                <label for="themeSelect">Theme</label>
-                <select id="themeSelect">
-                    <option value="steel-night">Steel Night</option>
-                    <option value="paper-mint">Paper Mint</option>
-                    <option value="amber-terminal">Amber Terminal</option>
-                    <option value="neon-grid">Neon Grid</option>
-                    <option value="mono-slate">Mono Slate</option>
-                    <option value="tech-grid">Tech Grid</option>
-                    <option value="skeuo-panel">Skeuo Panel</option>
-                    <option value="industrial-terminal">Industrial Terminal</option>
-                </select>
+            <div class="panel-tabs-wrap">
+                <div class="panel-tabs">
+                    <button id="tabBtnGenerate" class="panel-tab-btn is-active" type="button" data-tab="generate">Texture</button>
+                    <button id="tabBtnExport" class="panel-tab-btn" type="button" data-tab="export">Export</button>
+                    <button id="tabBtnGallery" class="panel-tab-btn" type="button" data-tab="gallery">Gallery</button>
+                </div>
+                <button id="settingsBtn" class="panel-settings-btn" type="button" aria-expanded="false" aria-controls="settingsMenu" title="Settings">&#9881;</button>
+                <div id="settingsMenu" class="settings-menu" hidden>
+                    <div class="settings-row">
+                        <label for="themeSelect">Theme</label>
+                        <select id="themeSelect">
+                            <option value="steel-night">Steel Night</option>
+                            <option value="paper-mint">Paper Mint</option>
+                            <option value="amber-terminal">Amber Terminal</option>
+                            <option value="neon-grid">Neon Grid</option>
+                            <option value="mono-slate">Mono Slate</option>
+                            <option value="tech-grid">Tech Grid</option>
+                            <option value="skeuo-panel">Skeuo Panel</option>
+                            <option value="industrial-terminal">Industrial Terminal</option>
+                        </select>
+                    </div>
+                    <button id="toggleDebugBtn" class="ds-btn" type="button">Hide Debug Panel</button>
+                </div>
             </div>
         </div>
         <div id="control-scroll" class="ds-scroll">
+            <div id="tabGenerate" class="panel-tab">
 
             <div class="section" data-mode="all">
                 <div class="control-row">
@@ -389,20 +532,21 @@
             <div class="section" data-mode="motherofpearl, topography">
                 <h3>Pattern Geometry</h3>
                 <div class="control-row" data-mode="topography">
-                    <div class="control-label">Noise Type</div>
+                    <div class="control-label">Terrain Source</div>
                     <div class="control-input">
                         <select id="topoNoiseType">
-                            <option value="white">White</option>
+                            <option value="ridged">Ridged</option>
                             <option value="simplex">Simplex</option>
-                            <option value="value">Value</option>
                             <option value="perlin">Perlin</option>
+                            <option value="value">Value</option>
+                            <option value="white">White</option>
                         </select>
                     </div>
                     <div class="control-icons"></div>
                 </div>
 
                 <div class="control-row" data-mode="motherofpearl, topography">
-                    <div class="control-label">Noise Scale:</div>
+                    <div class="control-label">Base Scale:</div>
                     <div class="control-input">
                         <input type="range" id="scale" min="0.001" max="0.02" step="0.001" value="0.006"
                             data-live="false" />
@@ -419,20 +563,36 @@
                 </div>
 
                 <div class="control-row" data-mode="motherofpearl">
-                    <div class="control-label">Flow Mode:</div>
+                    <div class="control-label">Growth Flow:</div>
                     <div class="control-input">
                         <select id="flowMode" data-live="false">
-                            <option value="circular">Circular</option>
-                            <option value="linear">Linear</option>
+                            <option value="linear">Layered Drift</option>
+                            <option value="circular">Concentric Growth</option>
                         </select>
                     </div>
                     <div class="control-icons"></div>
                 </div>
 
                 <div class="control-row" data-mode="motherofpearl">
-                    <div class="control-label">Layer Length:</div>
+                    <div class="control-label">Growth Drift:</div>
                     <div class="control-input">
                         <input type="range" id="layerLength" min="0" max="2" step="0.01" value="1" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row" data-mode="motherofpearl">
+                    <div class="control-label">Ring Spacing:</div>
+                    <div class="control-input">
+                        <input type="range" id="ringSpacing" min="0.2" max="2" step="0.01" value="1" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row" data-mode="motherofpearl">
+                    <div class="control-label">Ring Jitter:</div>
+                    <div class="control-input">
+                        <input type="range" id="ringJitter" min="0" max="1.2" step="0.01" value="0.35" data-live="false" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
@@ -440,37 +600,58 @@
 
             <!-- 3. COLOR APPEARANCE -->
             <div class="section" data-mode="motherofpearl">
-                <h3>Color Appearance</h3>
+                <h3>Iridescence</h3>
 
                 <div class="control-row">
-                    <div class="control-label">Color Range:</div>
+                    <div class="control-label">Hue Spread:</div>
                     <div class="control-input">
-                        <input type="range" id="range" min="0.1" max="1.5" step="0.1" value="1.0" data-live="false" />
+                        <input type="range" id="range" min="0.4" max="1.8" step="0.05" value="1.1" data-live="false" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
 
                 <div class="control-row">
-                    <div class="control-label">Blend:</div>
+                    <div class="control-label">Band Softness:</div>
                     <div class="control-input">
-                        <input type="range" id="blend" min="0.5" max="3" step="0.1" value="1.2" data-live="false" />
+                        <input type="range" id="blend" min="0.6" max="3" step="0.1" value="1.4" data-live="false" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
 
                 <div class="control-row">
-                    <div class="control-label">Color Intensity:</div>
+                    <div class="control-label">Interference:</div>
                     <div class="control-input">
-                        <input type="range" id="intensity" min="0" max="200" step="1" value="100" data-live="false" />
+                        <input type="range" id="intensity" min="20" max="220" step="1" value="130" data-live="false" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
             </div>
 
 
-            <!-- 4. LIGHTING -->
+            <!-- 4. GROWTH SEAMS -->
             <div class="section" data-mode="motherofpearl">
-                <h3>Lighting</h3>
+                <h3>Growth Seams</h3>
+
+                <div class="control-row">
+                    <div class="control-label">Seam Thickness:</div>
+                    <div class="control-input">
+                        <input type="range" id="seamThickness" min="0.02" max="0.45" step="0.01" value="0.14" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Seam Contrast:</div>
+                    <div class="control-input">
+                        <input type="range" id="seamContrast" min="0" max="1.2" step="0.01" value="0.55" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+
+            <div class="section" data-mode="motherofpearl">
+                <h3>Surface Microstructure</h3>
 
                 <div class="control-row">
                     <div class="control-label">Light Angle:</div>
@@ -481,27 +662,33 @@
                 </div>
 
                 <div class="control-row">
-                    <div class="control-label">Highlight Strength:</div>
+                    <div class="control-label">Shimmer Strength:</div>
                     <div class="control-input">
-                        <input type="range" id="highlightStrength" min="0" max="2" step="0.01" value="0.5"
-                            data-live="false" />
+                        <input type="range" id="highlightStrength" min="0" max="2" step="0.01" value="0.65" data-live="false" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
-            </div>
-
-
-            <div class="section" data-mode="motherofpearl">
-                <h3>Animation</h3>
 
                 <div class="control-row">
-                    <div class="control-label">Animate Flow:</div>
+                    <div class="control-label">Scratch Density:</div>
                     <div class="control-input">
-                        <select id="animateFlow" disabled>
-                            <option value="none">None</option>
-                            <option value="light">Light Sweep</option>
-                            <option value="layers">Wave Layers</option>
-                        </select>
+                        <input type="range" id="scratchDensity" min="0" max="1" step="0.01" value="0.45" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Scratch Direction:</div>
+                    <div class="control-input">
+                        <input type="range" id="scratchAngle" min="0" max="1" step="0.01" value="0.3" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Polish:</div>
+                    <div class="control-input">
+                        <input type="range" id="surfacePolish" min="0" max="1" step="0.01" value="0.55" data-live="false" />
                     </div>
                     <div class="control-icons"></div>
                 </div>
@@ -531,6 +718,19 @@
             <!-- 9. ACTIONS -->
             <div class="section" data-mode="topography">
                 <h3>Topography</h3>
+                <div class="control-row">
+                    <div class="control-label">Terrain Preset:</div>
+                    <div class="control-input">
+                        <select id="topoPreset" data-live="false">
+                            <option value="coastal">Coastal</option>
+                            <option value="alpine">Alpine</option>
+                            <option value="dunes">Dunes</option>
+                            <option value="volcanic">Volcanic</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
 
                 <div class="control-row">
                     <div class="control-label">Bands:</div>
@@ -548,6 +748,30 @@
                             <option value="fill">Band Fill</option>
                             <option value="gradient">Smooth Gradient</option>
                         </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Ridge Strength:</div>
+                    <div class="control-input">
+                        <input type="range" id="topoRidge" min="0" max="1" step="0.01" value="0.6" data-live="false">
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Domain Warp:</div>
+                    <div class="control-input">
+                        <input type="range" id="topoWarp" min="0" max="1" step="0.01" value="0.35" data-live="false">
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Erosion:</div>
+                    <div class="control-input">
+                        <input type="range" id="topoErosion" min="0" max="1" step="0.01" value="0.4" data-live="false">
                     </div>
                     <div class="control-icons"></div>
                 </div>
@@ -590,12 +814,190 @@
                     </div>
                     <div class="control-icons"></div>
                 </div>
+
+                <div class="control-row">
+                    <div class="control-label">Gaussian Blur:</div>
+                    <div class="control-input">
+                        <input type="range" id="gaussianBlur" min="0" max="10" step="0.2" value="0" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Generate</div>
+                    <div class="control-input">
+                        <div class="generate-actions">
+                            <button id="generateInlineBtn" class="ds-btn ds-btn-primary" type="button">Generate</button>
+                        </div>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            <div class="section" data-mode="motherofpearl">
+                <h3>Nacre Color</h3>
+                <div class="control-row">
+                    <div class="control-label">Base Surface:</div>
+                    <div class="control-input">
+                        <select id="substrateTone" data-live="false">
+                            <option value="light">Light / Pearl Base</option>
+                            <option value="dark">Dark / Abalone Base</option>
+                        </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Substrate Mix:</div>
+                    <div class="control-input">
+                        <input type="range" id="substrateMix" min="0" max="1" step="0.01" value="0.45" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Palette:</div>
+                    <div class="control-input">
+                        <select id="nacrePalette" data-live="false">
+                            <option value="classic">Classic Nacre</option>
+                            <option value="abalone">Abalone Bright</option>
+                            <option value="silver">Silver Pearl</option>
+                            <option value="pinkgreen">Pink-Green Shift</option>
+                        </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Brilliance:</div>
+                    <div class="control-input">
+                        <input type="range" id="nacreBrilliance" min="0.5" max="2.2" step="0.01" value="1.25" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Chromatic Shift:</div>
+                    <div class="control-input">
+                        <input type="range" id="nacreChromatic" min="0" max="2" step="0.01" value="1.0" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            <div class="section" data-mode="all">
+                <h3>Experimental FX</h3>
+                <div class="control-row">
+                    <div class="control-label">Invert Color:</div>
+                    <div class="control-input">
+                        <input type="checkbox" id="fxInvert" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Chromatic Aberration:</div>
+                    <div class="control-input">
+                        <input type="range" id="fxChromatic" min="0" max="6" step="0.1" value="0" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Glitch Tearing:</div>
+                    <div class="control-input">
+                        <input type="range" id="fxGlitch" min="0" max="1" step="0.01" value="0" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Scanlines:</div>
+                    <div class="control-input">
+                        <input type="range" id="fxScanline" min="0" max="1" step="0.01" value="0" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            </div>
+
+            <div id="tabExport" class="panel-tab" hidden>
+                <div class="section">
+                    <h3>Export Settings</h3>
+                    <div class="control-row">
+                        <div class="control-label">File Type:</div>
+                        <div class="control-input">
+                            <select id="exportFileType">
+                                <option value="png">PNG</option>
+                                <option value="jpeg">JPEG</option>
+                                <option value="webp">WebP</option>
+                            </select>
+                        </div>
+                        <div class="control-icons"></div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-label">Quality:</div>
+                        <div class="control-input">
+                            <input type="range" id="exportQuality" min="0.4" max="1" step="0.01" value="0.92" />
+                        </div>
+                        <div class="control-icons"></div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-label">Crop:</div>
+                        <div class="control-input">
+                            <select id="exportCropMode">
+                                <option value="full">Full Canvas</option>
+                                <option value="square">Square</option>
+                                <option value="portrait">Portrait (4:5)</option>
+                                <option value="landscape">Landscape (16:9)</option>
+                            </select>
+                        </div>
+                        <div class="control-icons"></div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-label">Size Preset:</div>
+                        <div class="control-input">
+                            <select id="exportSizePreset">
+                                <option value="current">Current</option>
+                                <option value="1080-square">1080 Square</option>
+                                <option value="1920x1080">1920x1080</option>
+                                <option value="2160-square">2160 Square</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="control-icons"></div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-label">Output Size:</div>
+                        <div class="control-input">
+                            <div class="res-inputs">
+                                <input type="number" id="exportWidth" min="1" value="1920" />
+                                <span>x</span>
+                                <input type="number" id="exportHeight" min="1" value="1080" />
+                            </div>
+                        </div>
+                        <div class="control-icons"></div>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Export Action</h3>
+                    <div class="export-row">
+                        <button id="exportFromPanelBtn" class="ds-btn ds-btn-primary" type="button">Export File</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabGallery" class="panel-tab" hidden>
+                <div class="section">
+                    <h3>Gallery</h3>
+                    <div class="export-row">
+                        <button id="clearGalleryBtn" class="ds-btn" type="button">Clear Gallery</button>
+                    </div>
+                    <div id="galleryGrid" class="gallery-grid"></div>
+                </div>
             </div>
 
         </div>
+        <div id="control-actions">
+            <button id="randomizeBtn" class="ds-btn" type="button" title="Randomize settings">Random</button>
+            <button id="saveSnapshotBtn" class="ds-btn ds-btn-primary" type="button">Save Snapshot</button>
+        </div>
         <div id="control-footer">
             <div id="status" data-state="idle">Idle</div>
-            <button id="generateBtn" class="ds-btn ds-btn-primary" onclick="startGeneration()">Generate</button>
+            <button id="generateBtn" class="ds-btn ds-btn-primary" onclick="startGeneration()" style="display: none;">Generate</button>
         </div>
     </div>
 
@@ -639,7 +1041,7 @@
                 panel.style.display = debugVisible ? "block" : "none";
             }
             if (toggleBtn) {
-                toggleBtn.textContent = debugVisible ? "Hide Debug" : "Show Debug";
+                toggleBtn.textContent = debugVisible ? "Hide Debug Panel" : "Show Debug Panel";
             }
         }
 
@@ -659,6 +1061,81 @@
         function getInput(id, asInteger = false) {
             const val = document.getElementById(id).value;
             return asInteger ? parseInt(val, 10) : parseFloat(val);
+        }
+
+        function clamp01(v) {
+            return Math.max(0, Math.min(1, v));
+        }
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function smoothstep(edge0, edge1, x) {
+            const t = clamp01((x - edge0) / Math.max(1e-6, edge1 - edge0));
+            return t * t * (3 - 2 * t);
+        }
+
+        function resolveSeed() {
+            const seedInput = document.getElementById("seed");
+            let seed = parseInt(seedInput.value, 10);
+            if (!Number.isFinite(seed)) {
+                seed = Math.floor(Math.random() * 2147483647);
+                seedInput.value = String(seed);
+            }
+            return seed;
+        }
+
+        function hash2(x, y, seed) {
+            const n = Math.sin((x * 127.1 + y * 311.7 + seed * 0.0001) * 1.0) * 43758.5453123;
+            return fract(n);
+        }
+
+        function fade(t) {
+            return t * t * t * (t * (t * 6 - 15) + 10);
+        }
+
+        function gradientDot(ix, iy, x, y, seed) {
+            const angle = hash2(ix, iy, seed) * Math.PI * 2;
+            const gx = Math.cos(angle);
+            const gy = Math.sin(angle);
+            const dx = x - ix;
+            const dy = y - iy;
+            return gx * dx + gy * dy;
+        }
+
+        function perlin2D(x, y, seed) {
+            const x0 = Math.floor(x);
+            const y0 = Math.floor(y);
+            const x1 = x0 + 1;
+            const y1 = y0 + 1;
+            const sx = fade(x - x0);
+            const sy = fade(y - y0);
+
+            const n00 = gradientDot(x0, y0, x, y, seed);
+            const n10 = gradientDot(x1, y0, x, y, seed);
+            const n01 = gradientDot(x0, y1, x, y, seed);
+            const n11 = gradientDot(x1, y1, x, y, seed);
+
+            const ix0 = lerp(n00, n10, sx);
+            const ix1 = lerp(n01, n11, sx);
+            return lerp(ix0, ix1, sy) * 1.5;
+        }
+
+        function value2D(x, y, seed) {
+            const x0 = Math.floor(x);
+            const y0 = Math.floor(y);
+            const x1 = x0 + 1;
+            const y1 = y0 + 1;
+            const sx = fade(x - x0);
+            const sy = fade(y - y0);
+            const v00 = hash2(x0, y0, seed);
+            const v10 = hash2(x1, y0, seed);
+            const v01 = hash2(x0, y1, seed);
+            const v11 = hash2(x1, y1, seed);
+            const ix0 = lerp(v00, v10, sx);
+            const ix1 = lerp(v01, v11, sx);
+            return lerp(ix0, ix1, sy) * 2 - 1;
         }
 
 
@@ -689,6 +1166,53 @@
         let renderTask = null;
         let originalImageData = null;
         let animationId = null;
+        let renderRunId = 0;
+        let previewDebounceId = null;
+        let finalDebounceId = null;
+        let interactionActive = false;
+
+        function isHeavyControl(el) {
+            return [
+                "renderWidth",
+                "renderHeight",
+                "resolutionPreset",
+                "layers",
+                "scale",
+                "topoErosion",
+                "topoBandCount",
+                "topoNoiseType",
+                "topoPreset"
+            ].includes(el.id);
+        }
+
+        function schedulePreviewRender(triggerEl) {
+            if (!triggerEl || isHeavyControl(triggerEl)) return;
+            interactionActive = true;
+            if (finalDebounceId) {
+                clearTimeout(finalDebounceId);
+                finalDebounceId = null;
+            }
+            if (previewDebounceId) {
+                clearTimeout(previewDebounceId);
+            }
+            previewDebounceId = setTimeout(() => {
+                startGeneration(true, { preview: true });
+            }, 60);
+        }
+
+        function scheduleFinalRender() {
+            interactionActive = false;
+            if (previewDebounceId) {
+                clearTimeout(previewDebounceId);
+                previewDebounceId = null;
+            }
+            if (finalDebounceId) {
+                clearTimeout(finalDebounceId);
+            }
+            finalDebounceId = setTimeout(() => {
+                startGeneration(true, { preview: false });
+            }, 110);
+        }
 
         function computeLightInfluence(nx, ny, lightVec, highlightStrength) {
             const angleInfluence = nx * lightVec.x + ny * lightVec.y;
@@ -724,18 +1248,20 @@
             return total / totalAmp;
         }
 
-        function getNoiseFunction(type, simplex) {
+        function getNoiseFunction(type, simplex, seed) {
             switch (type) {
                 case "simplex":
                     return (x, y) => simplex.noise2D(x, y); // Already in [-1, 1]
+                case "perlin":
+                    return (x, y) => perlin2D(x, y, seed);
                 case "white":
-                    return (x, y) => Math.random() * 2 - 1;
+                    return (x, y) => hash2(Math.floor(x * 4096), Math.floor(y * 4096), seed) * 2 - 1;
                 case "value":
+                    return (x, y) => value2D(x * 18, y * 18, seed);
+                case "ridged":
                     return (x, y) => {
-                        const sx = Math.floor(x * 1000) % 1000;
-                        const sy = Math.floor(y * 1000) % 1000;
-                        const seed = (sx + sy * 57);
-                        return (Math.sin(seed) * 43758.5453) % 1 * 2 - 1;
+                        const n = simplex.noise2D(x, y);
+                        return (1 - Math.abs(n)) * 2 - 1;
                     };
                 default:
                     return (x, y) => 0;
@@ -795,9 +1321,9 @@
         }
 
         function writePixel(data, i, r, g, b, boostR, boostG, boostB) {
-            data[i] = Math.min(255, r * boostR);
-            data[i + 1] = Math.min(255, g * boostG);
-            data[i + 2] = Math.min(255, b * boostB);
+            data[i] = Math.max(0, Math.min(255, r * boostR));
+            data[i + 1] = Math.max(0, Math.min(255, g * boostG));
+            data[i + 2] = Math.max(0, Math.min(255, b * boostB));
             data[i + 3] = 255;
         }
 
@@ -816,13 +1342,40 @@
             ];
         }
 
-        const palette = [
-            { h: 290, s: 20, l: 85 },
-            { h: 180, s: 20, l: 85 },
-            { h: 60, s: 20, l: 90 },
-            { h: 330, s: 20, l: 88 },
-            { h: 0, s: 0, l: 95 },
-        ];
+        const NACRE_PALETTES = {
+            classic: [
+                { h: 286, s: 26, l: 83 },
+                { h: 192, s: 28, l: 85 },
+                { h: 148, s: 24, l: 84 },
+                { h: 330, s: 20, l: 88 },
+                { h: 28, s: 12, l: 93 }
+            ],
+            abalone: [
+                { h: 278, s: 34, l: 82 },
+                { h: 232, s: 38, l: 79 },
+                { h: 186, s: 44, l: 79 },
+                { h: 154, s: 38, l: 80 },
+                { h: 334, s: 31, l: 86 }
+            ],
+            silver: [
+                { h: 230, s: 10, l: 88 },
+                { h: 210, s: 12, l: 84 },
+                { h: 185, s: 15, l: 86 },
+                { h: 260, s: 10, l: 87 },
+                { h: 26, s: 6, l: 94 }
+            ],
+            pinkgreen: [
+                { h: 328, s: 34, l: 86 },
+                { h: 300, s: 30, l: 84 },
+                { h: 164, s: 38, l: 81 },
+                { h: 136, s: 34, l: 82 },
+                { h: 28, s: 12, l: 93 }
+            ]
+        };
+
+        function getNacrePalette(name) {
+            return NACRE_PALETTES[name] || NACRE_PALETTES.classic;
+        }
 
         function updateVisibleSections(mode) {
             const allSections = document.querySelectorAll("#controls .section");
@@ -842,6 +1395,33 @@
                 const shouldShow = modes.includes("all") || modes.includes(mode);
                 row.hidden = !shouldShow;
             });
+        }
+
+        function applyTopoPreset(name) {
+            const presets = {
+                coastal: { scale: 0.004, layers: 4, ridge: 0.45, warp: 0.32, erosion: 0.55, bands: 9, source: "simplex" },
+                alpine: { scale: 0.007, layers: 5, ridge: 0.82, warp: 0.22, erosion: 0.26, bands: 14, source: "ridged" },
+                dunes: { scale: 0.003, layers: 3, ridge: 0.58, warp: 0.64, erosion: 0.12, bands: 11, source: "perlin" },
+                volcanic: { scale: 0.009, layers: 5, ridge: 0.72, warp: 0.48, erosion: 0.33, bands: 12, source: "value" }
+            };
+            if (name === "custom" || !presets[name]) return;
+            const p = presets[name];
+            const updates = [
+                ["scale", p.scale],
+                ["layers", p.layers],
+                ["topoRidge", p.ridge],
+                ["topoWarp", p.warp],
+                ["topoErosion", p.erosion],
+                ["topoBandCount", p.bands],
+                ["topoNoiseType", p.source]
+            ];
+            updates.forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.value = String(value);
+                markControlPending(el);
+            });
+            updatePendingStatus();
         }
 
         function markControlPending(el) {
@@ -875,6 +1455,7 @@
                 markControlPending(hInput);
             }
             updatePendingStatus();
+            scheduleFinalRender();
         });
 
         function applyGrainOverlay(ctx, width, height) {
@@ -890,44 +1471,156 @@
 
             ctx.putImageData(grainImage, 0, 0);
         }
-        function getRenderConfig() {
-            const seed = getInput("seed", true);
+
+        function applyGaussianBlurOverlay(sourceCanvas, blurAmount, alpha = 0.75) {
+            if (!blurAmount || blurAmount <= 0) return;
+            ctx.globalAlpha = alpha;
+            ctx.filter = `blur(${blurAmount}px)`;
+            ctx.drawImage(sourceCanvas, 0, 0);
+            ctx.globalAlpha = 1;
+            ctx.filter = "none";
+        }
+
+        function getSubstrateRgb(tone) {
+            if (tone === "dark") {
+                return { r: 16, g: 18, b: 22 };
+            }
+            return { r: 238, g: 234, b: 226 };
+        }
+
+        function applyExperimentalEffects(config) {
+            const fxInvert = config.fxInvert;
+            const fxChromatic = config.fxChromatic || 0;
+            const fxGlitch = config.fxGlitch || 0;
+            const fxScanline = config.fxScanline || 0;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            if (fxChromatic > 0.05) {
+                const src = ctx.getImageData(0, 0, width, height);
+                const out = ctx.createImageData(width, height);
+                const srcData = src.data;
+                const outData = out.data;
+                const shift = Math.max(1, Math.round(fxChromatic));
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const i = (y * width + x) * 4;
+                        const xr = Math.min(width - 1, x + shift);
+                        const xb = Math.max(0, x - shift);
+                        const ir = (y * width + xr) * 4;
+                        const ib = (y * width + xb) * 4;
+                        outData[i] = srcData[ir];
+                        outData[i + 1] = srcData[i + 1];
+                        outData[i + 2] = srcData[ib + 2];
+                        outData[i + 3] = 255;
+                    }
+                }
+                ctx.putImageData(out, 0, 0);
+            }
+
+            if (fxGlitch > 0.01) {
+                const maxSlices = Math.max(1, Math.floor(6 + fxGlitch * 28));
+                const maxShift = Math.max(1, Math.floor(width * (0.002 + fxGlitch * 0.03)));
+                for (let s = 0; s < maxSlices; s++) {
+                    const bandH = Math.max(1, Math.floor(2 + Math.random() * (8 + fxGlitch * 24)));
+                    const y = Math.floor(Math.random() * Math.max(1, height - bandH));
+                    const shift = Math.floor((Math.random() * 2 - 1) * maxShift);
+                    if (shift === 0) continue;
+                    ctx.drawImage(canvas, 0, y, width, bandH, shift, y, width, bandH);
+                }
+            }
+
+            if (fxScanline > 0.01) {
+                ctx.save();
+                ctx.globalAlpha = Math.min(0.7, fxScanline * 0.45);
+                ctx.fillStyle = "#000";
+                for (let y = 0; y < height; y += 2) {
+                    ctx.fillRect(0, y, width, 1);
+                }
+                ctx.restore();
+            }
+
+            if (fxInvert) {
+                const img = ctx.getImageData(0, 0, width, height);
+                const d = img.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    d[i] = 255 - d[i];
+                    d[i + 1] = 255 - d[i + 1];
+                    d[i + 2] = 255 - d[i + 2];
+                }
+                ctx.putImageData(img, 0, 0);
+            }
+        }
+        function getRenderConfig(renderOptions = {}) {
+            const seed = resolveSeed();
+            const fallbackWidth = Math.max(1, Math.floor(canvas.clientWidth || (window.innerWidth - 400)));
+            const fallbackHeight = Math.max(1, Math.floor(canvas.clientHeight || window.innerHeight));
+            const mode = document.getElementById("modeSelector").value;
+            const requestedWidth = getInput("renderWidth", true) || fallbackWidth;
+            const requestedHeight = getInput("renderHeight", true) || fallbackHeight;
+            const previewScale = mode === "topography" ? 0.35 : 0.5;
+            const scaleFactor = renderOptions.preview ? previewScale : 1;
+            const targetWidth = Math.max(1, Math.floor(requestedWidth * scaleFactor));
+            const targetHeight = Math.max(1, Math.floor(requestedHeight * scaleFactor));
 
             return {
-                width: getInput("renderWidth", true) || window.innerWidth,
-                height: getInput("renderHeight", true) || window.innerHeight,
+                width: targetWidth,
+                height: targetHeight,
+                outputWidth: requestedWidth,
+                outputHeight: requestedHeight,
+                preview: !!renderOptions.preview,
                 seed,
                 layers: getInput("layers", true),
                 scale: getInput("scale"),
                 blend: getInput("blend"),
                 layerLength: getInput("layerLength"),
+                ringSpacing: getInput("ringSpacing"),
+                ringJitter: getInput("ringJitter"),
+                seamThickness: getInput("seamThickness"),
+                seamContrast: getInput("seamContrast"),
+                scratchDensity: getInput("scratchDensity"),
+                scratchAngle: getInput("scratchAngle"),
+                surfacePolish: getInput("surfacePolish"),
                 colorIntensity: getInput("intensity"),
                 colorRange: getInput("range"),
+                nacrePalette: document.getElementById("nacrePalette")?.value || "classic",
+                nacreBrilliance: getInput("nacreBrilliance"),
+                nacreChromatic: getInput("nacreChromatic"),
+                substrateTone: document.getElementById("substrateTone")?.value || "light",
+                substrateMix: getInput("substrateMix"),
                 flowMode: document.getElementById("flowMode").value,
                 highlightStrength: getInput("highlightStrength"),
                 lightAngle: getInput("lightAngle"),
-                animateFlow: document.getElementById("animateFlow").value,
                 dotSize: getInput("risoDotSize", true),
                 threshold: getInput("risoThreshold", true),
                 boostR: getInput("boostR"),
                 boostG: getInput("boostG"),
                 boostB: getInput("boostB"),
-                grain: document.getElementById("grainToggle").checked
+                gaussianBlur: getInput("gaussianBlur"),
+                grain: document.getElementById("grainToggle").checked,
+                fxInvert: !!document.getElementById("fxInvert")?.checked,
+                fxChromatic: getInput("fxChromatic"),
+                fxGlitch: getInput("fxGlitch"),
+                fxScanline: getInput("fxScanline"),
+                topoPreset: document.getElementById("topoPreset")?.value || "coastal",
+                topoRidge: getInput("topoRidge"),
+                topoWarp: getInput("topoWarp"),
+                topoErosion: getInput("topoErosion")
             };
         }
 
-        function startGeneration(force = false) {
+        function startGeneration(force = false, renderOptions = {}) {
             const mode = document.getElementById("modeSelector").value;
 
             switch (mode) {
                 case "motherofpearl":
-                    generateMotherOfPearl(force);
+                    generateMotherOfPearl(force, renderOptions);
                     break;
                 case "risograph":
-                    generateRisograph(force);
+                    generateRisograph(force, renderOptions);
                     break;
                 case "topography":
-                    generateTopography(force);
+                    generateTopography(force, renderOptions);
                     break;
                 default:
                     console.warn("Unknown mode:", mode);
@@ -935,12 +1628,19 @@
             }
         }
 
-        function generateMotherOfPearl(force = false) {
-            clearPendingIndicators();
+        function generateMotherOfPearl(force = false, renderOptions = {}) {
+            if (!renderOptions.preview) {
+                clearPendingIndicators();
+            }
 
-            if (renderTask || (animationId && !force)) return;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
 
-            const config = getRenderConfig();
+            const runId = ++renderRunId;
+            const config = getRenderConfig(renderOptions);
+            const palette = getNacrePalette(config.nacrePalette);
 
             if (!Array.isArray(palette) || palette.length < 2) {
                 console.error("Palette must be an array with at least 2 colors.");
@@ -948,16 +1648,6 @@
                 return;
             }
 
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
-                generateBtn.disabled = false;
-            }
-
-            if (renderTask) return;
-
-            canvas.width = config.width;
-            canvas.height = config.height;
             offscreenCanvas.width = config.width;
             offscreenCanvas.height = config.height;
 
@@ -973,13 +1663,25 @@
             const scale = config.scale;
             const blendSharpness = config.blend;
             const layerLength = config.layerLength;
+            const ringSpacing = config.ringSpacing;
+            const ringJitter = config.ringJitter;
+            const seamThickness = config.seamThickness;
+            const seamContrast = config.seamContrast;
+            const scratchDensity = config.scratchDensity;
+            const scratchAngle = config.scratchAngle;
+            const surfacePolish = config.surfacePolish;
             const colorIntensity = config.colorIntensity;
             const colorRange = config.colorRange;
+            const nacreBrilliance = config.nacreBrilliance;
+            const nacreChromatic = config.nacreChromatic;
+            const substrateTone = config.substrateTone;
+            const substrateMix = clamp01(config.substrateMix);
             const highlightStrength = config.highlightStrength;
             const lightAngle = config.lightAngle;
+            const gaussianBlur = config.gaussianBlur;
+            const substrate = getSubstrateRgb(substrateTone);
 
             const flowMode = config.flowMode;
-            const animateFlow = config.animateFlow;
 
             const boostR = config.boostR;
             const boostG = config.boostG;
@@ -990,18 +1692,26 @@
                 x: Math.cos(lightAngle * 2 * Math.PI),
                 y: Math.sin(lightAngle * 2 * Math.PI),
             };
+            const scratchDir = {
+                x: Math.cos(scratchAngle * 2 * Math.PI),
+                y: Math.sin(scratchAngle * 2 * Math.PI),
+            };
 
             showDebugInfo(config);
 
 
             let y = 0;
-            const rowsPerFrame = 10;
-            setStatus("rendering", "Rendering...");
-            generateBtn.disabled = true;
+            const rowsPerFrame = config.preview ? 28 : 10;
+            setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+            generateBtn.disabled = !config.preview;
 
             progress.style.width = "0%";
 
             function renderChunk() {
+                if (runId !== renderRunId) {
+                    renderTask = null;
+                    return;
+                }
                 const endY = Math.min(y + rowsPerFrame, config.height);
                 for (; y < endY; y++) {
                     for (let x = 0; x < config.width; x++) {
@@ -1012,12 +1722,56 @@
                         const { px, py } = getFlowCoordinates(x, y, cx, cy, flowMode, layerLength);
                         const noise = getNoiseValue(px, py, layers, scale, simplex);
 
-                        const value = (noise + angleInfluence * 1.5 + highlightBoost + 1) / 2;
-                        const { h, s, l } = blendPaletteColors(value, blendSharpness, colorRange, colorIntensity, palette);
-                        const shiftedHue = applyHueShift(h, nx, ny, lightVec);
+                        const growthAxis = flowMode === "circular"
+                            ? Math.hypot(nx, ny) * 2.2
+                            : (nx * 0.72 + ny * 0.28) * layerLength * 1.4;
+                        const ringPhase = (growthAxis + noise * ringJitter) * ringSpacing * 24;
+                        const ringWave = Math.sin(ringPhase * Math.PI);
+                        const seamMask = smoothstep(1 - seamThickness, 1, Math.abs(ringWave));
 
-                        const [r, g, b] = hslToRgb(shiftedHue, s, l);
+                        const geometricField = clamp01((noise * 0.7 + ringWave * 0.55 + 1) / 2);
+                        const lightingField = angleInfluence * 0.42 + highlightBoost * 0.26;
+                        const bandingField = clamp01((Math.sin((ringPhase + noise * 1.75) * Math.PI) + 1) / 2);
+                        const nacreField = clamp01(geometricField * 0.62 + bandingField * 0.28 + seamMask * 0.1);
+                        const value = clamp01(nacreField * 0.9 + lightingField * 0.1);
+                        let { h, s, l } = blendPaletteColors(value, blendSharpness, colorRange, colorIntensity, palette);
+                        s = Math.min(100, s * nacreBrilliance);
+                        l = Math.min(97, l + (nacreBrilliance - 1) * 6);
+
+                        // Drive hue shifts from the same growth geometry so iridescence follows structure.
+                        const structureHueShift = (bandingField - 0.5) * (44 * nacreChromatic) * colorRange
+                            + seamMask * (14 * nacreChromatic)
+                            - (nacreField - 0.5) * 12;
+                        const directionalHueShift = (angleInfluence * 9 + highlightBoost * 4) * (0.35 + 0.45 * nacreChromatic);
+                        const shiftedHue = (h + structureHueShift + directionalHueShift + 360) % 360;
+
+                        let [r, g, b] = hslToRgb(shiftedHue, s, l);
                         const i = (y * config.width + x) * 4;
+
+                        const seamStrength = seamMask * seamContrast;
+                        const seamDark = 1 - seamStrength * 0.68;
+                        const seamWarm = seamStrength * 95;
+                        r = r * seamDark + seamWarm * 0.42;
+                        g = g * seamDark + seamWarm * 0.28;
+                        b = b * (1 - seamStrength * 0.34);
+
+                        const geometryLift = nacreField * (12 + 20 * surfacePolish);
+                        r += geometryLift * 0.55;
+                        g += geometryLift * 0.62;
+                        b += geometryLift * 0.78;
+
+                        const scratchFreq = 60 + scratchDensity * 320;
+                        const scratchPhase = (nx * scratchDir.x + ny * scratchDir.y) * scratchFreq + noise * 6;
+                        const scratchLine = Math.pow(Math.abs(Math.sin(scratchPhase * Math.PI)), 24);
+                        const scratchAmount = scratchLine * scratchDensity * (1 - surfacePolish) * 45;
+                        r += scratchAmount;
+                        g += scratchAmount * 0.88;
+                        b += scratchAmount * 0.75;
+
+                        const coverage = clamp01((0.36 + nacreField * 0.58 + highlightBoost * 0.14) * (1 - substrateMix) + substrateMix * (0.22 + seamMask * 0.22));
+                        r = substrate.r * (1 - coverage) + r * coverage;
+                        g = substrate.g * (1 - coverage) + g * coverage;
+                        b = substrate.b * (1 - coverage) + b * coverage;
 
                         writePixel(data, i, r, g, b, boostR, boostG, boostB);
                     }
@@ -1026,10 +1780,16 @@
                 if (y < config.height) {
                     requestAnimationFrame(renderChunk);
                 } else {
+                    if (runId !== renderRunId) {
+                        renderTask = null;
+                        return;
+                    }
                     offscreenCtx.putImageData(imageData, 0, 0);
 
-                    // Apply a soft blur before compositing
-                    ctx.clearRect(0, 0, config.width, config.height);
+                    // Apply a soft blur before compositing.
+                    // Keep previous frame visible during computation and swap only when ready.
+                    canvas.width = config.width;
+                    canvas.height = config.height;
                     ctx.globalAlpha = 1;
                     ctx.drawImage(offscreenCanvas, 0, 0);
 
@@ -1038,6 +1798,12 @@
                     ctx.filter = "blur(8px)";
                     ctx.drawImage(offscreenCanvas, 0, 0);
 
+                    if (gaussianBlur > 0) {
+                        ctx.globalAlpha = 0.72;
+                        ctx.filter = `blur(${gaussianBlur}px)`;
+                        ctx.drawImage(offscreenCanvas, 0, 0);
+                    }
+
                     // Reset effects
                     ctx.globalAlpha = 1.0;
                     ctx.filter = "none";
@@ -1045,6 +1811,7 @@
                     if (config.grain) {
                         applyGrainOverlay(ctx, config.width, config.height);
                     }
+                    applyExperimentalEffects(config);
 
                     originalImageData = new ImageData(
                         new Uint8ClampedArray(imageData.data),
@@ -1052,20 +1819,25 @@
                         imageData.height
                     );
 
-                    setStatus("complete", "Complete");
-
-                    setTimeout(() => {
-                        setStatus("idle", "Idle");
-                        generateBtn.disabled = false;
-                    }, 500);
+                    if (!config.preview) {
+                        setStatus("complete", "Complete");
+                        setTimeout(() => {
+                            setStatus("idle", "Idle");
+                            generateBtn.disabled = false;
+                        }, 500);
+                    } else {
+                        setStatus("idle", "Preview ready");
+                    }
 
                     renderTask = null;
                     // Save current values as "applied"
-                    document.querySelectorAll('#controls input, #controls select').forEach(el => {
-                        if (el.dataset.live !== "true") {
-                            el.dataset.applied = el.type === "checkbox" ? String(el.checked) : el.value;
-                        }
-                    });
+                    if (!config.preview) {
+                        document.querySelectorAll('#controls input, #controls select').forEach(el => {
+                            if (el.dataset.live !== "true") {
+                                el.dataset.applied = el.type === "checkbox" ? String(el.checked) : el.value;
+                            }
+                        });
+                    }
 
                 }
             }
@@ -1073,14 +1845,16 @@
             requestAnimationFrame(renderChunk);
         }
 
-        function generateRisograph(force = false) {
-            clearPendingIndicators();
-            generateBtn.disabled = true;
+        function generateRisograph(force = false, renderOptions = {}) {
+            if (!renderOptions.preview) {
+                clearPendingIndicators();
+            }
+            generateBtn.disabled = !renderOptions.preview;
 
             const width = canvas.width;
             const height = canvas.height;
 
-            const config = getRenderConfig();
+            const config = getRenderConfig(renderOptions);
             const dotSize = config.dotSize;
             const threshold = config.threshold;
 
@@ -1112,58 +1886,105 @@
 
             const { boostR, boostG, boostB, grain } = getLiveRenderOverrides();
             adjustColorBoosts();
+            applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.8);
             if (grain) applyGrainOverlay(ctx, config.width, config.height);
+            applyExperimentalEffects(config);
 
             setTimeout(() => {
-                setStatus("complete", "Riso rendered");
-                generateBtn.disabled = false;
-                setTimeout(() => setStatus("idle", "Idle"), 500);
-            }, 800);
+                if (!renderOptions.preview) {
+                    setStatus("complete", "Riso rendered");
+                    generateBtn.disabled = false;
+                    setTimeout(() => setStatus("idle", "Idle"), 500);
+                } else {
+                    setStatus("idle", "Preview ready");
+                }
+            }, renderOptions.preview ? 120 : 800);
 
         }
 
-        function generateTopography(force = false) {
-            clearPendingIndicators();
-            generateBtn.disabled = true;
+        function generateTopography(force = false, renderOptions = {}) {
+            if (!renderOptions.preview) {
+                clearPendingIndicators();
+            }
+            generateBtn.disabled = !renderOptions.preview;
 
-            const config = getRenderConfig();
+            const config = getRenderConfig(renderOptions);
             const bandCount = getInput("topoBandCount", true);
             const renderMode = document.getElementById("topoRenderMode").value;
             const noiseType = document.getElementById("topoNoiseType").value;
+            const ridgeStrength = config.topoRidge;
+            const warpStrength = config.topoWarp;
+            const erosionStrength = config.topoErosion;
 
             simplex = createSeededSimplex(config.seed);
-            const baseNoise = getNoiseFunction(noiseType, simplex);
-            const effectiveScale = 1000 * config.scale;
+            const baseNoise = getNoiseFunction(noiseType, simplex, config.seed);
+            const effectiveScale = 620 * config.scale;
 
             const noiseFunc = getCombinedNoiseFunction(baseNoise, config.layers, effectiveScale);
+            const terrainNoise = (nx, ny) => {
+                const warpAmp = 0.18 * warpStrength;
+                const wx = nx + noiseFunc(nx + 7.91, ny - 4.28) * warpAmp;
+                const wy = ny + noiseFunc(nx - 5.73, ny + 9.16) * warpAmp;
+                const n = noiseFunc(wx, wy);
+                const ridged = 1 - Math.abs(n);
+                const ridgedSigned = ridged * 2 - 1;
+                return n * (1 - ridgeStrength) + ridgedSigned * ridgeStrength;
+            };
 
-            showDebugInfo(config, { effectiveScale });
+            showDebugInfo(config, { effectiveScale, ridgeStrength, warpStrength, erosionStrength });
 
-            canvas.width = config.width;
-            canvas.height = config.height;
+            offscreenCanvas.width = config.width;
+            offscreenCanvas.height = config.height;
 
-            const imageData = ctx.createImageData(config.width, config.height);
+            const heights = new Float32Array(config.width * config.height);
+            for (let y = 0; y < config.height; y++) {
+                for (let x = 0; x < config.width; x++) {
+                    const nx = x / config.width;
+                    const ny = y / config.height;
+                    const n = terrainNoise(nx, ny);
+                    heights[y * config.width + x] = clamp01((n + 1) / 2);
+                }
+            }
+
+            const erosionSteps = renderOptions.preview
+                ? Math.floor(erosionStrength * 2)
+                : Math.floor(erosionStrength * 4);
+            for (let s = 0; s < erosionSteps; s++) {
+                const smoothed = new Float32Array(heights.length);
+                for (let y = 0; y < config.height; y++) {
+                    for (let x = 0; x < config.width; x++) {
+                        const i = y * config.width + x;
+                        const left = heights[y * config.width + Math.max(0, x - 1)];
+                        const right = heights[y * config.width + Math.min(config.width - 1, x + 1)];
+                        const up = heights[Math.max(0, y - 1) * config.width + x];
+                        const down = heights[Math.min(config.height - 1, y + 1) * config.width + x];
+                        const avg = (left + right + up + down + heights[i]) / 5;
+                        smoothed[i] = heights[i] + (avg - heights[i]) * (0.3 + erosionStrength * 0.45);
+                    }
+                }
+                heights.set(smoothed);
+            }
+
+            const imageData = offscreenCtx.createImageData(config.width, config.height);
             const data = imageData.data;
 
             for (let y = 0; y < config.height; y++) {
                 for (let x = 0; x < config.width; x++) {
                     const i = (y * config.width + x) * 4;
-                    const nx = x / config.width;
-                    const ny = y / config.height;
-
-                    const value = (noiseFunc(nx, ny) + 1) / 2; // Normalize to [0,1]
+                    const value = heights[y * config.width + x];
                     const band = Math.floor(value * bandCount);
 
                     let color = 255;
                     if (renderMode === "lines") {
                         // Check neighbors and highlight if band changes
-                        const vRight = (noiseFunc((x + 1) / config.width, ny) + 1) / 2;
-                        const vDown = (noiseFunc(nx, (y + 1) / config.height) + 1) / 2;
+                        const vRight = heights[y * config.width + Math.min(config.width - 1, x + 1)];
+                        const vDown = heights[Math.min(config.height - 1, y + 1) * config.width + x];
                         const bRight = Math.floor(vRight * bandCount);
                         const bDown = Math.floor(vDown * bandCount);
                         color = (band !== bRight || band !== bDown) ? 0 : 255;
                     } else if (renderMode === "fill") {
-                        color = Math.floor((band / (bandCount - 1)) * 255);
+                        const stepped = band / Math.max(1, bandCount - 1);
+                        color = Math.floor(stepped * 255);
                     } else if (renderMode === "gradient") {
                         color = Math.floor(value * 255);
                     }
@@ -1173,21 +1994,29 @@
                 }
             }
 
-            ctx.putImageData(imageData, 0, 0);
+            offscreenCtx.putImageData(imageData, 0, 0);
+            canvas.width = config.width;
+            canvas.height = config.height;
+            ctx.drawImage(offscreenCanvas, 0, 0);
             originalImageData = ctx.getImageData(0, 0, config.width, config.height);
 
 
             // Post-processing
             const { grain } = getLiveRenderOverrides();
-            if (grain) applyGrainOverlay(ctx, config.width, config.height);
             adjustColorBoosts();
+            applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.75);
+            if (grain) applyGrainOverlay(ctx, config.width, config.height);
+            applyExperimentalEffects(config);
 
-            setStatus("complete", `Topography rendered: ${bandCount} bands, ${renderMode}`);
-
-            setTimeout(() => {
-                setStatus("idle", "Idle");
-                generateBtn.disabled = false;
-            }, 800);
+            if (!renderOptions.preview) {
+                setStatus("complete", `Topography rendered: ${bandCount} bands, ${renderMode}`);
+                setTimeout(() => {
+                    setStatus("idle", "Idle");
+                    generateBtn.disabled = false;
+                }, 800);
+            } else {
+                setStatus("idle", "Preview ready");
+            }
         }
 
         function updatePendingStatus() {
@@ -1283,12 +2112,268 @@
             ctx.putImageData(newImageData, 0, 0);
         }
 
-        function exportPNG() {
-            const link = document.createElement("a");
+        const GALLERY_STORAGE_KEY = "raden-gallery-v1";
+        let galleryItems = [];
+
+        function setActiveTab(tabName) {
+            const tabMap = {
+                generate: document.getElementById("tabGenerate"),
+                export: document.getElementById("tabExport"),
+                gallery: document.getElementById("tabGallery")
+            };
+            Object.entries(tabMap).forEach(([key, el]) => {
+                if (!el) return;
+                el.hidden = key !== tabName;
+            });
+            document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
+                btn.classList.toggle("is-active", btn.dataset.tab === tabName);
+            });
+        }
+
+        function getControlState() {
+            const state = {};
+            document.querySelectorAll("#controls input, #controls select").forEach((el) => {
+                if (!el.id) return;
+                state[el.id] = el.type === "checkbox" ? el.checked : el.value;
+            });
+            return state;
+        }
+
+        function applyControlState(state) {
+            Object.entries(state || {}).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (el.type === "checkbox") {
+                    el.checked = !!value;
+                } else {
+                    el.value = String(value);
+                }
+            });
             const mode = document.getElementById("modeSelector").value;
-            link.download = `${mode}_output.png`;
-            link.href = canvas.toDataURL("image/png");
+            document.body.setAttribute("data-mode", mode);
+            updateVisibleSections(mode);
+        }
+
+        function randomBetween(min, max) {
+            return min + Math.random() * (max - min);
+        }
+
+        function randomizeSettings() {
+            const mode = document.getElementById("modeSelector").value;
+            const randomSeed = Math.floor(Math.random() * 2147483647);
+            const set = (id, val, decimals = 2) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const v = typeof val === "number" ? val.toFixed(decimals) : val;
+                el.value = String(v);
+                markControlPending(el);
+            };
+
+            set("seed", randomSeed, 0);
+            set("scale", randomBetween(0.002, 0.016), 3);
+            set("layers", Math.floor(randomBetween(2, 6)), 0);
+            set("boostR", randomBetween(0.9, 1.25), 2);
+            set("boostG", randomBetween(0.9, 1.25), 2);
+            set("boostB", randomBetween(0.9, 1.25), 2);
+            set("gaussianBlur", randomBetween(0.2, 3.2), 2);
+            set("fxChromatic", randomBetween(0, 1.5), 1);
+            set("fxGlitch", randomBetween(0, 0.2), 2);
+            set("fxScanline", randomBetween(0, 0.25), 2);
+            const invertEl = document.getElementById("fxInvert");
+            if (invertEl) {
+                invertEl.checked = Math.random() < 0.08;
+                markControlPending(invertEl);
+            }
+
+            if (mode === "motherofpearl") {
+                const palettes = ["classic", "abalone", "silver", "pinkgreen"];
+                set("flowMode", Math.random() > 0.5 ? "linear" : "circular");
+                set("ringSpacing", randomBetween(0.35, 1.8), 2);
+                set("ringJitter", randomBetween(0.05, 0.9), 2);
+                set("seamThickness", randomBetween(0.05, 0.3), 2);
+                set("seamContrast", randomBetween(0.15, 0.95), 2);
+                set("highlightStrength", randomBetween(0.2, 1.5), 2);
+                set("nacreBrilliance", randomBetween(0.9, 1.9), 2);
+                set("nacreChromatic", randomBetween(0.5, 1.8), 2);
+                set("nacrePalette", palettes[Math.floor(Math.random() * palettes.length)]);
+                set("substrateTone", Math.random() > 0.5 ? "light" : "dark");
+                set("substrateMix", randomBetween(0.2, 0.75), 2);
+            } else if (mode === "topography") {
+                const presets = ["coastal", "alpine", "dunes", "volcanic"];
+                const p = presets[Math.floor(Math.random() * presets.length)];
+                set("topoPreset", p);
+                applyTopoPreset(p);
+                set("topoBandCount", Math.floor(randomBetween(6, 18)), 0);
+                set("topoRidge", randomBetween(0.2, 0.9), 2);
+                set("topoWarp", randomBetween(0.15, 0.75), 2);
+                set("topoErosion", randomBetween(0.1, 0.85), 2);
+            } else if (mode === "risograph") {
+                set("risoDotSize", randomBetween(3, 20), 0);
+                set("risoThreshold", randomBetween(90, 190), 0);
+            }
+
+            updatePendingStatus();
+            scheduleFinalRender();
+        }
+
+        function getExportTargetSize() {
+            const preset = document.getElementById("exportSizePreset").value;
+            const cropMode = document.getElementById("exportCropMode").value;
+            const currentW = canvas.width || 1;
+            const currentH = canvas.height || 1;
+            if (preset === "current") return { width: currentW, height: currentH };
+            if (preset === "1080-square") return { width: 1080, height: 1080 };
+            if (preset === "2160-square") return { width: 2160, height: 2160 };
+            if (preset === "1920x1080") return { width: 1920, height: 1080 };
+            if (preset === "custom") {
+                const w = parseInt(document.getElementById("exportWidth").value, 10) || currentW;
+                const h = parseInt(document.getElementById("exportHeight").value, 10) || currentH;
+                return { width: Math.max(1, w), height: Math.max(1, h) };
+            }
+            if (cropMode === "square") return { width: 1080, height: 1080 };
+            return { width: currentW, height: currentH };
+        }
+
+        function buildExportCanvas() {
+            const cropMode = document.getElementById("exportCropMode").value;
+            const { width: outW, height: outH } = getExportTargetSize();
+            const srcW = canvas.width;
+            const srcH = canvas.height;
+            let sx = 0;
+            let sy = 0;
+            let sw = srcW;
+            let sh = srcH;
+
+            if (cropMode === "square") {
+                const side = Math.min(srcW, srcH);
+                sx = Math.floor((srcW - side) / 2);
+                sy = Math.floor((srcH - side) / 2);
+                sw = side;
+                sh = side;
+            } else if (cropMode === "portrait") {
+                const targetAspect = 4 / 5;
+                const currentAspect = srcW / srcH;
+                if (currentAspect > targetAspect) {
+                    sw = Math.floor(srcH * targetAspect);
+                    sx = Math.floor((srcW - sw) / 2);
+                } else {
+                    sh = Math.floor(srcW / targetAspect);
+                    sy = Math.floor((srcH - sh) / 2);
+                }
+            } else if (cropMode === "landscape") {
+                const targetAspect = 16 / 9;
+                const currentAspect = srcW / srcH;
+                if (currentAspect > targetAspect) {
+                    sw = Math.floor(srcH * targetAspect);
+                    sx = Math.floor((srcW - sw) / 2);
+                } else {
+                    sh = Math.floor(srcW / targetAspect);
+                    sy = Math.floor((srcH - sh) / 2);
+                }
+            }
+
+            const out = document.createElement("canvas");
+            out.width = outW;
+            out.height = outH;
+            const outCtx = out.getContext("2d");
+            outCtx.drawImage(canvas, sx, sy, sw, sh, 0, 0, outW, outH);
+            return out;
+        }
+
+        function exportWithOptions() {
+            const mode = document.getElementById("modeSelector").value;
+            const fileType = document.getElementById("exportFileType").value;
+            const quality = parseFloat(document.getElementById("exportQuality").value) || 0.92;
+            const exportCanvas = buildExportCanvas();
+            const mime = fileType === "jpeg" ? "image/jpeg" : fileType === "webp" ? "image/webp" : "image/png";
+            const ext = fileType === "jpeg" ? "jpg" : fileType;
+            const dataUrl = mime === "image/png"
+                ? exportCanvas.toDataURL(mime)
+                : exportCanvas.toDataURL(mime, quality);
+            const link = document.createElement("a");
+            link.download = `${mode}_output.${ext}`;
+            link.href = dataUrl;
             link.click();
+        }
+
+        function exportPNG() {
+            exportWithOptions();
+        }
+
+        function saveGallery() {
+            localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryItems));
+        }
+
+        function loadGallery() {
+            const raw = localStorage.getItem(GALLERY_STORAGE_KEY);
+            galleryItems = raw ? JSON.parse(raw) : [];
+        }
+
+        function renderGallery() {
+            const grid = document.getElementById("galleryGrid");
+            if (!grid) return;
+            grid.innerHTML = "";
+            galleryItems.forEach((item) => {
+                const tile = document.createElement("div");
+                tile.className = "gallery-tile";
+                const img = document.createElement("img");
+                img.src = item.thumbnail;
+                img.alt = item.label;
+
+                const label = document.createElement("div");
+                label.textContent = item.label;
+                label.style.fontSize = "12px";
+                label.style.color = "var(--ds-text-muted)";
+
+                const actions = document.createElement("div");
+                actions.className = "gallery-actions";
+                const delBtn = document.createElement("button");
+                delBtn.className = "ds-btn ds-btn-sm";
+                delBtn.textContent = "Delete";
+                delBtn.onclick = () => {
+                    galleryItems = galleryItems.filter((g) => g.id !== item.id);
+                    saveGallery();
+                    renderGallery();
+                };
+
+                const recallBtn = document.createElement("button");
+                recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary";
+                recallBtn.textContent = "Recall";
+                recallBtn.onclick = () => {
+                    applyControlState(item.settings);
+                    setActiveTab("generate");
+                    scheduleFinalRender();
+                };
+
+                actions.appendChild(delBtn);
+                actions.appendChild(recallBtn);
+                tile.appendChild(img);
+                tile.appendChild(label);
+                tile.appendChild(actions);
+                grid.appendChild(tile);
+            });
+        }
+
+        function saveSnapshot() {
+            const thumbCanvas = buildExportCanvas();
+            const tiny = document.createElement("canvas");
+            tiny.width = 220;
+            tiny.height = 220;
+            const tctx = tiny.getContext("2d");
+            tctx.drawImage(thumbCanvas, 0, 0, tiny.width, tiny.height);
+            const mode = document.getElementById("modeSelector").value;
+            const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            const item = {
+                id,
+                label: `${mode} ${new Date().toLocaleString()}`,
+                thumbnail: tiny.toDataURL("image/jpeg", 0.7),
+                settings: getControlState()
+            };
+            galleryItems.unshift(item);
+            galleryItems = galleryItems.slice(0, 60);
+            saveGallery();
+            renderGallery();
+            setStatus("complete", "Snapshot saved");
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -1296,6 +2381,44 @@
             document.body.setAttribute("data-mode", mode);
             updateVisibleSections(mode);
             setStatus("idle", "Idle");
+            setActiveTab("generate");
+
+            const settingsBtn = document.getElementById("settingsBtn");
+            const settingsMenu = document.getElementById("settingsMenu");
+            const debugToggleBtn = document.getElementById("toggleDebugBtn");
+            const setSettingsOpen = (open) => {
+                if (!settingsBtn || !settingsMenu) return;
+                settingsMenu.hidden = !open;
+                settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+            };
+
+            if (settingsBtn && settingsMenu) {
+                settingsBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    setSettingsOpen(settingsMenu.hidden);
+                });
+                settingsMenu.addEventListener("click", (e) => e.stopPropagation());
+                document.addEventListener("click", () => setSettingsOpen(false));
+                document.addEventListener("keydown", (e) => {
+                    if (e.key === "Escape") {
+                        setSettingsOpen(false);
+                    }
+                });
+            }
+            if (debugToggleBtn) {
+                debugToggleBtn.addEventListener("click", () => {
+                    toggleDebugPanel();
+                });
+            }
+
+            loadGallery();
+            renderGallery();
+
+            const topoPresetEl = document.getElementById("topoPreset");
+            if (topoPresetEl && topoPresetEl.value !== "custom") {
+                applyTopoPreset(topoPresetEl.value);
+                clearPendingIndicators();
+            }
 
             const savedTheme = localStorage.getItem("raden-theme") || document.documentElement.dataset.theme || "steel-night";
             document.documentElement.dataset.theme = savedTheme;
@@ -1311,13 +2434,69 @@
             startGeneration();
         });
 
+        document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                setActiveTab(btn.dataset.tab);
+            });
+        });
+
+        document.getElementById("randomizeBtn").addEventListener("click", () => {
+            randomizeSettings();
+        });
+
+        document.getElementById("generateInlineBtn").addEventListener("click", () => {
+            startGeneration();
+        });
+
+        document.getElementById("exportFromPanelBtn").addEventListener("click", () => {
+            exportWithOptions();
+        });
+
+        document.getElementById("saveSnapshotBtn").addEventListener("click", () => {
+            saveSnapshot();
+        });
+
+        document.getElementById("clearGalleryBtn").addEventListener("click", () => {
+            galleryItems = [];
+            saveGallery();
+            renderGallery();
+        });
+
+        document.getElementById("exportSizePreset").addEventListener("change", (e) => {
+            const preset = e.target.value;
+            const w = document.getElementById("exportWidth");
+            const h = document.getElementById("exportHeight");
+            if (preset === "1080-square") {
+                w.value = "1080";
+                h.value = "1080";
+            } else if (preset === "1920x1080") {
+                w.value = "1920";
+                h.value = "1080";
+            } else if (preset === "2160-square") {
+                w.value = "2160";
+                h.value = "2160";
+            } else if (preset === "current") {
+                w.value = String(canvas.width || 1920);
+                h.value = String(canvas.height || 1080);
+            }
+        });
+
         document.getElementById("modeSelector").addEventListener("change", (e) => {
             const mode = e.target.value;
             document.body.setAttribute("data-mode", mode);
-            console.log("Switched to mode:", mode);
             updateVisibleSections(mode);
-            // Later: Show/hide relevant controls based on mode
+            scheduleFinalRender();
         });
+
+        const topoPreset = document.getElementById("topoPreset");
+        if (topoPreset) {
+            topoPreset.addEventListener("change", (e) => {
+                applyTopoPreset(e.target.value);
+                if (document.getElementById("modeSelector").value === "topography") {
+                    scheduleFinalRender();
+                }
+            });
+        }
 
         if (themeSelect) {
             themeSelect.addEventListener("change", (e) => {
@@ -1330,39 +2509,15 @@
         document.querySelectorAll("#controls input, #controls select").forEach((el) => {
             if (el.dataset.live !== "true") {
                 el.addEventListener("input", () => {
+                    if (!el.closest("#tabGenerate")) return;
                     markControlPending(el);
-
-                    const controlRow = el.closest(".control-row");
-                    if (!controlRow) return;
-                    const icons = controlRow.querySelector(".control-icons");
-                    if (icons && !icons.querySelector(".reset-btn")) {
-                        const btn = document.createElement("button");
-                        btn.innerText = "R";
-                        btn.className = "reset-btn";
-                        btn.title = "Revert to last applied";
-
-                        btn.onclick = (e) => {
-                            e.preventDefault();
-                            if (el.type === "checkbox") {
-                                el.checked = el.dataset.applied === "true";
-                            } else {
-                                el.value = el.dataset.applied || "";
-                            }
-                            el.classList.remove("pending-change");
-
-                            const label = controlRow.querySelector(".control-label");
-                            if (label) {
-                                label.classList.remove("pending-dot");
-                            }
-
-                            btn.remove();
-                            updatePendingStatus();
-                        };
-
-                        icons.appendChild(btn);
-                    }
-
+                    schedulePreviewRender(el);
                     updatePendingStatus();
+                });
+
+                el.addEventListener("change", () => {
+                    if (!el.closest("#tabGenerate")) return;
+                    scheduleFinalRender();
                 });
             }
         });
