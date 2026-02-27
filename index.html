@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="steel-night">
+<html lang="en" data-theme="industrial-terminal">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Raden - Texture Generator v1.2.1</title>
+    <title>Raden - Texture Generator v1.5.0</title>
     <link rel="stylesheet" href="./theme.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/iconoir@7.10.1/css/iconoir.css" />
     <style>
         :root {
             --raden-panel-width: 480px;
@@ -182,6 +183,18 @@
             display: none;
         }
 
+        #postProcessingSection {
+            order: 80;
+        }
+
+        #experimentalSection {
+            order: 90;
+        }
+
+        #iterationToolsSection {
+            order: 999;
+        }
+
         .control-row {
             display: grid;
             grid-template-columns: minmax(130px, var(--raden-row-label-width)) minmax(0, 1fr) auto;
@@ -217,8 +230,79 @@
 
         .control-icons {
             display: flex;
+            gap: 6px;
             justify-content: flex-end;
+            min-width: 0;
+        }
+
+        .info-popover {
+            position: fixed;
+            max-width: 320px;
+            padding: 8px 10px;
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: color-mix(in oklab, var(--ds-bg-elevated) 95%, transparent);
+            color: var(--ds-text);
+            font-size: var(--ds-fs-1);
+            line-height: 1.35;
+            box-shadow: var(--ds-card-shadow);
+            z-index: var(--ds-z-toast);
+            pointer-events: none;
+        }
+
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             min-width: var(--ds-control-h-sm);
+            min-height: var(--ds-control-h-sm);
+            padding: 0 8px;
+            gap: 6px;
+        }
+
+        .icon-btn i {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .control-lock-btn {
+            opacity: 0;
+            transition: opacity var(--ds-dur-fast) var(--ds-ease-standard), transform var(--ds-dur-fast) var(--ds-ease-standard);
+            transform: translateX(2px);
+        }
+
+        .control-row:hover .control-lock-btn,
+        .control-row:focus-within .control-lock-btn,
+        .control-lock-btn.is-locked {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .control-lock-btn.is-locked {
+            border-color: var(--ds-warning);
+            color: var(--ds-warning);
+            background: color-mix(in oklab, var(--ds-warning) 15%, var(--ds-btn-bg));
+        }
+
+        .seed-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+            gap: var(--ds-space-2);
+        }
+
+        .seed-tile {
+            display: grid;
+            gap: 6px;
+            border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+            border-radius: var(--ds-radius-2);
+            background: color-mix(in oklab, var(--ds-bg-raised) 90%, transparent);
+            padding: 8px;
+        }
+
+        .seed-chip {
+            font-size: var(--ds-fs-1);
+            color: var(--ds-text-muted);
+            overflow-wrap: anywhere;
         }
 
         .control-input input[type="number"],
@@ -263,24 +347,6 @@
         .pending-change {
             border-color: var(--ds-warning) !important;
             box-shadow: 0 0 0 1px color-mix(in oklab, var(--ds-warning) 45%, transparent);
-        }
-
-        .reset-btn {
-            width: var(--ds-control-h-sm);
-            min-height: var(--ds-control-h-sm);
-            border: var(--ds-border-w) var(--ds-border-style) var(--ds-btn-border);
-            border-radius: var(--ds-radius-2);
-            background: var(--ds-btn-bg);
-            color: var(--ds-btn-text);
-            cursor: pointer;
-            font: inherit;
-            font-size: var(--ds-fs-1);
-            padding: 0;
-        }
-
-        .reset-btn:hover {
-            background: var(--ds-btn-bg-hover);
-            border-color: var(--ds-border-strong);
         }
 
         .export-row {
@@ -335,7 +401,7 @@
             align-items: center;
             justify-content: flex-start;
             gap: var(--ds-space-2);
-            padding: var(--ds-space-3);
+            padding: var(--ds-space-2) var(--ds-space-3);
             border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
         }
 
@@ -453,7 +519,9 @@
                     <button id="tabBtnExport" class="panel-tab-btn" type="button" data-tab="export">Export</button>
                     <button id="tabBtnGallery" class="panel-tab-btn" type="button" data-tab="gallery">Gallery</button>
                 </div>
-                <button id="settingsBtn" class="panel-settings-btn" type="button" aria-expanded="false" aria-controls="settingsMenu" title="Settings">&#9881;</button>
+                <button id="settingsBtn" class="panel-settings-btn icon-btn" type="button" aria-expanded="false" aria-controls="settingsMenu" title="Settings">
+                    <i class="iconoir-settings"></i>
+                </button>
                 <div id="settingsMenu" class="settings-menu" hidden>
                     <div class="settings-row">
                         <label for="themeSelect">Theme</label>
@@ -468,7 +536,23 @@
                             <option value="industrial-terminal">Industrial Terminal</option>
                         </select>
                     </div>
-                    <button id="toggleDebugBtn" class="ds-btn" type="button">Hide Debug Panel</button>
+                    <div class="settings-row">
+                        <label for="performanceProfile">Performance Profile</label>
+                        <select id="performanceProfile">
+                            <option value="balanced">Balanced</option>
+                            <option value="fast">Fast Preview</option>
+                            <option value="high">High Quality</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label for="hoverHintsToggle">Hover Hints</label>
+                        <input id="hoverHintsToggle" type="checkbox" />
+                    </div>
+                    <div class="settings-row">
+                        <label for="debugPanelToggle">Debug Panel</label>
+                        <input id="debugPanelToggle" type="checkbox" />
+                    </div>
+                    <button id="runQaChecksBtn" class="ds-btn" type="button">Run QA Checks</button>
                 </div>
             </div>
         </div>
@@ -481,9 +565,35 @@
                     <div class="control-input">
                         <select id="modeSelector">
                             <option value="motherofpearl">Mother of Pearl</option>
+                            <option value="opalvein">Opal Vein</option>
+                            <option value="labradorite">Labradorite Flash</option>
+                            <option value="marbleink">Marble Ink</option>
                             <option value="risograph">Risograph</option>
                             <option value="topography">Topography</option>
                         </select>
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row" data-mode="motherofpearl">
+                    <div class="control-label">Material Preset</div>
+                    <div class="control-input">
+                        <select id="materialPreset">
+                            <option value="pearl_light">Pearl (Light Base)</option>
+                            <option value="black_pearl">Black Pearl</option>
+                            <option value="abalone">Abalone</option>
+                            <option value="shell_white">Shell White</option>
+                        </select>
+                    </div>
+                    <div class="control-icons">
+                        <button id="applyMaterialPresetBtn" class="ds-btn ds-btn-sm ds-btn-primary" type="button" title="Apply preset">
+                            <span>Apply</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Smart Random</div>
+                    <div class="control-input">
+                        <input type="checkbox" id="smartRandomToggle" checked />
                     </div>
                     <div class="control-icons"></div>
                 </div>
@@ -491,7 +601,7 @@
             <!-- 1. SEED & RESOLUTION -->
             <div class="section" data-mode="all">
                 <h3>Seed + Resolution</h3>
-                <div class="control-row" data-mode="motherofpearl, topography">
+                <div class="control-row" data-mode="motherofpearl, topography, opalvein, labradorite, marbleink">
                     <div class="control-label">Seed:</div>
                     <div class="control-input">
                         <input id="seed" placeholder="(random)" type="number" />
@@ -662,6 +772,22 @@
                 </div>
 
                 <div class="control-row">
+                    <div class="control-label">Light Curvature:</div>
+                    <div class="control-input">
+                        <input type="range" id="lightCurvature" min="0" max="1" step="0.01" value="0.28" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">Light Spread:</div>
+                    <div class="control-input">
+                        <input type="range" id="lightSpread" min="0" max="1" step="0.01" value="0.55" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+
+                <div class="control-row">
                     <div class="control-label">Shimmer Strength:</div>
                     <div class="control-input">
                         <input type="range" id="highlightStrength" min="0" max="2" step="0.01" value="0.65" data-live="false" />
@@ -777,7 +903,7 @@
                 </div>
             </div>
             <!-- 5. POST-PROCESSING -->
-            <div class="section" data-mode="all">
+            <div id="postProcessingSection" class="section" data-mode="all">
                 <h3>Post-Processing</h3>
 
                 <div class="control-row">
@@ -822,15 +948,6 @@
                     </div>
                     <div class="control-icons"></div>
                 </div>
-                <div class="control-row">
-                    <div class="control-label">Generate</div>
-                    <div class="control-input">
-                        <div class="generate-actions">
-                            <button id="generateInlineBtn" class="ds-btn ds-btn-primary" type="button">Generate</button>
-                        </div>
-                    </div>
-                    <div class="control-icons"></div>
-                </div>
             </div>
 
             <div class="section" data-mode="motherofpearl">
@@ -849,6 +966,17 @@
                     <div class="control-label">Substrate Mix:</div>
                     <div class="control-input">
                         <input type="range" id="substrateMix" min="0" max="1" step="0.01" value="0.45" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Texture Family:</div>
+                    <div class="control-input">
+                        <select id="textureFamily" data-live="false">
+                            <option value="classic">Classic Nacre</option>
+                            <option value="opal">Opal Vein</option>
+                            <option value="labradorite">Labradorite Flash</option>
+                        </select>
                     </div>
                     <div class="control-icons"></div>
                 </div>
@@ -880,7 +1008,117 @@
                 </div>
             </div>
 
-            <div class="section" data-mode="all">
+            <div class="section" data-mode="opalvein">
+                <h3>Opal Vein</h3>
+                <div class="control-row">
+                    <div class="control-label">Cell Scale:</div>
+                    <div class="control-input">
+                        <input type="range" id="opalCellScale" min="0.002" max="0.03" step="0.001" value="0.009" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Vein Density:</div>
+                    <div class="control-input">
+                        <input type="range" id="opalVeinDensity" min="0" max="2" step="0.01" value="0.85" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Fire Intensity:</div>
+                    <div class="control-input">
+                        <input type="range" id="opalFire" min="0" max="2.4" step="0.01" value="1.2" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Dark Matrix:</div>
+                    <div class="control-input">
+                        <input type="range" id="opalMatrix" min="0" max="1" step="0.01" value="0.52" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            <div class="section" data-mode="labradorite">
+                <h3>Labradorite Flash</h3>
+                <div class="control-row">
+                    <div class="control-label">Flash Scale:</div>
+                    <div class="control-input">
+                        <input type="range" id="labradoriteScale" min="0.002" max="0.03" step="0.001" value="0.008" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Flash Direction:</div>
+                    <div class="control-input">
+                        <input type="range" id="labradoriteDirection" min="0" max="1" step="0.01" value="0.33" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Band Sharpness:</div>
+                    <div class="control-input">
+                        <input type="range" id="labradoriteBanding" min="0.4" max="3" step="0.01" value="1.6" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Flash Intensity:</div>
+                    <div class="control-input">
+                        <input type="range" id="labradoriteFlash" min="0" max="2.5" step="0.01" value="1.35" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Base Darkness:</div>
+                    <div class="control-input">
+                        <input type="range" id="labradoriteDarkness" min="0" max="1" step="0.01" value="0.68" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            <div class="section" data-mode="marbleink">
+                <h3>Marble Ink</h3>
+                <div class="control-row">
+                    <div class="control-label">Flow Scale:</div>
+                    <div class="control-input">
+                        <input type="range" id="marbleFlowScale" min="0.002" max="0.03" step="0.001" value="0.007" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Vein Frequency:</div>
+                    <div class="control-input">
+                        <input type="range" id="marbleVeinFreq" min="0.2" max="3" step="0.01" value="1.2" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Vein Contrast:</div>
+                    <div class="control-input">
+                        <input type="range" id="marbleContrast" min="0" max="1.5" step="0.01" value="0.78" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Ink Drift:</div>
+                    <div class="control-input">
+                        <input type="range" id="marbleInkDrift" min="0" max="1" step="0.01" value="0.42" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Stone Lightness:</div>
+                    <div class="control-input">
+                        <input type="range" id="marbleLightness" min="0" max="1" step="0.01" value="0.72" data-live="false" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+            </div>
+
+            <div id="experimentalSection" class="section" data-mode="all">
                 <h3>Experimental FX</h3>
                 <div class="control-row">
                     <div class="control-label">Invert Color:</div>
@@ -910,6 +1148,45 @@
                     </div>
                     <div class="control-icons"></div>
                 </div>
+            </div>
+
+            <div id="iterationToolsSection" class="section" data-mode="all">
+                <h3>Iteration Tools</h3>
+                <div class="control-row">
+                    <div class="control-label">A/B Compare</div>
+                    <div class="control-input">
+                        <input type="checkbox" id="compareToggle" />
+                    </div>
+                    <div class="control-icons">
+                        <button id="captureCompareBtn" class="ds-btn ds-btn-sm icon-btn" type="button" title="Capture current frame as A">
+                            <i class="iconoir-camera"></i>
+                            <span>Compare Capture</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Compare Split</div>
+                    <div class="control-input">
+                        <input type="range" id="compareSplit" min="0.05" max="0.95" step="0.01" value="0.5" data-live="true" />
+                    </div>
+                    <div class="control-icons"></div>
+                </div>
+                <div class="control-row">
+                    <div class="control-label">Seed Variants</div>
+                    <div class="control-input">
+                        <select id="seedExploreCount">
+                            <option value="4">4</option>
+                            <option value="9" selected>9</option>
+                            <option value="12">12</option>
+                        </select>
+                    </div>
+                    <div class="control-icons">
+                        <button id="seedExploreBtn" class="ds-btn ds-btn-sm" type="button" title="Generate seed variants">
+                            <span>Generate</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="seedExploreGrid" class="seed-grid"></div>
             </div>
 
             </div>
@@ -991,13 +1268,19 @@
             </div>
 
         </div>
-        <div id="control-actions">
-            <button id="randomizeBtn" class="ds-btn" type="button" title="Randomize settings">Random</button>
-            <button id="saveSnapshotBtn" class="ds-btn ds-btn-primary" type="button">Save Snapshot</button>
-        </div>
         <div id="control-footer">
             <div id="status" data-state="idle">Idle</div>
             <button id="generateBtn" class="ds-btn ds-btn-primary" onclick="startGeneration()" style="display: none;">Generate</button>
+        </div>
+        <div id="control-actions">
+            <button id="randomizeBtn" class="ds-btn icon-btn" type="button" title="Randomize settings">
+                <i class="iconoir-refresh"></i>
+                <span>Randomize</span>
+            </button>
+            <button id="saveSnapshotBtn" class="ds-btn ds-btn-primary icon-btn" type="button" title="Save snapshot">
+                <i class="iconoir-camera"></i>
+                <span>Save Snapshot</span>
+            </button>
         </div>
     </div>
 
@@ -1009,7 +1292,7 @@
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
     <script>
 
-        let debugVisible = true;
+        let debugVisible = false;
 
         function showDebugInfo(config, extras = {}) {
             const panel = document.getElementById("debugPanel");
@@ -1033,15 +1316,19 @@
             panel.style.display = "block";
         }
 
-        function toggleDebugPanel() {
-            debugVisible = !debugVisible;
+        function toggleDebugPanel(forceState) {
+            if (typeof forceState === "boolean") {
+                debugVisible = forceState;
+            } else {
+                debugVisible = !debugVisible;
+            }
             const panel = document.getElementById("debugPanel");
-            const toggleBtn = document.getElementById("toggleDebugBtn");
+            const debugToggle = document.getElementById("debugPanelToggle");
             if (panel) {
                 panel.style.display = debugVisible ? "block" : "none";
             }
-            if (toggleBtn) {
-                toggleBtn.textContent = debugVisible ? "Hide Debug Panel" : "Show Debug Panel";
+            if (debugToggle) {
+                debugToggle.checked = debugVisible;
             }
         }
 
@@ -1169,7 +1456,6 @@
         let renderRunId = 0;
         let previewDebounceId = null;
         let finalDebounceId = null;
-        let interactionActive = false;
 
         function isHeavyControl(el) {
             return [
@@ -1185,9 +1471,20 @@
             ].includes(el.id);
         }
 
+        function isUiOnlyControl(el) {
+            return [
+                "materialPreset",
+                "seedExploreCount",
+                "compareToggle",
+                "hoverHintsToggle",
+                "debugPanelToggle",
+                "themeSelect"
+            ].includes(el.id);
+        }
+
         function schedulePreviewRender(triggerEl) {
             if (!triggerEl || isHeavyControl(triggerEl)) return;
-            interactionActive = true;
+            const perf = getPerformanceProfile();
             if (finalDebounceId) {
                 clearTimeout(finalDebounceId);
                 finalDebounceId = null;
@@ -1197,11 +1494,11 @@
             }
             previewDebounceId = setTimeout(() => {
                 startGeneration(true, { preview: true });
-            }, 60);
+            }, perf.previewDebounceMs);
         }
 
         function scheduleFinalRender() {
-            interactionActive = false;
+            const perf = getPerformanceProfile();
             if (previewDebounceId) {
                 clearTimeout(previewDebounceId);
                 previewDebounceId = null;
@@ -1211,14 +1508,18 @@
             }
             finalDebounceId = setTimeout(() => {
                 startGeneration(true, { preview: false });
-            }, 110);
+            }, perf.finalDebounceMs);
         }
 
-        function computeLightInfluence(nx, ny, lightVec, highlightStrength) {
-            const angleInfluence = nx * lightVec.x + ny * lightVec.y;
-            const bandFreq = 10;
-            const band = Math.sin((nx * lightVec.y - ny * lightVec.x) * bandFreq * Math.PI);
-            const highlightBoost = band * highlightStrength;
+        function computeLightInfluence(nx, ny, lightVec, highlightStrength, lightSpread = 0.55, lightCurvature = 0.28) {
+            const radial = Math.hypot(nx, ny);
+            const curvedNx = nx + nx * radial * lightCurvature * 1.2;
+            const curvedNy = ny + ny * radial * lightCurvature * 1.2;
+            const angleInfluence = curvedNx * lightVec.x + curvedNy * lightVec.y;
+            const bandFreq = 4 + (1 - lightSpread) * 18;
+            const band = Math.sin((curvedNx * lightVec.y - curvedNy * lightVec.x) * bandFreq * Math.PI);
+            const spreadDamp = Math.max(0.25, 1 - radial * (0.35 + lightSpread * 0.45));
+            const highlightBoost = band * highlightStrength * spreadDamp;
             return { angleInfluence, highlightBoost };
         }
 
@@ -1314,12 +1615,6 @@
             return { h, s, l };
         }
 
-        function applyHueShift(h, nx, ny, lightVec) {
-            const directionInfluence = nx * lightVec.y - ny * lightVec.x;
-            const hueShift = directionInfluence * 30;
-            return (h + hueShift + 360) % 360;
-        }
-
         function writePixel(data, i, r, g, b, boostR, boostG, boostB) {
             data[i] = Math.max(0, Math.min(255, r * boostR));
             data[i + 1] = Math.max(0, Math.min(255, g * boostG));
@@ -1397,7 +1692,8 @@
             });
         }
 
-        function applyTopoPreset(name) {
+        function applyTopoPreset(name, options = {}) {
+            const respectLocks = !!options.respectLocks;
             const presets = {
                 coastal: { scale: 0.004, layers: 4, ridge: 0.45, warp: 0.32, erosion: 0.55, bands: 9, source: "simplex" },
                 alpine: { scale: 0.007, layers: 5, ridge: 0.82, warp: 0.22, erosion: 0.26, bands: 14, source: "ridged" },
@@ -1416,6 +1712,7 @@
                 ["topoNoiseType", p.source]
             ];
             updates.forEach(([id, value]) => {
+                if (respectLocks && isControlLocked(id)) return;
                 const el = document.getElementById(id);
                 if (!el) return;
                 el.value = String(value);
@@ -1558,7 +1855,7 @@
             const mode = document.getElementById("modeSelector").value;
             const requestedWidth = getInput("renderWidth", true) || fallbackWidth;
             const requestedHeight = getInput("renderHeight", true) || fallbackHeight;
-            const previewScale = mode === "topography" ? 0.35 : 0.5;
+            const previewScale = getPreviewScaleForMode(mode);
             const scaleFactor = renderOptions.preview ? previewScale : 1;
             const targetWidth = Math.max(1, Math.floor(requestedWidth * scaleFactor));
             const targetHeight = Math.max(1, Math.floor(requestedHeight * scaleFactor));
@@ -1586,11 +1883,28 @@
                 nacrePalette: document.getElementById("nacrePalette")?.value || "classic",
                 nacreBrilliance: getInput("nacreBrilliance"),
                 nacreChromatic: getInput("nacreChromatic"),
+                textureFamily: document.getElementById("textureFamily")?.value || "classic",
+                opalCellScale: getInput("opalCellScale"),
+                opalVeinDensity: getInput("opalVeinDensity"),
+                opalFire: getInput("opalFire"),
+                opalMatrix: getInput("opalMatrix"),
+                labradoriteScale: getInput("labradoriteScale"),
+                labradoriteDirection: getInput("labradoriteDirection"),
+                labradoriteBanding: getInput("labradoriteBanding"),
+                labradoriteFlash: getInput("labradoriteFlash"),
+                labradoriteDarkness: getInput("labradoriteDarkness"),
+                marbleFlowScale: getInput("marbleFlowScale"),
+                marbleVeinFreq: getInput("marbleVeinFreq"),
+                marbleContrast: getInput("marbleContrast"),
+                marbleInkDrift: getInput("marbleInkDrift"),
+                marbleLightness: getInput("marbleLightness"),
                 substrateTone: document.getElementById("substrateTone")?.value || "light",
                 substrateMix: getInput("substrateMix"),
                 flowMode: document.getElementById("flowMode").value,
                 highlightStrength: getInput("highlightStrength"),
                 lightAngle: getInput("lightAngle"),
+                lightCurvature: getInput("lightCurvature"),
+                lightSpread: getInput("lightSpread"),
                 dotSize: getInput("risoDotSize", true),
                 threshold: getInput("risoThreshold", true),
                 boostR: getInput("boostR"),
@@ -1615,6 +1929,15 @@
             switch (mode) {
                 case "motherofpearl":
                     generateMotherOfPearl(force, renderOptions);
+                    break;
+                case "opalvein":
+                    generateOpalVein(force, renderOptions);
+                    break;
+                case "labradorite":
+                    generateLabradoriteFlash(force, renderOptions);
+                    break;
+                case "marbleink":
+                    generateMarbleInk(force, renderOptions);
                     break;
                 case "risograph":
                     generateRisograph(force, renderOptions);
@@ -1674,10 +1997,13 @@
             const colorRange = config.colorRange;
             const nacreBrilliance = config.nacreBrilliance;
             const nacreChromatic = config.nacreChromatic;
+            const textureFamily = config.textureFamily;
             const substrateTone = config.substrateTone;
             const substrateMix = clamp01(config.substrateMix);
             const highlightStrength = config.highlightStrength;
             const lightAngle = config.lightAngle;
+            const lightCurvature = clamp01(config.lightCurvature || 0.28);
+            const lightSpread = clamp01(config.lightSpread || 0.55);
             const gaussianBlur = config.gaussianBlur;
             const substrate = getSubstrateRgb(substrateTone);
 
@@ -1701,7 +2027,7 @@
 
 
             let y = 0;
-            const rowsPerFrame = config.preview ? 28 : 10;
+            const rowsPerFrame = getRowsPerFrame("motherofpearl", config.preview);
             setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
             generateBtn.disabled = !config.preview;
 
@@ -1710,6 +2036,7 @@
             function renderChunk() {
                 if (runId !== renderRunId) {
                     renderTask = null;
+                    animationId = null;
                     return;
                 }
                 const endY = Math.min(y + rowsPerFrame, config.height);
@@ -1718,7 +2045,7 @@
                         const nx = x / config.width - 0.5;
                         const ny = y / config.height - 0.5;
 
-                        const { angleInfluence, highlightBoost } = computeLightInfluence(nx, ny, lightVec, highlightStrength);
+                        const { angleInfluence, highlightBoost } = computeLightInfluence(nx, ny, lightVec, highlightStrength, lightSpread, lightCurvature);
                         const { px, py } = getFlowCoordinates(x, y, cx, cy, flowMode, layerLength);
                         const noise = getNoiseValue(px, py, layers, scale, simplex);
 
@@ -1732,23 +2059,47 @@
                         const geometricField = clamp01((noise * 0.7 + ringWave * 0.55 + 1) / 2);
                         const lightingField = angleInfluence * 0.42 + highlightBoost * 0.26;
                         const bandingField = clamp01((Math.sin((ringPhase + noise * 1.75) * Math.PI) + 1) / 2);
-                        const nacreField = clamp01(geometricField * 0.62 + bandingField * 0.28 + seamMask * 0.1);
+                        let familyBanding = bandingField;
+                        let familySeam = seamMask;
+                        let familyBrillianceMul = 1;
+                        let familyChromaticMul = 1;
+                        let substrateCoverageBias = 0;
+                        if (textureFamily === "opal") {
+                            const cellField = clamp01((Math.sin((noise * 4.2 + nx * 3.1 - ny * 2.7) * Math.PI) + 1) / 2);
+                            familyBanding = clamp01(bandingField * 0.58 + cellField * 0.42);
+                            familySeam = clamp01(seamMask * 0.52 + smoothstep(0.72, 1, cellField) * 0.48);
+                            familyBrillianceMul = 1.08;
+                            familyChromaticMul = 1.12;
+                            substrateCoverageBias = -0.06;
+                        } else if (textureFamily === "labradorite") {
+                            const flash = Math.pow(clamp01((angleInfluence + 1) / 2), 2.7);
+                            familyBanding = clamp01(bandingField * 0.7 + flash * 0.3);
+                            familySeam = clamp01(seamMask * 1.18);
+                            familyBrillianceMul = 1.04;
+                            familyChromaticMul = 1.28;
+                            substrateCoverageBias = 0.08;
+                        }
+
+                        const nacreField = clamp01(geometricField * 0.62 + familyBanding * 0.28 + familySeam * 0.1);
                         const value = clamp01(nacreField * 0.9 + lightingField * 0.1);
                         let { h, s, l } = blendPaletteColors(value, blendSharpness, colorRange, colorIntensity, palette);
-                        s = Math.min(100, s * nacreBrilliance);
-                        l = Math.min(97, l + (nacreBrilliance - 1) * 6);
+                        s = Math.min(100, s * nacreBrilliance * familyBrillianceMul);
+                        l = Math.min(97, l + (nacreBrilliance * familyBrillianceMul - 1) * 6);
+                        if (textureFamily === "labradorite") {
+                            l = Math.max(10, l - 8);
+                        }
 
                         // Drive hue shifts from the same growth geometry so iridescence follows structure.
-                        const structureHueShift = (bandingField - 0.5) * (44 * nacreChromatic) * colorRange
-                            + seamMask * (14 * nacreChromatic)
+                        const structureHueShift = (familyBanding - 0.5) * (44 * nacreChromatic * familyChromaticMul) * colorRange
+                            + familySeam * (14 * nacreChromatic * familyChromaticMul)
                             - (nacreField - 0.5) * 12;
-                        const directionalHueShift = (angleInfluence * 9 + highlightBoost * 4) * (0.35 + 0.45 * nacreChromatic);
+                        const directionalHueShift = (angleInfluence * 9 + highlightBoost * 4) * (0.35 + 0.45 * nacreChromatic * familyChromaticMul);
                         const shiftedHue = (h + structureHueShift + directionalHueShift + 360) % 360;
 
                         let [r, g, b] = hslToRgb(shiftedHue, s, l);
                         const i = (y * config.width + x) * 4;
 
-                        const seamStrength = seamMask * seamContrast;
+                        const seamStrength = familySeam * seamContrast;
                         const seamDark = 1 - seamStrength * 0.68;
                         const seamWarm = seamStrength * 95;
                         r = r * seamDark + seamWarm * 0.42;
@@ -1768,7 +2119,7 @@
                         g += scratchAmount * 0.88;
                         b += scratchAmount * 0.75;
 
-                        const coverage = clamp01((0.36 + nacreField * 0.58 + highlightBoost * 0.14) * (1 - substrateMix) + substrateMix * (0.22 + seamMask * 0.22));
+                        const coverage = clamp01((0.36 + nacreField * 0.58 + highlightBoost * 0.14 + substrateCoverageBias) * (1 - substrateMix) + substrateMix * (0.22 + familySeam * 0.22));
                         r = substrate.r * (1 - coverage) + r * coverage;
                         g = substrate.g * (1 - coverage) + g * coverage;
                         b = substrate.b * (1 - coverage) + b * coverage;
@@ -1778,10 +2129,11 @@
                 }
                 progress.style.width = `${(y / config.height) * 100}%`;
                 if (y < config.height) {
-                    requestAnimationFrame(renderChunk);
+                    animationId = requestAnimationFrame(renderChunk);
                 } else {
                     if (runId !== renderRunId) {
                         renderTask = null;
+                        animationId = null;
                         return;
                     }
                     offscreenCtx.putImageData(imageData, 0, 0);
@@ -1812,6 +2164,8 @@
                         applyGrainOverlay(ctx, config.width, config.height);
                     }
                     applyExperimentalEffects(config);
+                    captureDisplayBase();
+                    applyCompareView();
 
                     originalImageData = new ImageData(
                         new Uint8ClampedArray(imageData.data),
@@ -1830,6 +2184,7 @@
                     }
 
                     renderTask = null;
+                    animationId = null;
                     // Save current values as "applied"
                     if (!config.preview) {
                         document.querySelectorAll('#controls input, #controls select').forEach(el => {
@@ -1842,7 +2197,376 @@
                 }
             }
             renderTask = renderChunk;
-            requestAnimationFrame(renderChunk);
+            animationId = requestAnimationFrame(renderChunk);
+        }
+
+        function generateOpalVein(force = false, renderOptions = {}) {
+            if (!renderOptions.preview) {
+                clearPendingIndicators();
+            }
+
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            const runId = ++renderRunId;
+            const config = getRenderConfig(renderOptions);
+            offscreenCanvas.width = config.width;
+            offscreenCanvas.height = config.height;
+            simplex = createSeededSimplex(config.seed);
+
+            const imageData = offscreenCtx.createImageData(config.width, config.height);
+            const data = imageData.data;
+            const cellScale = config.opalCellScale || 0.009;
+            const veinDensity = config.opalVeinDensity || 0.85;
+            const fireIntensity = config.opalFire || 1.2;
+            const matrix = clamp01(config.opalMatrix || 0.52);
+            const gaussianBlur = config.gaussianBlur;
+            const boostR = config.boostR;
+            const boostG = config.boostG;
+            const boostB = config.boostB;
+
+            let y = 0;
+            const rowsPerFrame = getRowsPerFrame("opalvein", config.preview);
+            setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+            generateBtn.disabled = !config.preview;
+            progress.style.width = "0%";
+
+            function renderChunk() {
+                if (runId !== renderRunId) {
+                    renderTask = null;
+                    return;
+                }
+                const endY = Math.min(y + rowsPerFrame, config.height);
+                for (; y < endY; y++) {
+                    for (let x = 0; x < config.width; x++) {
+                        const nx = x / config.width;
+                        const ny = y / config.height;
+                        const i = (y * config.width + x) * 4;
+
+                        const n1 = simplex.noise2D(nx * 420 * cellScale, ny * 420 * cellScale);
+                        const n2 = simplex.noise2D((nx + 12.37) * 820 * cellScale, (ny - 5.91) * 820 * cellScale) * 0.5;
+                        const cells = clamp01((n1 * 0.75 + n2 * 0.25 + 1) / 2);
+                        const veins = Math.pow(Math.abs(Math.sin((cells * 10 + n1 * 3.5) * Math.PI)), 1.6 + veinDensity * 1.4);
+                        const edge = smoothstep(0.62 - veinDensity * 0.18, 0.92, veins);
+
+                        const darkBase = 14 + matrix * 24;
+                        let r = darkBase;
+                        let g = darkBase + 2;
+                        let b = darkBase + 5;
+
+                        const fireHue = ((cells * 360) + n2 * 120 + 360) % 360;
+                        const fireSat = Math.min(100, 45 + fireIntensity * 34 + edge * 14);
+                        const fireLum = Math.min(90, 26 + edge * 42 + fireIntensity * 8);
+                        const [fr, fg, fb] = hslToRgb(fireHue, fireSat, fireLum);
+
+                        const fireMask = clamp01(edge * (0.58 + fireIntensity * 0.25));
+                        r = r * (1 - fireMask) + fr * fireMask;
+                        g = g * (1 - fireMask) + fg * fireMask;
+                        b = b * (1 - fireMask) + fb * fireMask;
+
+                        const sparkle = Math.pow(clamp01((simplex.noise2D(nx * 1800, ny * 1800) + 1) / 2), 16) * fireIntensity * 140;
+                        r += sparkle * 0.65;
+                        g += sparkle * 0.92;
+                        b += sparkle;
+
+                        writePixel(data, i, r, g, b, boostR, boostG, boostB);
+                    }
+                }
+
+                progress.style.width = `${(y / config.height) * 100}%`;
+                if (y < config.height) {
+                    animationId = requestAnimationFrame(renderChunk);
+                    return;
+                }
+
+                offscreenCtx.putImageData(imageData, 0, 0);
+                canvas.width = config.width;
+                canvas.height = config.height;
+                ctx.globalAlpha = 1;
+                ctx.drawImage(offscreenCanvas, 0, 0);
+
+                ctx.globalAlpha = 0.22;
+                ctx.filter = "blur(7px)";
+                ctx.drawImage(offscreenCanvas, 0, 0);
+                if (gaussianBlur > 0) {
+                    ctx.globalAlpha = 0.72;
+                    ctx.filter = `blur(${gaussianBlur}px)`;
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                }
+                ctx.globalAlpha = 1;
+                ctx.filter = "none";
+
+                if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+                applyExperimentalEffects(config);
+                captureDisplayBase();
+                applyCompareView();
+
+                originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+                if (!config.preview) {
+                    setStatus("complete", "Opal rendered");
+                    setTimeout(() => {
+                        setStatus("idle", "Idle");
+                        generateBtn.disabled = false;
+                    }, 450);
+                } else {
+                    setStatus("idle", "Preview ready");
+                }
+                renderTask = null;
+                animationId = null;
+            }
+
+            renderTask = renderChunk;
+            animationId = requestAnimationFrame(renderChunk);
+        }
+
+        function generateLabradoriteFlash(force = false, renderOptions = {}) {
+            if (!renderOptions.preview) {
+                clearPendingIndicators();
+            }
+
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            const runId = ++renderRunId;
+            const config = getRenderConfig(renderOptions);
+            offscreenCanvas.width = config.width;
+            offscreenCanvas.height = config.height;
+            simplex = createSeededSimplex(config.seed);
+
+            const imageData = offscreenCtx.createImageData(config.width, config.height);
+            const data = imageData.data;
+            const scale = config.labradoriteScale || 0.008;
+            const bandSharpness = config.labradoriteBanding || 1.6;
+            const flashStrength = config.labradoriteFlash || 1.35;
+            const baseDarkness = clamp01(config.labradoriteDarkness || 0.68);
+            const direction = (config.labradoriteDirection || 0.33) * Math.PI * 2;
+            const dirX = Math.cos(direction);
+            const dirY = Math.sin(direction);
+            const gaussianBlur = config.gaussianBlur;
+            const boostR = config.boostR;
+            const boostG = config.boostG;
+            const boostB = config.boostB;
+
+            let y = 0;
+            const rowsPerFrame = getRowsPerFrame("labradorite", config.preview);
+            setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+            generateBtn.disabled = !config.preview;
+            progress.style.width = "0%";
+
+            function renderChunk() {
+                if (runId !== renderRunId) {
+                    renderTask = null;
+                    animationId = null;
+                    return;
+                }
+                const endY = Math.min(y + rowsPerFrame, config.height);
+                for (; y < endY; y++) {
+                    for (let x = 0; x < config.width; x++) {
+                        const nx = x / config.width - 0.5;
+                        const ny = y / config.height - 0.5;
+                        const i = (y * config.width + x) * 4;
+
+                        const nBase = simplex.noise2D((nx + 0.5) * 680 * scale, (ny + 0.5) * 680 * scale);
+                        const nDetail = simplex.noise2D((nx + 1.8) * 1400 * scale, (ny - 2.4) * 1400 * scale) * 0.45;
+                        const field = nBase * 0.75 + nDetail * 0.25;
+                        const directionBand = nx * dirX + ny * dirY;
+                        const band = Math.pow(Math.abs(Math.sin((directionBand * (36 + bandSharpness * 22) + field * 2.1) * Math.PI)), 1.2 + bandSharpness);
+                        const flashMask = clamp01(band * (0.4 + flashStrength * 0.42) + clamp01((field + 1) / 2) * 0.16);
+
+                        const base = 8 + (1 - baseDarkness) * 24;
+                        let r = base;
+                        let g = base + 2;
+                        let b = base + 5;
+
+                        const hue = (178 + field * 48 + directionBand * 90 + 360) % 360;
+                        const sat = Math.min(100, 42 + flashStrength * 28 + flashMask * 20);
+                        const lum = Math.min(88, 18 + flashMask * 52);
+                        const [fr, fg, fb] = hslToRgb(hue, sat, lum);
+
+                        r = r * (1 - flashMask) + fr * flashMask;
+                        g = g * (1 - flashMask) + fg * flashMask;
+                        b = b * (1 - flashMask) + fb * flashMask;
+
+                        const spark = Math.pow(clamp01((simplex.noise2D((nx + 4.2) * 2600, (ny - 1.3) * 2600) + 1) / 2), 18) * flashStrength * 170;
+                        r += spark * 0.45;
+                        g += spark * 0.8;
+                        b += spark;
+
+                        writePixel(data, i, r, g, b, boostR, boostG, boostB);
+                    }
+                }
+
+                progress.style.width = `${(y / config.height) * 100}%`;
+                if (y < config.height) {
+                    animationId = requestAnimationFrame(renderChunk);
+                    return;
+                }
+
+                offscreenCtx.putImageData(imageData, 0, 0);
+                canvas.width = config.width;
+                canvas.height = config.height;
+                ctx.globalAlpha = 1;
+                ctx.drawImage(offscreenCanvas, 0, 0);
+
+                ctx.globalAlpha = 0.24;
+                ctx.filter = "blur(9px)";
+                ctx.drawImage(offscreenCanvas, 0, 0);
+                if (gaussianBlur > 0) {
+                    ctx.globalAlpha = 0.72;
+                    ctx.filter = `blur(${gaussianBlur}px)`;
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                }
+                ctx.globalAlpha = 1;
+                ctx.filter = "none";
+
+                if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+                applyExperimentalEffects(config);
+                captureDisplayBase();
+                applyCompareView();
+
+                originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+                if (!config.preview) {
+                    setStatus("complete", "Labradorite rendered");
+                    setTimeout(() => {
+                        setStatus("idle", "Idle");
+                        generateBtn.disabled = false;
+                    }, 450);
+                } else {
+                    setStatus("idle", "Preview ready");
+                }
+                renderTask = null;
+                animationId = null;
+            }
+
+            renderTask = renderChunk;
+            animationId = requestAnimationFrame(renderChunk);
+        }
+
+        function generateMarbleInk(force = false, renderOptions = {}) {
+            if (!renderOptions.preview) {
+                clearPendingIndicators();
+            }
+
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            const runId = ++renderRunId;
+            const config = getRenderConfig(renderOptions);
+            offscreenCanvas.width = config.width;
+            offscreenCanvas.height = config.height;
+            simplex = createSeededSimplex(config.seed);
+
+            const imageData = offscreenCtx.createImageData(config.width, config.height);
+            const data = imageData.data;
+            const flowScale = config.marbleFlowScale || 0.007;
+            const veinFreq = config.marbleVeinFreq || 1.2;
+            const contrast = config.marbleContrast || 0.78;
+            const inkDrift = clamp01(config.marbleInkDrift || 0.42);
+            const stoneLightness = clamp01(config.marbleLightness || 0.72);
+            const gaussianBlur = config.gaussianBlur;
+            const boostR = config.boostR;
+            const boostG = config.boostG;
+            const boostB = config.boostB;
+
+            let y = 0;
+            const rowsPerFrame = getRowsPerFrame("marbleink", config.preview);
+            setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+            generateBtn.disabled = !config.preview;
+            progress.style.width = "0%";
+
+            function renderChunk() {
+                if (runId !== renderRunId) {
+                    renderTask = null;
+                    animationId = null;
+                    return;
+                }
+                const endY = Math.min(y + rowsPerFrame, config.height);
+                for (; y < endY; y++) {
+                    for (let x = 0; x < config.width; x++) {
+                        const nx = x / config.width;
+                        const ny = y / config.height;
+                        const i = (y * config.width + x) * 4;
+
+                        const warp1 = simplex.noise2D(nx * 900 * flowScale, ny * 900 * flowScale) * inkDrift * 0.32;
+                        const warp2 = simplex.noise2D((nx + 4.7) * 1600 * flowScale, (ny - 1.8) * 1600 * flowScale) * inkDrift * 0.18;
+                        const px = nx + warp1;
+                        const py = ny + warp2;
+
+                        const n = simplex.noise2D(px * 1200 * flowScale, py * 1200 * flowScale);
+                        const n2 = simplex.noise2D((px + 2.3) * 2400 * flowScale, (py - 2.1) * 2400 * flowScale) * 0.4;
+                        const flow = n * 0.7 + n2 * 0.3;
+                        const vein = Math.pow(Math.abs(Math.sin((flow * veinFreq * 4.2 + py * 3.2) * Math.PI)), 1.4 + contrast * 1.7);
+                        const veinMask = smoothstep(0.62 - contrast * 0.2, 0.96, vein);
+
+                        const stone = Math.round(145 + stoneLightness * 92 + flow * 9);
+                        let r = stone;
+                        let g = stone - 4;
+                        let b = stone - 10;
+
+                        const warmVein = 42 + contrast * 38;
+                        r = r * (1 - veinMask) + warmVein * veinMask;
+                        g = g * (1 - veinMask) + (warmVein - 10) * veinMask;
+                        b = b * (1 - veinMask) + (warmVein - 18) * veinMask;
+
+                        const cloud = clamp01((simplex.noise2D(px * 400 * flowScale, py * 400 * flowScale) + 1) / 2);
+                        r += cloud * 14;
+                        g += cloud * 11;
+                        b += cloud * 7;
+
+                        writePixel(data, i, r, g, b, boostR, boostG, boostB);
+                    }
+                }
+
+                progress.style.width = `${(y / config.height) * 100}%`;
+                if (y < config.height) {
+                    animationId = requestAnimationFrame(renderChunk);
+                    return;
+                }
+
+                offscreenCtx.putImageData(imageData, 0, 0);
+                canvas.width = config.width;
+                canvas.height = config.height;
+                ctx.globalAlpha = 1;
+                ctx.drawImage(offscreenCanvas, 0, 0);
+
+                ctx.globalAlpha = 0.18;
+                ctx.filter = "blur(5px)";
+                ctx.drawImage(offscreenCanvas, 0, 0);
+                if (gaussianBlur > 0) {
+                    ctx.globalAlpha = 0.72;
+                    ctx.filter = `blur(${gaussianBlur}px)`;
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                }
+                ctx.globalAlpha = 1;
+                ctx.filter = "none";
+
+                if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+                applyExperimentalEffects(config);
+                captureDisplayBase();
+                applyCompareView();
+
+                originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+                if (!config.preview) {
+                    setStatus("complete", "Marble rendered");
+                    setTimeout(() => {
+                        setStatus("idle", "Idle");
+                        generateBtn.disabled = false;
+                    }, 450);
+                } else {
+                    setStatus("idle", "Preview ready");
+                }
+                renderTask = null;
+                animationId = null;
+            }
+
+            renderTask = renderChunk;
+            animationId = requestAnimationFrame(renderChunk);
         }
 
         function generateRisograph(force = false, renderOptions = {}) {
@@ -1889,6 +2613,8 @@
             applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.8);
             if (grain) applyGrainOverlay(ctx, config.width, config.height);
             applyExperimentalEffects(config);
+            captureDisplayBase();
+            applyCompareView();
 
             setTimeout(() => {
                 if (!renderOptions.preview) {
@@ -2007,6 +2733,8 @@
             applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.75);
             if (grain) applyGrainOverlay(ctx, config.width, config.height);
             applyExperimentalEffects(config);
+            captureDisplayBase();
+            applyCompareView();
 
             if (!renderOptions.preview) {
                 setStatus("complete", `Topography rendered: ${bandCount} bands, ${renderMode}`);
@@ -2045,8 +2773,6 @@
                 }
             });
 
-            document.querySelectorAll('.reset-btn').forEach(btn => btn.remove());
-
             updatePendingStatus();
         }
 
@@ -2071,49 +2797,436 @@
             }
 
             ctx.putImageData(newImageData, 0, 0);
+            captureDisplayBase();
+            applyCompareView();
         }
 
-        function updateLightingEffect(lightAngle) {
-            if (!originalImageData) return;
-
-            const width = originalImageData.width;
-            const height = originalImageData.height;
-
-            const data = originalImageData.data;
-            const newImageData = ctx.createImageData(width, height);
-            const newData = newImageData.data;
-
-            const { highlightStrength } = getLiveRenderOverrides();
-
-            const lightVec = {
-                x: Math.cos(lightAngle * 2 * Math.PI),
-                y: Math.sin(lightAngle * 2 * Math.PI),
-            };
-
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const i = (y * width + x) * 4;
-
-                    const nx = x / width - 0.5;
-                    const ny = y / height - 0.5;
-                    const bandFreq = 10;
-                    const band = Math.sin(
-                        (nx * lightVec.y - ny * lightVec.x) * bandFreq * Math.PI
-                    );
-                    const highlight = band * highlightStrength;
-
-                    newData[i] = Math.min(255, data[i] + highlight * 255);
-                    newData[i + 1] = Math.min(255, data[i + 1] + highlight * 255);
-                    newData[i + 2] = Math.min(255, data[i + 2] + highlight * 255);
-                    newData[i + 3] = data[i + 3];
-                }
-            }
-
-            ctx.putImageData(newImageData, 0, 0);
-        }
 
         const GALLERY_STORAGE_KEY = "raden-gallery-v1";
+        const LOCK_STORAGE_KEY = "raden-random-locks-v1";
+        const HOVER_HINTS_STORAGE_KEY = "raden-hover-hints-v1";
+        const PERFORMANCE_PROFILE_STORAGE_KEY = "raden-performance-profile-v1";
+        const PERF_PROFILES = {
+            fast: {
+                previewScaleGeneral: 0.36,
+                previewScaleTopography: 0.24,
+                previewDebounceMs: 40,
+                finalDebounceMs: 85,
+                rowsPerFramePreviewMul: 1.6,
+                rowsPerFrameFinalMul: 1.3
+            },
+            balanced: {
+                previewScaleGeneral: 0.5,
+                previewScaleTopography: 0.35,
+                previewDebounceMs: 60,
+                finalDebounceMs: 110,
+                rowsPerFramePreviewMul: 1,
+                rowsPerFrameFinalMul: 1
+            },
+            high: {
+                previewScaleGeneral: 0.66,
+                previewScaleTopography: 0.5,
+                previewDebounceMs: 90,
+                finalDebounceMs: 140,
+                rowsPerFramePreviewMul: 0.8,
+                rowsPerFrameFinalMul: 0.85
+            }
+        };
+        const RANDOMIZABLE_CONTROL_IDS = [
+            "seed", "scale", "layers", "range", "blend", "intensity",
+            "layerLength", "ringSpacing", "ringJitter", "seamThickness", "seamContrast",
+            "lightAngle", "lightCurvature", "lightSpread", "highlightStrength", "scratchDensity", "scratchAngle", "surfacePolish",
+            "boostR", "boostG", "boostB", "gaussianBlur", "grainToggle",
+            "fxInvert", "fxChromatic", "fxGlitch", "fxScanline",
+            "flowMode", "nacreBrilliance", "nacreChromatic", "nacrePalette", "textureFamily",
+            "opalCellScale", "opalVeinDensity", "opalFire", "opalMatrix",
+            "labradoriteScale", "labradoriteDirection", "labradoriteBanding", "labradoriteFlash", "labradoriteDarkness",
+            "marbleFlowScale", "marbleVeinFreq", "marbleContrast", "marbleInkDrift", "marbleLightness",
+            "substrateTone", "substrateMix", "topoPreset", "topoNoiseType", "topoBandCount", "topoRenderMode", "topoRidge",
+            "topoWarp", "topoErosion", "risoDotSize", "risoThreshold"
+        ];
+        const CONTROL_INFO = {
+            scale: "Base pattern scale. Lower values create larger formations; higher values create tighter detail.",
+            layers: "Detail layers (noise octaves). Higher values add texture complexity but cost more render time.",
+            ringSpacing: "Distance/frequency of nacre growth bands. Higher values make denser stripe patterns.",
+            substrateTone: "Substrate color under nacre. Use light for pearl-like shells, dark for abalone-like shells.",
+            substrateMix: "How much substrate shows through nacre. Higher mix reveals more base material.",
+            textureFamily: "Switches nacre structure style. Classic is balanced, Opal adds cellular veins, Labradorite emphasizes directional flashes.",
+            lightCurvature: "Bends lighting bands across the shell surface curvature.",
+            lightSpread: "Controls how broad or tight light bands appear.",
+            opalCellScale: "Controls Opal cell size. Lower values create larger cell structures.",
+            opalVeinDensity: "Controls how dense and sharp the vein boundaries are.",
+            opalFire: "Controls iridescent fire intensity inside opal cells.",
+            opalMatrix: "Controls darkness of the host matrix around opal color pockets.",
+            labradoriteScale: "Controls feature size of the labradorite flash pattern.",
+            labradoriteDirection: "Rotates directional flash streaks across the surface.",
+            labradoriteBanding: "Controls sharpness and spacing of flash bands.",
+            labradoriteFlash: "Controls intensity of blue-green labradorescence flashes.",
+            labradoriteDarkness: "Controls darkness of the host stone matrix.",
+            marbleFlowScale: "Controls scale of flowing marble structures.",
+            marbleVeinFreq: "Controls frequency of vein lines through the stone.",
+            marbleContrast: "Controls contrast between veins and host stone.",
+            marbleInkDrift: "Controls how much ink-like warping distorts veins.",
+            marbleLightness: "Controls base stone lightness.",
+            topoWarp: "Domain warping amount for terrain. Higher values bend and flow contour structures.",
+            topoErosion: "Post-noise smoothing/erosion. Higher values soften terrain and reduce sharp transitions."
+        };
+        let lockedControlIds = new Set();
         let galleryItems = [];
+        let compareImage = null;
+        const displayBaseCanvas = document.createElement("canvas");
+        const displayBaseCtx = displayBaseCanvas.getContext("2d");
+        let seedVariants = [];
+
+        function getPerformanceProfileKey() {
+            const selected = document.getElementById("performanceProfile")?.value || localStorage.getItem(PERFORMANCE_PROFILE_STORAGE_KEY) || "balanced";
+            return PERF_PROFILES[selected] ? selected : "balanced";
+        }
+
+        function getPerformanceProfile() {
+            return PERF_PROFILES[getPerformanceProfileKey()];
+        }
+
+        function savePerformanceProfile(key) {
+            localStorage.setItem(PERFORMANCE_PROFILE_STORAGE_KEY, PERF_PROFILES[key] ? key : "balanced");
+        }
+
+        function getPreviewScaleForMode(mode) {
+            const perf = getPerformanceProfile();
+            return mode === "topography" ? perf.previewScaleTopography : perf.previewScaleGeneral;
+        }
+
+        function getRowsPerFrame(mode, preview) {
+            const perf = getPerformanceProfile();
+            let base = 12;
+            if (preview) {
+                base = mode === "motherofpearl" ? 28 : 30;
+                return Math.max(8, Math.floor(base * perf.rowsPerFramePreviewMul));
+            }
+            base = mode === "motherofpearl" ? 10 : 12;
+            return Math.max(6, Math.floor(base * perf.rowsPerFrameFinalMul));
+        }
+
+        function isControlLocked(id) {
+            return lockedControlIds.has(id);
+        }
+
+        function saveLocks() {
+            try {
+                localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(Array.from(lockedControlIds)));
+            } catch (err) {
+                console.warn("Unable to persist locks", err);
+            }
+        }
+
+        function loadLocks() {
+            try {
+                const raw = localStorage.getItem(LOCK_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                lockedControlIds = new Set(Array.isArray(parsed) ? parsed : []);
+            } catch {
+                lockedControlIds = new Set();
+            }
+        }
+
+        function setControlLock(id, locked) {
+            if (locked) {
+                lockedControlIds.add(id);
+            } else {
+                lockedControlIds.delete(id);
+            }
+            saveLocks();
+            const btn = document.querySelector(`.control-lock-btn[data-lock-for="${id}"]`);
+            if (btn) {
+                btn.classList.toggle("is-locked", locked);
+                btn.setAttribute("aria-pressed", locked ? "true" : "false");
+                btn.title = locked ? "Unlock randomize for this control" : "Lock this control from randomize";
+            }
+        }
+
+        function isHoverHintsEnabled() {
+            return !!document.getElementById("hoverHintsToggle")?.checked;
+        }
+
+        function saveHoverHintsPreference(enabled) {
+            localStorage.setItem(HOVER_HINTS_STORAGE_KEY, enabled ? "1" : "0");
+        }
+
+        function loadHoverHintsPreference() {
+            const raw = localStorage.getItem(HOVER_HINTS_STORAGE_KEY);
+            return raw === "1";
+        }
+
+        function showInfoPopover(target, text) {
+            let pop = document.getElementById("infoPopover");
+            if (!pop) {
+                pop = document.createElement("div");
+                pop.id = "infoPopover";
+                pop.className = "info-popover";
+                document.body.appendChild(pop);
+            }
+            pop.textContent = text;
+            const rect = target.getBoundingClientRect();
+            const top = Math.max(8, rect.top - 12);
+            const left = Math.max(8, rect.left - 280);
+            pop.style.top = `${top}px`;
+            pop.style.left = `${left}px`;
+            pop.hidden = false;
+            if (showInfoPopover._timeout) clearTimeout(showInfoPopover._timeout);
+            showInfoPopover._timeout = setTimeout(() => {
+                pop.hidden = true;
+            }, 2800);
+        }
+
+        function buildFallbackHelpText(labelText) {
+            const plain = (labelText || "this setting").replace(/[:]/g, "").toLowerCase();
+            return `This changes ${plain}. Move it slowly and watch how the image responds.`;
+        }
+
+        function getControlHelpText(controlId, labelText) {
+            return CONTROL_INFO[controlId] || buildFallbackHelpText(labelText);
+        }
+
+        function runQaChecks() {
+            const modes = ["motherofpearl", "opalvein", "labradorite", "marbleink", "topography", "risograph"];
+            const modeSelector = document.getElementById("modeSelector");
+            const issues = [];
+            const initialMode = modeSelector?.value || "motherofpearl";
+            const allGenerateControls = Array.from(document.querySelectorAll("#tabGenerate input[id], #tabGenerate select[id]"));
+            const allGenerateInputs = Array.from(document.querySelectorAll("#tabGenerate .control-row input, #tabGenerate .control-row select"));
+            const missingHelpCustom = [];
+
+            allGenerateInputs.forEach((el) => {
+                if (!el.id && !isUiOnlyControl(el)) {
+                    issues.push("A visible control is missing an id and cannot support full help/locking coverage.");
+                }
+            });
+
+            allGenerateControls.forEach((el) => {
+                if (isUiOnlyControl(el)) return;
+                const row = el.closest(".control-row");
+                const label = row?.querySelector(".control-label")?.textContent?.trim() || el.id;
+                const help = getControlHelpText(el.id, label);
+                if (!help || help.length < 8) {
+                    issues.push(`Weak help text for ${el.id}`);
+                }
+                if (!Object.prototype.hasOwnProperty.call(CONTROL_INFO, el.id)) {
+                    missingHelpCustom.push(el.id);
+                }
+            });
+
+            modes.forEach((mode) => {
+                if (!modeSelector) return;
+                modeSelector.value = mode;
+                updateVisibleSections(mode);
+                const visibleModeRows = Array.from(document.querySelectorAll("#tabGenerate .control-row")).filter((row) => !row.hidden);
+                if (visibleModeRows.length < 3) {
+                    issues.push(`Mode ${mode} has too few visible controls`);
+                }
+            });
+
+            if (modeSelector) {
+                modeSelector.value = initialMode;
+                updateVisibleSections(initialMode);
+            }
+
+            const summary = [
+                `QA checks: ${issues.length === 0 ? "PASS" : "WARN"}`,
+                `Generate controls scanned: ${allGenerateControls.length}/${allGenerateInputs.length}`,
+                `Controls using fallback help: ${missingHelpCustom.length}`,
+                issues.length ? `Issues: ${issues.join(" | ")}` : "Issues: none"
+            ].join("\n");
+
+            showDebugInfo({ qa: issues.length === 0 ? "PASS" : "WARN" }, {
+                controls_scanned: allGenerateControls.length,
+                fallback_help_count: missingHelpCustom.length,
+                issues: issues.length ? issues.join("; ") : "none"
+            });
+            setStatus(issues.length === 0 ? "complete" : "error", issues.length === 0 ? "QA checks passed" : "QA checks found warnings");
+            console.info(summary);
+        }
+
+        function enhanceControlUtilities() {
+            document.querySelectorAll(".control-row").forEach((row) => {
+                const label = row.querySelector(".control-label");
+                const icons = row.querySelector(".control-icons");
+                const control = row.querySelector("input[id], select[id]");
+                if (!label || !control || !control.id) return;
+                label.dataset.controlId = control.id;
+
+                if (RANDOMIZABLE_CONTROL_IDS.includes(control.id) && icons && !icons.querySelector(`[data-lock-for="${control.id}"]`)) {
+                    const lockBtn = document.createElement("button");
+                    lockBtn.type = "button";
+                    lockBtn.className = "ds-btn ds-btn-sm icon-btn control-lock-btn";
+                    lockBtn.dataset.lockFor = control.id;
+                    lockBtn.setAttribute("aria-pressed", "false");
+                    lockBtn.innerHTML = '<i class="iconoir-lock"></i>';
+                    lockBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        setControlLock(control.id, !isControlLocked(control.id));
+                    });
+                    icons.appendChild(lockBtn);
+                    setControlLock(control.id, isControlLocked(control.id));
+                }
+
+                const helpText = getControlHelpText(control.id, label.textContent || control.id);
+                if (helpText) {
+                    label.addEventListener("mouseenter", () => {
+                        if (!isHoverHintsEnabled()) return;
+                        showInfoPopover(label, helpText);
+                    });
+                }
+            });
+        }
+
+        function captureDisplayBase() {
+            if (!canvas.width || !canvas.height) return;
+            displayBaseCanvas.width = canvas.width;
+            displayBaseCanvas.height = canvas.height;
+            displayBaseCtx.clearRect(0, 0, displayBaseCanvas.width, displayBaseCanvas.height);
+            displayBaseCtx.drawImage(canvas, 0, 0);
+        }
+
+        function applyCompareView() {
+            if (!displayBaseCanvas.width || !displayBaseCanvas.height) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(displayBaseCanvas, 0, 0);
+            const compareEnabled = !!document.getElementById("compareToggle")?.checked;
+            if (!compareEnabled || !compareImage) return;
+
+            const split = parseFloat(document.getElementById("compareSplit")?.value || "0.5");
+            const splitPx = Math.floor(canvas.width * split);
+
+            ctx.drawImage(compareImage, 0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(splitPx, 0, canvas.width - splitPx, canvas.height);
+            ctx.clip();
+            ctx.drawImage(displayBaseCanvas, 0, 0);
+            ctx.restore();
+
+            ctx.save();
+            ctx.strokeStyle = "rgba(255,255,255,0.75)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(splitPx + 0.5, 0);
+            ctx.lineTo(splitPx + 0.5, canvas.height);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function captureCompareFrame() {
+            if (!canvas.width || !canvas.height) return;
+            const img = new Image();
+            img.onload = () => {
+                compareImage = img;
+                applyCompareView();
+                setStatus("complete", "Captured compare frame");
+            };
+            img.src = canvas.toDataURL("image/png");
+        }
+
+        function renderSeedVariants() {
+            const grid = document.getElementById("seedExploreGrid");
+            if (!grid) return;
+            grid.innerHTML = "";
+            seedVariants.forEach((seed) => {
+                const tile = document.createElement("div");
+                tile.className = "seed-tile";
+                const chip = document.createElement("div");
+                chip.className = "seed-chip";
+                chip.textContent = `Seed ${seed}`;
+                const applyBtn = document.createElement("button");
+                applyBtn.className = "ds-btn ds-btn-sm ds-btn-primary";
+                applyBtn.type = "button";
+                applyBtn.title = "Apply seed variant";
+                applyBtn.textContent = "Apply";
+                applyBtn.onclick = () => {
+                    const seedInput = document.getElementById("seed");
+                    if (!seedInput) return;
+                    seedInput.value = String(seed);
+                    markControlPending(seedInput);
+                    updatePendingStatus();
+                    scheduleFinalRender();
+                };
+                tile.appendChild(chip);
+                tile.appendChild(applyBtn);
+                grid.appendChild(tile);
+            });
+        }
+
+        function generateSeedVariants() {
+            const count = parseInt(document.getElementById("seedExploreCount")?.value || "9", 10);
+            seedVariants = [];
+            for (let i = 0; i < Math.max(1, count); i++) {
+                seedVariants.push(Math.floor(Math.random() * 2147483647));
+            }
+            renderSeedVariants();
+        }
+
+        function applyMaterialPreset(name, options = {}) {
+            const respectLocks = !!options.respectLocks;
+            const presets = {
+                pearl_light: {
+                    substrateTone: "light",
+                    substrateMix: 0.42,
+                    textureFamily: "classic",
+                    nacrePalette: "classic",
+                    nacreBrilliance: 1.22,
+                    nacreChromatic: 1.05,
+                    ringSpacing: 0.9,
+                    ringJitter: 0.32,
+                    seamThickness: 0.12,
+                    seamContrast: 0.42
+                },
+                black_pearl: {
+                    substrateTone: "dark",
+                    substrateMix: 0.62,
+                    textureFamily: "labradorite",
+                    nacrePalette: "silver",
+                    nacreBrilliance: 1.35,
+                    nacreChromatic: 1.22,
+                    ringSpacing: 1.08,
+                    ringJitter: 0.48,
+                    seamThickness: 0.16,
+                    seamContrast: 0.7
+                },
+                abalone: {
+                    substrateTone: "dark",
+                    substrateMix: 0.58,
+                    textureFamily: "opal",
+                    nacrePalette: "abalone",
+                    nacreBrilliance: 1.58,
+                    nacreChromatic: 1.48,
+                    ringSpacing: 1.24,
+                    ringJitter: 0.62,
+                    seamThickness: 0.19,
+                    seamContrast: 0.82
+                },
+                shell_white: {
+                    substrateTone: "light",
+                    substrateMix: 0.28,
+                    textureFamily: "classic",
+                    nacrePalette: "pinkgreen",
+                    nacreBrilliance: 1.15,
+                    nacreChromatic: 0.85,
+                    ringSpacing: 0.74,
+                    ringJitter: 0.24,
+                    seamThickness: 0.1,
+                    seamContrast: 0.35
+                }
+            };
+            const preset = presets[name];
+            if (!preset) return;
+            Object.entries(preset).forEach(([id, value]) => {
+                if (respectLocks && isControlLocked(id)) return;
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.value = String(value);
+                markControlPending(el);
+            });
+            updatePendingStatus();
+        }
 
         function setActiveTab(tabName) {
             const tabMap = {
@@ -2160,50 +3273,100 @@
 
         function randomizeSettings() {
             const mode = document.getElementById("modeSelector").value;
+            const smartRandom = !!document.getElementById("smartRandomToggle")?.checked;
             const randomSeed = Math.floor(Math.random() * 2147483647);
             const set = (id, val, decimals = 2) => {
+                if (isControlLocked(id)) return;
                 const el = document.getElementById(id);
                 if (!el) return;
                 const v = typeof val === "number" ? val.toFixed(decimals) : val;
                 el.value = String(v);
                 markControlPending(el);
             };
+            const setCheck = (id, checked) => {
+                if (isControlLocked(id)) return;
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.checked = !!checked;
+                markControlPending(el);
+            };
 
             set("seed", randomSeed, 0);
             set("scale", randomBetween(0.002, 0.016), 3);
             set("layers", Math.floor(randomBetween(2, 6)), 0);
+            set("range", randomBetween(0.55, 1.7), 2);
+            set("blend", randomBetween(0.7, 2.6), 2);
+            set("intensity", randomBetween(55, 210), 0);
+            set("layerLength", randomBetween(0.15, 1.9), 2);
             set("boostR", randomBetween(0.9, 1.25), 2);
             set("boostG", randomBetween(0.9, 1.25), 2);
             set("boostB", randomBetween(0.9, 1.25), 2);
             set("gaussianBlur", randomBetween(0.2, 3.2), 2);
+            setCheck("grainToggle", Math.random() > 0.2);
             set("fxChromatic", randomBetween(0, 1.5), 1);
             set("fxGlitch", randomBetween(0, 0.2), 2);
             set("fxScanline", randomBetween(0, 0.25), 2);
             const invertEl = document.getElementById("fxInvert");
-            if (invertEl) {
+            if (invertEl && !isControlLocked("fxInvert")) {
                 invertEl.checked = Math.random() < 0.08;
                 markControlPending(invertEl);
             }
 
             if (mode === "motherofpearl") {
                 const palettes = ["classic", "abalone", "silver", "pinkgreen"];
+                const families = ["classic", "opal", "labradorite"];
+                if (smartRandom) {
+                    const presetPool = ["pearl_light", "black_pearl", "abalone", "shell_white"];
+                    const preset = presetPool[Math.floor(Math.random() * presetPool.length)];
+                    const presetEl = document.getElementById("materialPreset");
+                    if (presetEl) presetEl.value = preset;
+                    applyMaterialPreset(preset, { respectLocks: true });
+                }
                 set("flowMode", Math.random() > 0.5 ? "linear" : "circular");
                 set("ringSpacing", randomBetween(0.35, 1.8), 2);
                 set("ringJitter", randomBetween(0.05, 0.9), 2);
                 set("seamThickness", randomBetween(0.05, 0.3), 2);
                 set("seamContrast", randomBetween(0.15, 0.95), 2);
                 set("highlightStrength", randomBetween(0.2, 1.5), 2);
+                set("lightAngle", randomBetween(0, 1), 2);
+                set("lightCurvature", randomBetween(0.06, 0.95), 2);
+                set("lightSpread", randomBetween(0.15, 0.95), 2);
+                set("scratchDensity", randomBetween(0.05, 0.92), 2);
+                set("scratchAngle", randomBetween(0, 1), 2);
+                set("surfacePolish", randomBetween(0.1, 0.95), 2);
                 set("nacreBrilliance", randomBetween(0.9, 1.9), 2);
                 set("nacreChromatic", randomBetween(0.5, 1.8), 2);
                 set("nacrePalette", palettes[Math.floor(Math.random() * palettes.length)]);
+                set("textureFamily", families[Math.floor(Math.random() * families.length)]);
                 set("substrateTone", Math.random() > 0.5 ? "light" : "dark");
                 set("substrateMix", randomBetween(0.2, 0.75), 2);
+            } else if (mode === "opalvein") {
+                set("opalCellScale", randomBetween(0.004, 0.018), 3);
+                set("opalVeinDensity", randomBetween(0.35, 1.6), 2);
+                set("opalFire", randomBetween(0.65, 2.1), 2);
+                set("opalMatrix", randomBetween(0.25, 0.85), 2);
+            } else if (mode === "labradorite") {
+                set("labradoriteScale", randomBetween(0.003, 0.016), 3);
+                set("labradoriteDirection", randomBetween(0, 1), 2);
+                set("labradoriteBanding", randomBetween(0.7, 2.6), 2);
+                set("labradoriteFlash", randomBetween(0.7, 2.2), 2);
+                set("labradoriteDarkness", randomBetween(0.45, 0.92), 2);
+            } else if (mode === "marbleink") {
+                set("marbleFlowScale", randomBetween(0.003, 0.014), 3);
+                set("marbleVeinFreq", randomBetween(0.45, 2.4), 2);
+                set("marbleContrast", randomBetween(0.25, 1.3), 2);
+                set("marbleInkDrift", randomBetween(0.08, 0.92), 2);
+                set("marbleLightness", randomBetween(0.45, 0.94), 2);
             } else if (mode === "topography") {
                 const presets = ["coastal", "alpine", "dunes", "volcanic"];
+                const renderModes = ["lines", "fill", "gradient"];
+                const sources = ["ridged", "simplex", "perlin", "value"];
                 const p = presets[Math.floor(Math.random() * presets.length)];
                 set("topoPreset", p);
-                applyTopoPreset(p);
+                applyTopoPreset(p, { respectLocks: true });
+                set("topoNoiseType", sources[Math.floor(Math.random() * sources.length)]);
                 set("topoBandCount", Math.floor(randomBetween(6, 18)), 0);
+                set("topoRenderMode", renderModes[Math.floor(Math.random() * renderModes.length)]);
                 set("topoRidge", randomBetween(0.2, 0.9), 2);
                 set("topoWarp", randomBetween(0.15, 0.75), 2);
                 set("topoErosion", randomBetween(0.1, 0.85), 2);
@@ -2296,10 +3459,6 @@
             link.click();
         }
 
-        function exportPNG() {
-            exportWithOptions();
-        }
-
         function saveGallery() {
             localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryItems));
         }
@@ -2385,7 +3544,8 @@
 
             const settingsBtn = document.getElementById("settingsBtn");
             const settingsMenu = document.getElementById("settingsMenu");
-            const debugToggleBtn = document.getElementById("toggleDebugBtn");
+            const debugPanelToggle = document.getElementById("debugPanelToggle");
+            const hoverHintsToggle = document.getElementById("hoverHintsToggle");
             const setSettingsOpen = (open) => {
                 if (!settingsBtn || !settingsMenu) return;
                 settingsMenu.hidden = !open;
@@ -2405,14 +3565,28 @@
                     }
                 });
             }
-            if (debugToggleBtn) {
-                debugToggleBtn.addEventListener("click", () => {
-                    toggleDebugPanel();
+            if (debugPanelToggle) {
+                debugPanelToggle.checked = false;
+                debugPanelToggle.addEventListener("change", (e) => {
+                    toggleDebugPanel(!!e.target.checked);
                 });
             }
 
             loadGallery();
             renderGallery();
+            loadLocks();
+            if (hoverHintsToggle) {
+                hoverHintsToggle.checked = loadHoverHintsPreference();
+            }
+            const performanceProfile = document.getElementById("performanceProfile");
+            if (performanceProfile) {
+                const savedProfile = localStorage.getItem(PERFORMANCE_PROFILE_STORAGE_KEY) || "balanced";
+                const key = PERF_PROFILES[savedProfile] ? savedProfile : "balanced";
+                performanceProfile.value = key;
+                savePerformanceProfile(key);
+            }
+            toggleDebugPanel(false);
+            enhanceControlUtilities();
 
             const topoPresetEl = document.getElementById("topoPreset");
             if (topoPresetEl && topoPresetEl.value !== "custom") {
@@ -2432,6 +3606,7 @@
 
             updatePendingStatus();
             startGeneration();
+            generateSeedVariants();
         });
 
         document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
@@ -2444,8 +3619,23 @@
             randomizeSettings();
         });
 
-        document.getElementById("generateInlineBtn").addEventListener("click", () => {
-            startGeneration();
+        document.getElementById("hoverHintsToggle").addEventListener("change", (e) => {
+            saveHoverHintsPreference(!!e.target.checked);
+        });
+
+        document.getElementById("performanceProfile").addEventListener("change", (e) => {
+            savePerformanceProfile(e.target.value);
+            scheduleFinalRender();
+        });
+
+        document.getElementById("runQaChecksBtn").addEventListener("click", () => {
+            runQaChecks();
+        });
+
+        document.getElementById("applyMaterialPresetBtn").addEventListener("click", () => {
+            const preset = document.getElementById("materialPreset")?.value || "pearl_light";
+            applyMaterialPreset(preset);
+            scheduleFinalRender();
         });
 
         document.getElementById("exportFromPanelBtn").addEventListener("click", () => {
@@ -2454,6 +3644,22 @@
 
         document.getElementById("saveSnapshotBtn").addEventListener("click", () => {
             saveSnapshot();
+        });
+
+        document.getElementById("captureCompareBtn").addEventListener("click", () => {
+            captureCompareFrame();
+        });
+
+        document.getElementById("compareToggle").addEventListener("change", () => {
+            applyCompareView();
+        });
+
+        document.getElementById("compareSplit").addEventListener("input", () => {
+            applyCompareView();
+        });
+
+        document.getElementById("seedExploreBtn").addEventListener("click", () => {
+            generateSeedVariants();
         });
 
         document.getElementById("clearGalleryBtn").addEventListener("click", () => {
@@ -2510,6 +3716,7 @@
             if (el.dataset.live !== "true") {
                 el.addEventListener("input", () => {
                     if (!el.closest("#tabGenerate")) return;
+                    if (isUiOnlyControl(el)) return;
                     markControlPending(el);
                     schedulePreviewRender(el);
                     updatePendingStatus();
@@ -2517,6 +3724,7 @@
 
                 el.addEventListener("change", () => {
                     if (!el.closest("#tabGenerate")) return;
+                    if (isUiOnlyControl(el)) return;
                     scheduleFinalRender();
                 });
             }
@@ -2525,5 +3733,3 @@
 </body>
 
 </html>
-
-
