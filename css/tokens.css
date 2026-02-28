@@ -111,6 +111,31 @@
   --ds-input-text: var(--ds-text);
   --ds-input-placeholder: var(--ds-text-muted);
   --ds-input-shadow: none;
+  --ds-color-input-radius: var(--ds-btn-radius);
+  --ds-color-input-bg: var(--ds-btn-bg);
+  --ds-color-input-shadow: var(--ds-input-shadow);
+  --ds-color-input-pad: 3px;
+
+  --ds-check-size: 16px;
+  --ds-check-bg: var(--ds-input-bg);
+  --ds-check-border: var(--ds-input-border);
+  --ds-check-mark: var(--ds-btn-primary-text);
+  --ds-check-checked-bg: var(--ds-accent);
+
+  --ds-range-track-h: 8px;
+  --ds-range-track-bg: var(--ds-bg-soft);
+  --ds-range-track-border: var(--ds-border);
+  --ds-range-thumb-size: 16px;
+  --ds-range-thumb-bg: var(--ds-btn-bg);
+  --ds-range-thumb-border: var(--ds-btn-border);
+  --ds-range-thumb-shadow: var(--ds-btn-shadow);
+
+  --ds-spin-bg: var(--ds-bg-soft);
+  --ds-spin-border: var(--ds-input-border);
+  --ds-spin-glyph: var(--ds-text-muted);
+  --ds-spin-opacity: 0;
+  --ds-spin-opacity-active: 0.9;
+  --ds-number-pad-end: calc(var(--ds-space-2) + 8px);
 
   --ds-chip-bg: color-mix(in oklab, var(--ds-bg-raised), transparent 12%);
   --ds-chip-border: var(--ds-border);

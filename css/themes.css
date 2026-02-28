@@ -528,6 +528,35 @@
   --ds-chip-text: #e9e2ff;
 }
 
+/* Native control token mapping for all base themes. */
+:root[data-theme] {
+  --ds-color-input-radius: var(--ds-btn-radius);
+  --ds-color-input-bg: var(--ds-input-bg);
+  --ds-color-input-shadow: var(--ds-input-shadow);
+  --ds-color-input-pad: max(2px, var(--ds-border-w));
+
+  --ds-check-size: clamp(14px, calc(var(--ds-control-h) * 0.42), 18px);
+  --ds-check-bg: var(--ds-input-bg);
+  --ds-check-border: var(--ds-input-border);
+  --ds-check-mark: var(--ds-btn-primary-text);
+  --ds-check-checked-bg: var(--ds-accent);
+
+  --ds-range-track-h: max(6px, calc(var(--ds-control-h) * 0.2));
+  --ds-range-track-bg: var(--ds-bg-soft);
+  --ds-range-track-border: var(--ds-border);
+  --ds-range-thumb-size: clamp(14px, calc(var(--ds-control-h) * 0.45), 20px);
+  --ds-range-thumb-bg: var(--ds-btn-bg);
+  --ds-range-thumb-border: var(--ds-btn-border);
+  --ds-range-thumb-shadow: var(--ds-btn-shadow);
+
+  --ds-spin-bg: transparent;
+  --ds-spin-border: transparent;
+  --ds-spin-glyph: var(--ds-text-muted);
+  --ds-spin-opacity: 0;
+  --ds-spin-opacity-active: 0.88;
+  --ds-number-pad-end: calc(var(--ds-space-2) + 8px);
+}
+
 :root:not([data-theme]) {
   color-scheme: dark;
 }
