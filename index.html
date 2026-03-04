@@ -1,0 +1,4761 @@
+﻿<!doctype html>
+<html lang="en" data-theme="industrial-terminal">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="app-version" content="1.7.0" />
+    <title>Raden - Texture Generator</title>
+    <link rel="stylesheet" href="./theme.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/iconoir@7.10.1/css/iconoir.css"
+    />
+    <style>
+      :root {
+        --raden-panel-width: 480px;
+        --raden-grid-gap: var(--ds-space-3);
+        --raden-frame-pad: var(--ds-space-3);
+        --raden-section-gap: var(--ds-space-3);
+        --raden-row-gap: var(--ds-space-2);
+        --raden-row-label-width: 11.5rem;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: var(--raden-panel-width) 1fr;
+        gap: var(--raden-grid-gap);
+        padding: var(--raden-frame-pad);
+        background:
+          radial-gradient(
+            700px 500px at 82% -10%,
+            color-mix(in oklab, var(--ds-accent) 18%, transparent),
+            transparent 70%
+          ),
+          radial-gradient(
+            800px 600px at -10% 110%,
+            color-mix(in oklab, var(--ds-info) 14%, transparent),
+            transparent 66%
+          ),
+          var(--ds-bg);
+        color: var(--ds-text);
+        font-family: var(--ds-font-sans);
+      }
+
+      #controls {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        min-height: 0;
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-card-border);
+        border-radius: var(--ds-card-radius);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 88%, transparent);
+        box-shadow: var(--ds-card-shadow);
+        backdrop-filter: blur(8px);
+      }
+
+      #control-header {
+        display: grid;
+        gap: var(--ds-space-3);
+        padding: var(--ds-space-4);
+        border-bottom: var(--ds-border-w) var(--ds-border-style)
+          var(--ds-border);
+      }
+
+      #control-scroll {
+        min-height: 0;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        scrollbar-gutter: stable both-edges;
+        display: block;
+        padding: var(--ds-space-3);
+      }
+
+      .panel-tabs-wrap {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--ds-space-2);
+        align-items: center;
+      }
+
+      .panel-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--ds-space-2);
+      }
+
+      .panel-tab-btn {
+        min-height: var(--ds-control-h-sm);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-btn-bg);
+        color: var(--ds-text-muted);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .panel-tab-btn.is-active {
+        border-color: var(--ds-accent);
+        background: color-mix(in oklab, var(--ds-accent) 18%, var(--ds-btn-bg));
+        color: var(--ds-text);
+      }
+
+      .panel-settings-btn {
+        min-height: var(--ds-control-h-sm);
+        min-width: var(--ds-control-h-sm);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-btn-bg);
+        color: var(--ds-text-muted);
+        font: inherit;
+        cursor: pointer;
+        padding: 0 var(--ds-space-2);
+      }
+
+      .panel-settings-btn[aria-expanded="true"] {
+        border-color: var(--ds-accent);
+        color: var(--ds-text);
+        background: color-mix(in oklab, var(--ds-accent) 15%, var(--ds-btn-bg));
+      }
+
+      .settings-menu {
+        position: absolute;
+        top: calc(100% + var(--ds-space-2));
+        right: 0;
+        width: min(280px, calc(100% - var(--ds-space-2)));
+        display: grid;
+        gap: var(--ds-space-2);
+        padding: var(--ds-space-2);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 96%, transparent);
+        box-shadow: var(--ds-card-shadow);
+        z-index: calc(var(--ds-z-toast) - 1);
+      }
+
+      .settings-menu[hidden] {
+        display: none;
+      }
+
+      .settings-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .settings-row label {
+        font-size: var(--ds-fs-1);
+        letter-spacing: var(--ds-label-spacing);
+        text-transform: var(--ds-label-transform);
+        color: var(--ds-text-muted);
+      }
+
+      #settingsMenu select {
+        width: 100%;
+        min-height: var(--ds-control-h);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-input-bg);
+        color: var(--ds-input-text);
+        font: inherit;
+        padding: var(--ds-space-2) var(--ds-space-3);
+      }
+
+      #settingsMenu .ds-btn {
+        width: 100%;
+      }
+
+      .panel-tab {
+        display: flex;
+        flex-direction: column;
+        gap: var(--raden-section-gap);
+        align-content: flex-start;
+        justify-content: flex-start;
+        height: max-content;
+      }
+
+      .panel-tab[hidden] {
+        display: none;
+      }
+
+      #controls .section {
+        display: grid;
+        gap: var(--raden-row-gap);
+        align-content: flex-start;
+        padding: var(--ds-space-3);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-raised) 86%, transparent);
+      }
+
+      #controls .section h3 {
+        margin: 0;
+        font-size: var(--ds-fs-2);
+        letter-spacing: var(--ds-label-spacing);
+        text-transform: var(--ds-label-transform);
+        color: var(--ds-text-muted);
+        font-weight: 600;
+      }
+
+      #controls .section[hidden] {
+        display: none;
+      }
+
+      #postProcessingSection {
+        order: 80;
+      }
+
+      #experimentalSection {
+        order: 90;
+      }
+
+      #iterationToolsSection {
+        order: 999;
+      }
+
+      .control-row {
+        display: grid;
+        grid-template-columns: minmax(
+            130px,
+            var(--raden-row-label-width)
+          ) minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--ds-space-2);
+        min-width: 0;
+      }
+
+      .control-label {
+        position: relative;
+        font-size: var(--ds-fs-1);
+        letter-spacing: var(--ds-label-spacing);
+        text-transform: var(--ds-label-transform);
+        color: var(--ds-text-muted);
+      }
+
+      .section-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--ds-space-2);
+      }
+
+      .section-help-btn {
+        min-width: var(--ds-control-h-sm);
+        min-height: var(--ds-control-h-sm);
+        padding: 0;
+      }
+
+      .help-detail-grid {
+        display: grid;
+        gap: var(--ds-space-2);
+      }
+
+      .help-detail-grid .help-k {
+        font-size: var(--ds-fs-1);
+        letter-spacing: var(--ds-label-spacing);
+        text-transform: var(--ds-label-transform);
+        color: var(--ds-text-muted);
+        margin: 0 0 4px;
+      }
+
+      .help-detail-grid .help-v {
+        margin: 0;
+        color: var(--ds-text);
+        line-height: 1.4;
+      }
+
+      .control-label::before {
+        content: "•";
+        color: var(--ds-warning);
+        margin-right: 6px;
+        opacity: 0;
+        transition: opacity var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .control-label.pending-dot::before {
+        opacity: 1;
+      }
+
+      .control-input {
+        min-width: 0;
+        width: 100%;
+      }
+
+      .control-icons {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        min-width: 0;
+      }
+
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--ds-control-h-sm);
+        min-height: var(--ds-control-h-sm);
+        padding: 0 8px;
+        gap: 6px;
+      }
+
+      .icon-btn i {
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .control-lock-btn {
+        opacity: 0;
+        transition:
+          opacity var(--ds-dur-fast) var(--ds-ease-standard),
+          transform var(--ds-dur-fast) var(--ds-ease-standard);
+        transform: translateX(2px);
+      }
+
+      .control-row:hover .control-lock-btn,
+      .control-row:focus-within .control-lock-btn,
+      .control-lock-btn.is-locked {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .control-lock-btn.is-locked {
+        border-color: var(--ds-warning);
+        color: var(--ds-warning);
+        background: color-mix(
+          in oklab,
+          var(--ds-warning) 15%,
+          var(--ds-btn-bg)
+        );
+      }
+
+      .seed-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+        gap: var(--ds-space-2);
+      }
+
+      .seed-tile {
+        display: grid;
+        gap: 6px;
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-raised) 90%, transparent);
+        padding: 8px;
+      }
+
+      .seed-chip {
+        font-size: var(--ds-fs-1);
+        color: var(--ds-text-muted);
+        overflow-wrap: anywhere;
+      }
+
+      .control-input input[type="number"],
+      .control-input select {
+        width: 100%;
+        min-height: var(--ds-control-h);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-input-bg);
+        color: var(--ds-input-text);
+        font: inherit;
+        padding: var(--ds-space-2) var(--ds-space-3);
+      }
+
+      .control-input select {
+        text-overflow: ellipsis;
+      }
+
+      .control-input input[type="range"] {
+        width: 100%;
+        accent-color: var(--ds-accent);
+      }
+
+      .control-input input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--ds-accent);
+      }
+
+      .res-inputs {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: var(--ds-space-1);
+        width: 100%;
+      }
+
+      .res-inputs span {
+        color: var(--ds-text-muted);
+      }
+
+      .pending-change {
+        border-color: var(--ds-warning) !important;
+        box-shadow: 0 0 0 1px
+          color-mix(in oklab, var(--ds-warning) 45%, transparent);
+      }
+
+      .export-row {
+        display: flex;
+        gap: var(--ds-space-2);
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: var(--ds-space-2);
+      }
+
+      .gallery-tile {
+        display: grid;
+        gap: 6px;
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-raised) 90%, transparent);
+        padding: 6px;
+      }
+
+      .gallery-tile img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 6px;
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+      }
+
+      .gallery-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      #themeSelect {
+        width: 100%;
+        min-height: var(--ds-control-h);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-input-bg);
+        color: var(--ds-input-text);
+        font: inherit;
+        padding: var(--ds-space-2) var(--ds-space-3);
+      }
+
+      #control-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--ds-space-2);
+        padding: var(--ds-space-2) var(--ds-space-3);
+        border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+      }
+
+      .generate-actions {
+        display: flex;
+        gap: var(--ds-space-2);
+        flex-wrap: wrap;
+      }
+
+      #control-actions {
+        display: flex;
+        gap: var(--ds-space-2);
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        padding: var(--ds-space-2) var(--ds-space-3);
+        border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+      }
+
+      #status {
+        max-width: 68%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-radius: var(--ds-radius-pill);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        padding: 4px 10px;
+        font-size: var(--ds-fs-1);
+        color: var(--ds-text-muted);
+      }
+
+      #status[data-state="rendering"] {
+        color: var(--ds-info);
+        border-color: color-mix(in oklab, var(--ds-info) 62%, var(--ds-border));
+        background: color-mix(in oklab, var(--ds-info) 16%, transparent);
+      }
+
+      #status[data-state="complete"] {
+        color: var(--ds-success);
+        border-color: color-mix(
+          in oklab,
+          var(--ds-success) 62%,
+          var(--ds-border)
+        );
+        background: color-mix(in oklab, var(--ds-success) 16%, transparent);
+      }
+
+      #status[data-state="error"] {
+        color: var(--ds-danger);
+        border-color: color-mix(
+          in oklab,
+          var(--ds-danger) 62%,
+          var(--ds-border)
+        );
+        background: color-mix(in oklab, var(--ds-danger) 16%, transparent);
+      }
+
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 0%;
+        background: linear-gradient(90deg, var(--ds-accent), var(--ds-focus));
+        z-index: var(--ds-z-toast);
+        transition: width var(--ds-dur-fast) linear;
+      }
+
+      #canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: var(--ds-card-radius);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        box-shadow: var(--ds-card-shadow);
+        background: var(--ds-bg-raised);
+        min-width: 0;
+        min-height: 0;
+      }
+
+      #debugPanel {
+        position: fixed;
+        top: var(--ds-space-3);
+        right: var(--ds-space-3);
+        width: min(340px, 45vw);
+        max-height: calc(100vh - (2 * var(--ds-space-3)));
+        overflow: auto;
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 88%, transparent);
+        color: var(--ds-text);
+        font-family: var(--ds-font-mono);
+        font-size: var(--ds-fs-1);
+        line-height: 1.4;
+        padding: var(--ds-space-3);
+        pointer-events: none;
+        z-index: calc(var(--ds-z-toast) - 1);
+        white-space: pre-wrap;
+      }
+
+      @media (max-width: 980px) {
+        body {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(0, 1fr) minmax(240px, 45vh);
+        }
+
+        #canvas {
+          grid-row: 1;
+        }
+
+        #controls {
+          grid-row: 2;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="controls">
+      <div id="control-header">
+        <div class="panel-tabs-wrap">
+          <div class="panel-tabs">
+            <button
+              id="tabBtnGallery"
+              class="panel-tab-btn"
+              type="button"
+              data-tab="gallery"
+            >
+              Gallery
+            </button>
+
+            <button
+              id="tabBtnGenerate"
+              class="panel-tab-btn is-active"
+              type="button"
+              data-tab="generate"
+            >
+              Texture
+            </button>
+            <button
+              id="tabBtnExport"
+              class="panel-tab-btn"
+              type="button"
+              data-tab="export"
+            >
+              Export
+            </button>
+          </div>
+          <button
+            id="settingsBtn"
+            class="panel-settings-btn icon-btn"
+            type="button"
+            aria-expanded="false"
+            aria-controls="settingsMenu"
+            title="Settings"
+          >
+            <i class="iconoir-settings"></i>
+          </button>
+          <div id="settingsMenu" class="settings-menu" hidden>
+            <div class="settings-row">
+              <label for="themeSelect">Theme</label>
+              <select id="themeSelect">
+                <option value="steel-night">Steel Night</option>
+                <option value="paper-mint">Paper Mint</option>
+                <option value="amber-terminal">Amber Terminal</option>
+                <option value="neon-grid">Neon Grid</option>
+                <option value="mono-slate">Mono Slate</option>
+                <option value="tech-grid">Tech Grid</option>
+                <option value="skeuo-panel">Skeuo Panel</option>
+                <option value="industrial-terminal">Industrial Terminal</option>
+                <option value="velvet-touch">Velvet Touch</option>
+                <option value="eva-wireframe">Eva Wireframe</option>
+                <option value="eva-unit-01">Eva Unit-01</option>
+                <option value="saturn-alloy">Saturn Alloy</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <label for="performanceProfile">Performance Profile</label>
+              <select id="performanceProfile">
+                <option value="balanced">Balanced</option>
+                <option value="fast">Fast Preview</option>
+                <option value="high">High Quality</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <label for="debugPanelToggle">Debug Panel</label>
+              <input id="debugPanelToggle" type="checkbox" />
+            </div>
+            <button id="runQaChecksBtn" class="ds-btn" type="button">
+              Run QA Checks
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="control-scroll" class="ds-scroll">
+        <div id="tabGenerate" class="panel-tab">
+          <div class="section" data-mode="all">
+            <div class="control-row">
+              <div class="control-label">Mode</div>
+              <div class="control-input">
+                <select id="modeSelector">
+                  <option value="motherofpearl">Mother of Pearl</option>
+                  <option value="opalvein">Opal Vein</option>
+                  <option value="labradorite">Labradorite Flash</option>
+                  <option value="marbleink">Marble Ink</option>
+                  <option value="risograph">Risograph</option>
+                  <option value="topography">Topography</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="motherofpearl">
+              <div class="control-label">Material Preset</div>
+              <div class="control-input">
+                <select id="materialPreset">
+                  <option value="pearl_light">Pearl (Light Base)</option>
+                  <option value="black_pearl">Black Pearl</option>
+                  <option value="abalone">Abalone</option>
+                  <option value="shell_white">Shell White</option>
+                </select>
+              </div>
+              <div class="control-icons">
+                <button
+                  id="applyMaterialPresetBtn"
+                  class="ds-btn ds-btn-sm ds-btn-primary"
+                  type="button"
+                  title="Apply preset"
+                >
+                  <span>Apply</span>
+                </button>
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Smart Random</div>
+              <div class="control-input">
+                <input type="checkbox" id="smartRandomToggle" checked />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+          <!-- 1. SEED & RESOLUTION -->
+          <div class="section" data-mode="all">
+            <h3>Seed + Resolution</h3>
+            <div
+              class="control-row"
+              data-mode="motherofpearl, topography, opalvein, labradorite, marbleink"
+            >
+              <div class="control-label">Seed:</div>
+              <div class="control-input">
+                <input id="seed" placeholder="(random)" type="number" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Preset:</div>
+              <div class="control-input">
+                <select id="resolutionPreset">
+                  <option value="">Auto (Window Size)</option>
+                  <option value="1920x1080">HD (1920x1080)</option>
+                  <option value="1080x1080">Square (1080x1080)</option>
+                  <option value="3840x2160">4K (3840x2160)</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Dimensions:</div>
+              <div class="control-input">
+                <div class="res-inputs">
+                  <input
+                    type="number"
+                    id="renderWidth"
+                    min="1"
+                    placeholder="Width"
+                  />
+                  <span>x</span>
+                  <input
+                    type="number"
+                    id="renderHeight"
+                    min="1"
+                    placeholder="Height"
+                  />
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <!-- 2. PATTERN GEOMETRY -->
+
+          <div class="section" data-mode="motherofpearl, topography">
+            <h3>Pattern Geometry</h3>
+            <div class="control-row" data-mode="topography">
+              <div class="control-label">Terrain Source</div>
+              <div class="control-input">
+                <select id="topoNoiseType">
+                  <option value="ridged">Ridged</option>
+                  <option value="simplex">Simplex</option>
+                  <option value="perlin">Perlin</option>
+                  <option value="value">Value</option>
+                  <option value="white">White</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row" data-mode="motherofpearl, topography">
+              <div class="control-label">Base Scale:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="scale"
+                  min="0.001"
+                  max="0.02"
+                  step="0.001"
+                  value="0.006"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row" data-mode="motherofpearl, topography">
+              <div class="control-label">Noise Layers:</div>
+              <div class="control-input">
+                <input
+                  type="number"
+                  id="layers"
+                  min="1"
+                  max="5"
+                  step="1"
+                  value="3"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row" data-mode="motherofpearl">
+              <div class="control-label">Growth Flow:</div>
+              <div class="control-input">
+                <select id="flowMode" data-live="false">
+                  <option value="linear">Layered Drift</option>
+                  <option value="circular">Concentric Growth</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row" data-mode="motherofpearl">
+              <div class="control-label">Growth Drift:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="layerLength"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="1"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row" data-mode="motherofpearl">
+              <div class="control-label">Ring Spacing:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="ringSpacing"
+                  min="0.2"
+                  max="2"
+                  step="0.01"
+                  value="1"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row" data-mode="motherofpearl">
+              <div class="control-label">Ring Jitter:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="ringJitter"
+                  min="0"
+                  max="1.2"
+                  step="0.01"
+                  value="0.35"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <!-- 3. COLOR APPEARANCE -->
+          <div class="section" data-mode="motherofpearl">
+            <h3>Iridescence</h3>
+
+            <div class="control-row">
+              <div class="control-label">Hue Spread:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="range"
+                  min="0.4"
+                  max="1.8"
+                  step="0.05"
+                  value="1.1"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Band Softness:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="blend"
+                  min="0.6"
+                  max="3"
+                  step="0.1"
+                  value="1.4"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Interference:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="intensity"
+                  min="20"
+                  max="220"
+                  step="1"
+                  value="130"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <!-- 4. GROWTH SEAMS -->
+          <div class="section" data-mode="motherofpearl">
+            <h3>Growth Seams</h3>
+
+            <div class="control-row">
+              <div class="control-label">Seam Thickness:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="seamThickness"
+                  min="0.02"
+                  max="0.45"
+                  step="0.01"
+                  value="0.14"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Seam Contrast:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="seamContrast"
+                  min="0"
+                  max="1.2"
+                  step="0.01"
+                  value="0.55"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="motherofpearl">
+            <h3>Surface Microstructure</h3>
+
+            <div class="control-row">
+              <div class="control-label">Light Angle:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="lightAngle"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.5"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Light Curvature:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="lightCurvature"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.28"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Light Spread:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="lightSpread"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.55"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Shimmer Strength:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="highlightStrength"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="0.65"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Scratch Density:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="scratchDensity"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.45"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Scratch Direction:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="scratchAngle"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.3"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Polish:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="surfacePolish"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.55"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <!-- 8. ACTIONS -->
+          <div class="section" data-mode="risograph">
+            <h3>Risograph Controls</h3>
+
+            <div class="control-row">
+              <div class="control-label">Dot Size:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="risoDotSize"
+                  min="1"
+                  max="50"
+                  value="10"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Threshold:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="risoThreshold"
+                  min="0"
+                  max="255"
+                  value="128"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <!-- 9. ACTIONS -->
+          <div class="section" data-mode="topography">
+            <h3>Topography</h3>
+            <div class="control-row">
+              <div class="control-label">Terrain Preset:</div>
+              <div class="control-input">
+                <select id="topoPreset" data-live="false">
+                  <option value="coastal">Coastal</option>
+                  <option value="alpine">Alpine</option>
+                  <option value="dunes">Dunes</option>
+                  <option value="volcanic">Volcanic</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Bands:</div>
+              <div class="control-input">
+                <input
+                  type="number"
+                  id="topoBandCount"
+                  min="2"
+                  max="20"
+                  step="1"
+                  value="8"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Mode:</div>
+              <div class="control-input">
+                <select id="topoRenderMode" data-live="false">
+                  <option value="lines">Lines Only</option>
+                  <option value="fill">Band Fill</option>
+                  <option value="gradient">Smooth Gradient</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Ridge Strength:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="topoRidge"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.6"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Domain Warp:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="topoWarp"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.35"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Erosion:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="topoErosion"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.4"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+          <!-- 5. POST-PROCESSING -->
+          <div id="postProcessingSection" class="section" data-mode="all">
+            <h3>Post-Processing</h3>
+
+            <div class="control-row">
+              <div class="control-label">Red Boost:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="boostR"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="1"
+                  oninput="adjustColorBoosts()"
+                  data-live="true"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Green Boost:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="boostG"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="1"
+                  oninput="adjustColorBoosts()"
+                  data-live="true"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Blue Boost:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="boostB"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="1"
+                  oninput="adjustColorBoosts()"
+                  data-live="true"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Grain Overlay:</div>
+              <div class="control-input">
+                <input type="checkbox" id="grainToggle" checked />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Gaussian Blur:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="gaussianBlur"
+                  min="0"
+                  max="10"
+                  step="0.2"
+                  value="0"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="motherofpearl">
+            <h3>Nacre Color</h3>
+            <div class="control-row">
+              <div class="control-label">Base Surface:</div>
+              <div class="control-input">
+                <select id="substrateTone" data-live="false">
+                  <option value="light">Light / Pearl Base</option>
+                  <option value="dark">Dark / Abalone Base</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Substrate Mix:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="substrateMix"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.45"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Texture Family:</div>
+              <div class="control-input">
+                <select id="textureFamily" data-live="false">
+                  <option value="classic">Classic Nacre</option>
+                  <option value="opal">Opal Vein</option>
+                  <option value="labradorite">Labradorite Flash</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Palette:</div>
+              <div class="control-input">
+                <select id="nacrePalette" data-live="false">
+                  <option value="classic">Classic Nacre</option>
+                  <option value="abalone">Abalone Bright</option>
+                  <option value="silver">Silver Pearl</option>
+                  <option value="pinkgreen">Pink-Green Shift</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Brilliance:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="nacreBrilliance"
+                  min="0.5"
+                  max="2.2"
+                  step="0.01"
+                  value="1.25"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Chromatic Shift:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="nacreChromatic"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="1.0"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="opalvein">
+            <h3>Opal Vein</h3>
+            <div class="control-row">
+              <div class="control-label">Cell Scale:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="opalCellScale"
+                  min="0.002"
+                  max="0.03"
+                  step="0.001"
+                  value="0.009"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Vein Density:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="opalVeinDensity"
+                  min="0"
+                  max="2"
+                  step="0.01"
+                  value="0.85"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Fire Intensity:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="opalFire"
+                  min="0"
+                  max="2.4"
+                  step="0.01"
+                  value="1.2"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Dark Matrix:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="opalMatrix"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.52"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="labradorite">
+            <h3>Labradorite Flash</h3>
+            <div class="control-row">
+              <div class="control-label">Flash Scale:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="labradoriteScale"
+                  min="0.002"
+                  max="0.03"
+                  step="0.001"
+                  value="0.008"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Flash Direction:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="labradoriteDirection"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.33"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Band Sharpness:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="labradoriteBanding"
+                  min="0.4"
+                  max="3"
+                  step="0.01"
+                  value="1.6"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Flash Intensity:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="labradoriteFlash"
+                  min="0"
+                  max="2.5"
+                  step="0.01"
+                  value="1.35"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Base Darkness:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="labradoriteDarkness"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.68"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="marbleink">
+            <h3>Marble Ink</h3>
+            <div class="control-row">
+              <div class="control-label">Flow Scale:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="marbleFlowScale"
+                  min="0.002"
+                  max="0.03"
+                  step="0.001"
+                  value="0.007"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Vein Frequency:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="marbleVeinFreq"
+                  min="0.2"
+                  max="3"
+                  step="0.01"
+                  value="1.2"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Vein Contrast:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="marbleContrast"
+                  min="0"
+                  max="1.5"
+                  step="0.01"
+                  value="0.78"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Ink Drift:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="marbleInkDrift"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.42"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Stone Lightness:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="marbleLightness"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.72"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div id="experimentalSection" class="section" data-mode="all">
+            <h3>Experimental FX</h3>
+            <div class="control-row">
+              <div class="control-label">Invert Color:</div>
+              <div class="control-input">
+                <input type="checkbox" id="fxInvert" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Chromatic Aberration:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="fxChromatic"
+                  min="0"
+                  max="6"
+                  step="0.1"
+                  value="0"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Glitch Tearing:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="fxGlitch"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Scanlines:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="fxScanline"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                  data-live="false"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div id="iterationToolsSection" class="section" data-mode="all">
+            <h3>Iteration Tools</h3>
+            <div class="control-row">
+              <div class="control-label">A/B Compare</div>
+              <div class="control-input">
+                <input type="checkbox" id="compareToggle" />
+              </div>
+              <div class="control-icons">
+                <button
+                  id="captureCompareBtn"
+                  class="ds-btn ds-btn-sm icon-btn"
+                  type="button"
+                  title="Capture current frame as A"
+                >
+                  <i class="iconoir-camera"></i>
+                  <span>Compare Capture</span>
+                </button>
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Compare Split</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="compareSplit"
+                  min="0.05"
+                  max="0.95"
+                  step="0.01"
+                  value="0.5"
+                  data-live="true"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Seed Variants</div>
+              <div class="control-input">
+                <select id="seedExploreCount">
+                  <option value="4">4</option>
+                  <option value="9" selected>9</option>
+                  <option value="12">12</option>
+                </select>
+              </div>
+              <div class="control-icons">
+                <button
+                  id="seedExploreBtn"
+                  class="ds-btn ds-btn-sm"
+                  type="button"
+                  title="Generate seed variants"
+                >
+                  <span>Generate</span>
+                </button>
+              </div>
+            </div>
+            <div id="seedExploreGrid" class="seed-grid"></div>
+          </div>
+        </div>
+
+        <div id="tabExport" class="panel-tab" hidden>
+          <div class="section">
+            <h3>Export Settings</h3>
+            <div class="control-row">
+              <div class="control-label">File Type:</div>
+              <div class="control-input">
+                <select id="exportFileType">
+                  <option value="png">PNG</option>
+                  <option value="jpeg">JPEG</option>
+                  <option value="webp">WebP</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Quality:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="exportQuality"
+                  min="0.4"
+                  max="1"
+                  step="0.01"
+                  value="0.92"
+                />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Crop:</div>
+              <div class="control-input">
+                <select id="exportCropMode">
+                  <option value="full">Full Canvas</option>
+                  <option value="square">Square</option>
+                  <option value="portrait">Portrait (4:5)</option>
+                  <option value="landscape">Landscape (16:9)</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Size Preset:</div>
+              <div class="control-input">
+                <select id="exportSizePreset">
+                  <option value="current">Current</option>
+                  <option value="1080-square">1080 Square</option>
+                  <option value="1920x1080">1920x1080</option>
+                  <option value="2160-square">2160 Square</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Output Size:</div>
+              <div class="control-input">
+                <div class="res-inputs">
+                  <input type="number" id="exportWidth" min="1" value="1920" />
+                  <span>x</span>
+                  <input type="number" id="exportHeight" min="1" value="1080" />
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+          <div class="section">
+            <h3>Export Action</h3>
+            <div class="export-row">
+              <button
+                id="exportFromPanelBtn"
+                class="ds-btn ds-btn-primary"
+                type="button"
+              >
+                Export File
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabGallery" class="panel-tab" hidden>
+          <div class="section">
+            <h3>Gallery</h3>
+            <div class="export-row">
+              <button id="clearGalleryBtn" class="ds-btn" type="button">
+                Clear Gallery
+              </button>
+            </div>
+            <div id="galleryGrid" class="gallery-grid"></div>
+          </div>
+        </div>
+      </div>
+      <div id="control-footer">
+        <div id="status" data-state="idle">Idle</div>
+        <button
+          id="generateBtn"
+          class="ds-btn ds-btn-primary"
+          onclick="startGeneration()"
+          style="display: none"
+        >
+          Generate
+        </button>
+      </div>
+      <div id="control-actions">
+        <button
+          id="randomizeBtn"
+          class="ds-btn icon-btn"
+          type="button"
+          title="Randomize settings"
+        >
+          <i class="iconoir-refresh"></i>
+          <span>Randomize</span>
+        </button>
+        <button
+          id="saveSnapshotBtn"
+          class="ds-btn ds-btn-primary icon-btn"
+          type="button"
+          title="Save snapshot"
+        >
+          <i class="iconoir-camera"></i>
+          <span>Save Snapshot</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="debugPanel"></div>
+    <dialog id="controlHelpDialog" class="ds-modal">
+      <div class="ds-modal-panel ds-stack">
+        <div>
+          <h3 id="controlHelpTitle" class="ds-card-title">Section Help</h3>
+          <p id="controlHelpSubtitle" class="ds-muted">
+            Property descriptions for this section.
+          </p>
+        </div>
+        <div id="sectionHelpList" class="help-detail-grid"></div>
+        <div class="ds-toolbar">
+          <button
+            id="controlHelpCloseBtn"
+            type="button"
+            class="ds-btn ds-btn-primary"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="progress"></div>
+    <canvas id="canvas"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
+    <script>
+      let debugVisible = false;
+
+      function showDebugInfo(config, extras = {}) {
+        const panel = document.getElementById("debugPanel");
+        if (!panel) return;
+
+        if (!debugVisible) {
+          panel.style.display = "none";
+          return;
+        }
+
+        let info = "Debug Info\n";
+        for (const [key, val] of Object.entries(config)) {
+          info += `${key}: ${val}\n`;
+        }
+
+        for (const [key, val] of Object.entries(extras)) {
+          info += `${key}: ${val}\n`;
+        }
+
+        panel.innerText = info;
+        panel.style.display = "block";
+      }
+
+      function toggleDebugPanel(forceState) {
+        if (typeof forceState === "boolean") {
+          debugVisible = forceState;
+        } else {
+          debugVisible = !debugVisible;
+        }
+        const panel = document.getElementById("debugPanel");
+        const debugToggle = document.getElementById("debugPanelToggle");
+        if (panel) {
+          panel.style.display = debugVisible ? "block" : "none";
+        }
+        if (debugToggle) {
+          debugToggle.checked = debugVisible;
+        }
+      }
+
+      function seededRandom(seed) {
+        let x = Math.sin(seed) * 10000;
+        return () => {
+          x = Math.sin(x) * 10000;
+          return x - Math.floor(x);
+        };
+      }
+
+      function createSeededSimplex(seed) {
+        const rng = seededRandom(seed);
+        return new SimplexNoise(rng);
+      }
+
+      function getInput(id, asInteger = false) {
+        const val = document.getElementById(id).value;
+        return asInteger ? parseInt(val, 10) : parseFloat(val);
+      }
+
+      function clamp01(v) {
+        return Math.max(0, Math.min(1, v));
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function smoothstep(edge0, edge1, x) {
+        const t = clamp01((x - edge0) / Math.max(1e-6, edge1 - edge0));
+        return t * t * (3 - 2 * t);
+      }
+
+      function resolveSeed() {
+        const seedInput = document.getElementById("seed");
+        let seed = parseInt(seedInput.value, 10);
+        if (!Number.isFinite(seed)) {
+          seed = Math.floor(Math.random() * 2147483647);
+          seedInput.value = String(seed);
+        }
+        return seed;
+      }
+
+      function hash2(x, y, seed) {
+        const n =
+          Math.sin((x * 127.1 + y * 311.7 + seed * 0.0001) * 1.0) *
+          43758.5453123;
+        return fract(n);
+      }
+
+      function fade(t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+      }
+
+      function gradientDot(ix, iy, x, y, seed) {
+        const angle = hash2(ix, iy, seed) * Math.PI * 2;
+        const gx = Math.cos(angle);
+        const gy = Math.sin(angle);
+        const dx = x - ix;
+        const dy = y - iy;
+        return gx * dx + gy * dy;
+      }
+
+      function perlin2D(x, y, seed) {
+        const x0 = Math.floor(x);
+        const y0 = Math.floor(y);
+        const x1 = x0 + 1;
+        const y1 = y0 + 1;
+        const sx = fade(x - x0);
+        const sy = fade(y - y0);
+
+        const n00 = gradientDot(x0, y0, x, y, seed);
+        const n10 = gradientDot(x1, y0, x, y, seed);
+        const n01 = gradientDot(x0, y1, x, y, seed);
+        const n11 = gradientDot(x1, y1, x, y, seed);
+
+        const ix0 = lerp(n00, n10, sx);
+        const ix1 = lerp(n01, n11, sx);
+        return lerp(ix0, ix1, sy) * 1.5;
+      }
+
+      function value2D(x, y, seed) {
+        const x0 = Math.floor(x);
+        const y0 = Math.floor(y);
+        const x1 = x0 + 1;
+        const y1 = y0 + 1;
+        const sx = fade(x - x0);
+        const sy = fade(y - y0);
+        const v00 = hash2(x0, y0, seed);
+        const v10 = hash2(x1, y0, seed);
+        const v01 = hash2(x0, y1, seed);
+        const v11 = hash2(x1, y1, seed);
+        const ix0 = lerp(v00, v10, sx);
+        const ix1 = lerp(v01, v11, sx);
+        return lerp(ix0, ix1, sy) * 2 - 1;
+      }
+
+      const generateBtn = document.getElementById("generateBtn");
+      // Cached DOM elements for live updates or toggles
+      const boostRInput = document.getElementById("boostR");
+      const boostGInput = document.getElementById("boostG");
+      const boostBInput = document.getElementById("boostB");
+      const grainToggle = document.getElementById("grainToggle");
+      const highlightStrengthInput =
+        document.getElementById("highlightStrength");
+      const themeSelect = document.getElementById("themeSelect");
+
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const offscreenCanvas = document.createElement("canvas");
+      const offscreenCtx = offscreenCanvas.getContext("2d");
+
+      const progress = document.getElementById("progress");
+      const status = document.getElementById("status");
+
+      function setStatus(state, message) {
+        status.dataset.state = state;
+        status.textContent = message;
+      }
+
+      let simplex;
+      let renderTask = null;
+      let originalImageData = null;
+      let animationId = null;
+      let renderRunId = 0;
+      let previewDebounceId = null;
+      let finalDebounceId = null;
+
+      function isHeavyControl(el) {
+        return [
+          "renderWidth",
+          "renderHeight",
+          "resolutionPreset",
+          "layers",
+          "scale",
+          "topoErosion",
+          "topoBandCount",
+          "topoNoiseType",
+          "topoPreset",
+        ].includes(el.id);
+      }
+
+      function isUiOnlyControl(el) {
+        return [
+          "materialPreset",
+          "seedExploreCount",
+          "compareToggle",
+          "debugPanelToggle",
+          "themeSelect",
+        ].includes(el.id);
+      }
+
+      function schedulePreviewRender(triggerEl) {
+        if (!triggerEl || isHeavyControl(triggerEl)) return;
+        const perf = getPerformanceProfile();
+        if (finalDebounceId) {
+          clearTimeout(finalDebounceId);
+          finalDebounceId = null;
+        }
+        if (previewDebounceId) {
+          clearTimeout(previewDebounceId);
+        }
+        previewDebounceId = setTimeout(() => {
+          startGeneration(true, { preview: true });
+        }, perf.previewDebounceMs);
+      }
+
+      function scheduleFinalRender() {
+        const perf = getPerformanceProfile();
+        if (previewDebounceId) {
+          clearTimeout(previewDebounceId);
+          previewDebounceId = null;
+        }
+        if (finalDebounceId) {
+          clearTimeout(finalDebounceId);
+        }
+        finalDebounceId = setTimeout(() => {
+          startGeneration(true, { preview: false });
+        }, perf.finalDebounceMs);
+      }
+
+      function computeLightInfluence(
+        nx,
+        ny,
+        lightVec,
+        highlightStrength,
+        lightSpread = 0.55,
+        lightCurvature = 0.28,
+      ) {
+        const radial = Math.hypot(nx, ny);
+        const curvedNx = nx + nx * radial * lightCurvature * 1.2;
+        const curvedNy = ny + ny * radial * lightCurvature * 1.2;
+        const angleInfluence = curvedNx * lightVec.x + curvedNy * lightVec.y;
+        const bandFreq = 4 + (1 - lightSpread) * 18;
+        const band = Math.sin(
+          (curvedNx * lightVec.y - curvedNy * lightVec.x) * bandFreq * Math.PI,
+        );
+        const spreadDamp = Math.max(
+          0.25,
+          1 - radial * (0.35 + lightSpread * 0.45),
+        );
+        const highlightBoost = band * highlightStrength * spreadDamp;
+        return { angleInfluence, highlightBoost };
+      }
+
+      function getFlowCoordinates(x, y, cx, cy, flowMode, layerLength) {
+        let px = x,
+          py = y;
+        if (flowMode === "circular") {
+          const dx = x - cx;
+          const dy = y - cy;
+          const theta = Math.atan2(dy, dx);
+          px += Math.cos(theta) * layerLength * 40;
+          py += Math.sin(theta) * layerLength * 40;
+        } else if (flowMode === "linear") {
+          px += layerLength * 40;
+        }
+        return { px, py };
+      }
+
+      function getNoiseValue(px, py, layers, scale, simplex) {
+        let total = 0;
+        let totalAmp = 0;
+        for (let o = 0; o < layers; o++) {
+          const freq = scale * Math.pow(2, o);
+          const amp = Math.pow(0.5, o);
+          total += simplex.noise2D(px * freq, py * freq) * amp;
+          totalAmp += amp;
+        }
+        return total / totalAmp;
+      }
+
+      function getNoiseFunction(type, simplex, seed) {
+        switch (type) {
+          case "simplex":
+            return (x, y) => simplex.noise2D(x, y); // Already in [-1, 1]
+          case "perlin":
+            return (x, y) => perlin2D(x, y, seed);
+          case "white":
+            return (x, y) =>
+              hash2(Math.floor(x * 4096), Math.floor(y * 4096), seed) * 2 - 1;
+          case "value":
+            return (x, y) => value2D(x * 18, y * 18, seed);
+          case "ridged":
+            return (x, y) => {
+              const n = simplex.noise2D(x, y);
+              return (1 - Math.abs(n)) * 2 - 1;
+            };
+          default:
+            return (x, y) => 0;
+        }
+      }
+
+      function getCombinedNoiseFunction(baseFn, layers, scale) {
+        return (x, y) => {
+          let total = 0;
+          let amp = 1;
+          let freq = 1;
+          let max = 0;
+          for (let i = 0; i < layers; i++) {
+            total += baseFn(x * freq * scale, y * freq * scale) * amp;
+            max += amp;
+            amp *= 0.5;
+            freq *= 2;
+          }
+          return total / max;
+        };
+      }
+
+      function fract(n) {
+        return n - Math.floor(n);
+      }
+
+      function getLiveRenderOverrides() {
+        return {
+          boostR: parseFloat(boostRInput.value),
+          boostG: parseFloat(boostGInput.value),
+          boostB: parseFloat(boostBInput.value),
+          highlightStrength: parseFloat(highlightStrengthInput.value),
+          grain: grainToggle.checked,
+        };
+      }
+
+      function blendPaletteColors(
+        value,
+        blendSharpness,
+        colorRange,
+        colorIntensity,
+        palette,
+      ) {
+        const valueClamped = Math.min(1, Math.max(0, value)) * colorRange;
+        const scaled = valueClamped * 4;
+        const index = Math.max(
+          0,
+          Math.min(Math.floor(scaled), palette.length - 2),
+        );
+        const frac = Math.pow(scaled - index, blendSharpness);
+
+        const c1 = palette[index];
+        const c2 = palette[index + 1];
+
+        let h = c1.h + (c2.h - c1.h) * frac;
+        let s = (c1.s + (c2.s - c1.s) * frac) * (colorIntensity / 100);
+        let l = c1.l + (c2.l - c1.l) * frac;
+
+        return { h, s, l };
+      }
+
+      function writePixel(data, i, r, g, b, boostR, boostG, boostB) {
+        data[i] = Math.max(0, Math.min(255, r * boostR));
+        data[i + 1] = Math.max(0, Math.min(255, g * boostG));
+        data[i + 2] = Math.max(0, Math.min(255, b * boostB));
+        data[i + 3] = 255;
+      }
+
+      function hslToRgb(h, s, l) {
+        s /= 100;
+        l /= 100;
+        const k = (n) => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = (n) =>
+          l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        return [
+          Math.round(f(0) * 255),
+          Math.round(f(8) * 255),
+          Math.round(f(4) * 255),
+        ];
+      }
+
+      const NACRE_PALETTES = {
+        classic: [
+          { h: 286, s: 26, l: 83 },
+          { h: 192, s: 28, l: 85 },
+          { h: 148, s: 24, l: 84 },
+          { h: 330, s: 20, l: 88 },
+          { h: 28, s: 12, l: 93 },
+        ],
+        abalone: [
+          { h: 278, s: 34, l: 82 },
+          { h: 232, s: 38, l: 79 },
+          { h: 186, s: 44, l: 79 },
+          { h: 154, s: 38, l: 80 },
+          { h: 334, s: 31, l: 86 },
+        ],
+        silver: [
+          { h: 230, s: 10, l: 88 },
+          { h: 210, s: 12, l: 84 },
+          { h: 185, s: 15, l: 86 },
+          { h: 260, s: 10, l: 87 },
+          { h: 26, s: 6, l: 94 },
+        ],
+        pinkgreen: [
+          { h: 328, s: 34, l: 86 },
+          { h: 300, s: 30, l: 84 },
+          { h: 164, s: 38, l: 81 },
+          { h: 136, s: 34, l: 82 },
+          { h: 28, s: 12, l: 93 },
+        ],
+      };
+
+      function getNacrePalette(name) {
+        return NACRE_PALETTES[name] || NACRE_PALETTES.classic;
+      }
+
+      function updateVisibleSections(mode) {
+        const allSections = document.querySelectorAll("#controls .section");
+        allSections.forEach((section) => {
+          const modes = section.dataset.mode
+            ? section.dataset.mode.split(",").map((s) => s.trim())
+            : ["all"];
+          const shouldShow = modes.includes("all") || modes.includes(mode);
+          section.hidden = !shouldShow;
+        });
+
+        const allRows = document.querySelectorAll("#controls .control-row");
+        allRows.forEach((row) => {
+          const modes = row.dataset.mode
+            ? row.dataset.mode.split(",").map((s) => s.trim())
+            : ["all"];
+          const shouldShow = modes.includes("all") || modes.includes(mode);
+          row.hidden = !shouldShow;
+        });
+      }
+
+      function applyTopoPreset(name, options = {}) {
+        const respectLocks = !!options.respectLocks;
+        const presets = {
+          coastal: {
+            scale: 0.004,
+            layers: 4,
+            ridge: 0.45,
+            warp: 0.32,
+            erosion: 0.55,
+            bands: 9,
+            source: "simplex",
+          },
+          alpine: {
+            scale: 0.007,
+            layers: 5,
+            ridge: 0.82,
+            warp: 0.22,
+            erosion: 0.26,
+            bands: 14,
+            source: "ridged",
+          },
+          dunes: {
+            scale: 0.003,
+            layers: 3,
+            ridge: 0.58,
+            warp: 0.64,
+            erosion: 0.12,
+            bands: 11,
+            source: "perlin",
+          },
+          volcanic: {
+            scale: 0.009,
+            layers: 5,
+            ridge: 0.72,
+            warp: 0.48,
+            erosion: 0.33,
+            bands: 12,
+            source: "value",
+          },
+        };
+        if (name === "custom" || !presets[name]) return;
+        const p = presets[name];
+        const updates = [
+          ["scale", p.scale],
+          ["layers", p.layers],
+          ["topoRidge", p.ridge],
+          ["topoWarp", p.warp],
+          ["topoErosion", p.erosion],
+          ["topoBandCount", p.bands],
+          ["topoNoiseType", p.source],
+        ];
+        updates.forEach(([id, value]) => {
+          if (respectLocks && isControlLocked(id)) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.value = String(value);
+          markControlPending(el);
+        });
+        updatePendingStatus();
+      }
+
+      function markControlPending(el) {
+        el.classList.add("pending-change");
+        const controlRow = el.closest(".control-row");
+        if (!controlRow) return;
+
+        const label = controlRow.querySelector(".control-label");
+        if (label) {
+          label.classList.add("pending-dot");
+        }
+      }
+
+      document
+        .getElementById("resolutionPreset")
+        .addEventListener("change", () => {
+          const preset = document.getElementById("resolutionPreset").value;
+          const wInput = document.getElementById("renderWidth");
+          const hInput = document.getElementById("renderHeight");
+
+          if (preset && preset !== "custom") {
+            const [w, h] = preset.split("x").map(Number);
+            if (parseInt(wInput.value) !== w || parseInt(hInput.value) !== h) {
+              wInput.value = w;
+              hInput.value = h;
+              markControlPending(wInput);
+              markControlPending(hInput);
+            }
+          } else {
+            wInput.value = "";
+            hInput.value = "";
+            markControlPending(wInput);
+            markControlPending(hInput);
+          }
+          updatePendingStatus();
+          scheduleFinalRender();
+        });
+
+      function applyGrainOverlay(ctx, width, height) {
+        const grainImage = ctx.getImageData(0, 0, width, height);
+        const d = grainImage.data;
+
+        for (let i = 0; i < d.length; i += 4) {
+          const grain = Math.floor((Math.random() - 0.5) * 20); // range -10 to +10
+          d[i] = Math.min(255, Math.max(0, d[i] + grain)); // R
+          d[i + 1] = Math.min(255, Math.max(0, d[i + 1] + grain)); // G
+          d[i + 2] = Math.min(255, Math.max(0, d[i + 2] + grain)); // B
+        }
+
+        ctx.putImageData(grainImage, 0, 0);
+      }
+
+      function applyGaussianBlurOverlay(
+        sourceCanvas,
+        blurAmount,
+        alpha = 0.75,
+      ) {
+        if (!blurAmount || blurAmount <= 0) return;
+        ctx.globalAlpha = alpha;
+        ctx.filter = `blur(${blurAmount}px)`;
+        ctx.drawImage(sourceCanvas, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.filter = "none";
+      }
+
+      function getSubstrateRgb(tone) {
+        if (tone === "dark") {
+          return { r: 16, g: 18, b: 22 };
+        }
+        return { r: 238, g: 234, b: 226 };
+      }
+
+      function applyExperimentalEffects(config) {
+        const fxInvert = config.fxInvert;
+        const fxChromatic = config.fxChromatic || 0;
+        const fxGlitch = config.fxGlitch || 0;
+        const fxScanline = config.fxScanline || 0;
+        const width = canvas.width;
+        const height = canvas.height;
+
+        if (fxChromatic > 0.05) {
+          const src = ctx.getImageData(0, 0, width, height);
+          const out = ctx.createImageData(width, height);
+          const srcData = src.data;
+          const outData = out.data;
+          const shift = Math.max(1, Math.round(fxChromatic));
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const i = (y * width + x) * 4;
+              const xr = Math.min(width - 1, x + shift);
+              const xb = Math.max(0, x - shift);
+              const ir = (y * width + xr) * 4;
+              const ib = (y * width + xb) * 4;
+              outData[i] = srcData[ir];
+              outData[i + 1] = srcData[i + 1];
+              outData[i + 2] = srcData[ib + 2];
+              outData[i + 3] = 255;
+            }
+          }
+          ctx.putImageData(out, 0, 0);
+        }
+
+        if (fxGlitch > 0.01) {
+          const maxSlices = Math.max(1, Math.floor(6 + fxGlitch * 28));
+          const maxShift = Math.max(
+            1,
+            Math.floor(width * (0.002 + fxGlitch * 0.03)),
+          );
+          for (let s = 0; s < maxSlices; s++) {
+            const bandH = Math.max(
+              1,
+              Math.floor(2 + Math.random() * (8 + fxGlitch * 24)),
+            );
+            const y = Math.floor(Math.random() * Math.max(1, height - bandH));
+            const shift = Math.floor((Math.random() * 2 - 1) * maxShift);
+            if (shift === 0) continue;
+            ctx.drawImage(canvas, 0, y, width, bandH, shift, y, width, bandH);
+          }
+        }
+
+        if (fxScanline > 0.01) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.7, fxScanline * 0.45);
+          ctx.fillStyle = "#000";
+          for (let y = 0; y < height; y += 2) {
+            ctx.fillRect(0, y, width, 1);
+          }
+          ctx.restore();
+        }
+
+        if (fxInvert) {
+          const img = ctx.getImageData(0, 0, width, height);
+          const d = img.data;
+          for (let i = 0; i < d.length; i += 4) {
+            d[i] = 255 - d[i];
+            d[i + 1] = 255 - d[i + 1];
+            d[i + 2] = 255 - d[i + 2];
+          }
+          ctx.putImageData(img, 0, 0);
+        }
+      }
+      function getRenderConfig(renderOptions = {}) {
+        const seed = resolveSeed();
+        const fallbackWidth = Math.max(
+          1,
+          Math.floor(canvas.clientWidth || window.innerWidth - 400),
+        );
+        const fallbackHeight = Math.max(
+          1,
+          Math.floor(canvas.clientHeight || window.innerHeight),
+        );
+        const mode = document.getElementById("modeSelector").value;
+        const requestedWidth = getInput("renderWidth", true) || fallbackWidth;
+        const requestedHeight =
+          getInput("renderHeight", true) || fallbackHeight;
+        const previewScale = getPreviewScaleForMode(mode);
+        const scaleFactor = renderOptions.preview ? previewScale : 1;
+        const targetWidth = Math.max(
+          1,
+          Math.floor(requestedWidth * scaleFactor),
+        );
+        const targetHeight = Math.max(
+          1,
+          Math.floor(requestedHeight * scaleFactor),
+        );
+
+        return {
+          width: targetWidth,
+          height: targetHeight,
+          outputWidth: requestedWidth,
+          outputHeight: requestedHeight,
+          preview: !!renderOptions.preview,
+          seed,
+          layers: getInput("layers", true),
+          scale: getInput("scale"),
+          blend: getInput("blend"),
+          layerLength: getInput("layerLength"),
+          ringSpacing: getInput("ringSpacing"),
+          ringJitter: getInput("ringJitter"),
+          seamThickness: getInput("seamThickness"),
+          seamContrast: getInput("seamContrast"),
+          scratchDensity: getInput("scratchDensity"),
+          scratchAngle: getInput("scratchAngle"),
+          surfacePolish: getInput("surfacePolish"),
+          colorIntensity: getInput("intensity"),
+          colorRange: getInput("range"),
+          nacrePalette:
+            document.getElementById("nacrePalette")?.value || "classic",
+          nacreBrilliance: getInput("nacreBrilliance"),
+          nacreChromatic: getInput("nacreChromatic"),
+          textureFamily:
+            document.getElementById("textureFamily")?.value || "classic",
+          opalCellScale: getInput("opalCellScale"),
+          opalVeinDensity: getInput("opalVeinDensity"),
+          opalFire: getInput("opalFire"),
+          opalMatrix: getInput("opalMatrix"),
+          labradoriteScale: getInput("labradoriteScale"),
+          labradoriteDirection: getInput("labradoriteDirection"),
+          labradoriteBanding: getInput("labradoriteBanding"),
+          labradoriteFlash: getInput("labradoriteFlash"),
+          labradoriteDarkness: getInput("labradoriteDarkness"),
+          marbleFlowScale: getInput("marbleFlowScale"),
+          marbleVeinFreq: getInput("marbleVeinFreq"),
+          marbleContrast: getInput("marbleContrast"),
+          marbleInkDrift: getInput("marbleInkDrift"),
+          marbleLightness: getInput("marbleLightness"),
+          substrateTone:
+            document.getElementById("substrateTone")?.value || "light",
+          substrateMix: getInput("substrateMix"),
+          flowMode: document.getElementById("flowMode").value,
+          highlightStrength: getInput("highlightStrength"),
+          lightAngle: getInput("lightAngle"),
+          lightCurvature: getInput("lightCurvature"),
+          lightSpread: getInput("lightSpread"),
+          dotSize: getInput("risoDotSize", true),
+          threshold: getInput("risoThreshold", true),
+          boostR: getInput("boostR"),
+          boostG: getInput("boostG"),
+          boostB: getInput("boostB"),
+          gaussianBlur: getInput("gaussianBlur"),
+          grain: document.getElementById("grainToggle").checked,
+          fxInvert: !!document.getElementById("fxInvert")?.checked,
+          fxChromatic: getInput("fxChromatic"),
+          fxGlitch: getInput("fxGlitch"),
+          fxScanline: getInput("fxScanline"),
+          topoPreset: document.getElementById("topoPreset")?.value || "coastal",
+          topoRidge: getInput("topoRidge"),
+          topoWarp: getInput("topoWarp"),
+          topoErosion: getInput("topoErosion"),
+        };
+      }
+
+      function startGeneration(force = false, renderOptions = {}) {
+        const mode = document.getElementById("modeSelector").value;
+
+        switch (mode) {
+          case "motherofpearl":
+            generateMotherOfPearl(force, renderOptions);
+            break;
+          case "opalvein":
+            generateOpalVein(force, renderOptions);
+            break;
+          case "labradorite":
+            generateLabradoriteFlash(force, renderOptions);
+            break;
+          case "marbleink":
+            generateMarbleInk(force, renderOptions);
+            break;
+          case "risograph":
+            generateRisograph(force, renderOptions);
+            break;
+          case "topography":
+            generateTopography(force, renderOptions);
+            break;
+          default:
+            console.warn("Unknown mode:", mode);
+            break;
+        }
+      }
+
+      function generateMotherOfPearl(force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        const runId = ++renderRunId;
+        const config = getRenderConfig(renderOptions);
+        const palette = getNacrePalette(config.nacrePalette);
+
+        if (!Array.isArray(palette) || palette.length < 2) {
+          console.error("Palette must be an array with at least 2 colors.");
+          setStatus("error", "Palette error");
+          return;
+        }
+
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+
+        simplex = createSeededSimplex(config.seed);
+
+        const layers = config.layers;
+
+        const cx = config.width / 2;
+        const cy = config.height / 2;
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const data = imageData.data;
+
+        const scale = config.scale;
+        const blendSharpness = config.blend;
+        const layerLength = config.layerLength;
+        const ringSpacing = config.ringSpacing;
+        const ringJitter = config.ringJitter;
+        const seamThickness = config.seamThickness;
+        const seamContrast = config.seamContrast;
+        const scratchDensity = config.scratchDensity;
+        const scratchAngle = config.scratchAngle;
+        const surfacePolish = config.surfacePolish;
+        const colorIntensity = config.colorIntensity;
+        const colorRange = config.colorRange;
+        const nacreBrilliance = config.nacreBrilliance;
+        const nacreChromatic = config.nacreChromatic;
+        const textureFamily = config.textureFamily;
+        const substrateTone = config.substrateTone;
+        const substrateMix = clamp01(config.substrateMix);
+        const highlightStrength = config.highlightStrength;
+        const lightAngle = config.lightAngle;
+        const lightCurvature = clamp01(config.lightCurvature || 0.28);
+        const lightSpread = clamp01(config.lightSpread || 0.55);
+        const gaussianBlur = config.gaussianBlur;
+        const substrate = getSubstrateRgb(substrateTone);
+
+        const flowMode = config.flowMode;
+
+        const boostR = config.boostR;
+        const boostG = config.boostG;
+        const boostB = config.boostB;
+
+        const lightVec = {
+          x: Math.cos(lightAngle * 2 * Math.PI),
+          y: Math.sin(lightAngle * 2 * Math.PI),
+        };
+        const scratchDir = {
+          x: Math.cos(scratchAngle * 2 * Math.PI),
+          y: Math.sin(scratchAngle * 2 * Math.PI),
+        };
+
+        showDebugInfo(config);
+
+        let y = 0;
+        const rowsPerFrame = getRowsPerFrame("motherofpearl", config.preview);
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        generateBtn.disabled = !config.preview;
+
+        progress.style.width = "0%";
+
+        function renderChunk() {
+          if (runId !== renderRunId) {
+            renderTask = null;
+            animationId = null;
+            return;
+          }
+          const endY = Math.min(y + rowsPerFrame, config.height);
+          for (; y < endY; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const nx = x / config.width - 0.5;
+              const ny = y / config.height - 0.5;
+
+              const { angleInfluence, highlightBoost } = computeLightInfluence(
+                nx,
+                ny,
+                lightVec,
+                highlightStrength,
+                lightSpread,
+                lightCurvature,
+              );
+              const { px, py } = getFlowCoordinates(
+                x,
+                y,
+                cx,
+                cy,
+                flowMode,
+                layerLength,
+              );
+              const noise = getNoiseValue(px, py, layers, scale, simplex);
+
+              const growthAxis =
+                flowMode === "circular"
+                  ? Math.hypot(nx, ny) * 2.2
+                  : (nx * 0.72 + ny * 0.28) * layerLength * 1.4;
+              const ringPhase =
+                (growthAxis + noise * ringJitter) * ringSpacing * 24;
+              const ringWave = Math.sin(ringPhase * Math.PI);
+              const seamMask = smoothstep(
+                1 - seamThickness,
+                1,
+                Math.abs(ringWave),
+              );
+
+              const geometricField = clamp01(
+                (noise * 0.7 + ringWave * 0.55 + 1) / 2,
+              );
+              const lightingField =
+                angleInfluence * 0.42 + highlightBoost * 0.26;
+              const bandingField = clamp01(
+                (Math.sin((ringPhase + noise * 1.75) * Math.PI) + 1) / 2,
+              );
+              let familyBanding = bandingField;
+              let familySeam = seamMask;
+              let familyBrillianceMul = 1;
+              let familyChromaticMul = 1;
+              let substrateCoverageBias = 0;
+              if (textureFamily === "opal") {
+                const cellField = clamp01(
+                  (Math.sin((noise * 4.2 + nx * 3.1 - ny * 2.7) * Math.PI) +
+                    1) /
+                    2,
+                );
+                familyBanding = clamp01(bandingField * 0.58 + cellField * 0.42);
+                familySeam = clamp01(
+                  seamMask * 0.52 + smoothstep(0.72, 1, cellField) * 0.48,
+                );
+                familyBrillianceMul = 1.08;
+                familyChromaticMul = 1.12;
+                substrateCoverageBias = -0.06;
+              } else if (textureFamily === "labradorite") {
+                const flash = Math.pow(clamp01((angleInfluence + 1) / 2), 2.7);
+                familyBanding = clamp01(bandingField * 0.7 + flash * 0.3);
+                familySeam = clamp01(seamMask * 1.18);
+                familyBrillianceMul = 1.04;
+                familyChromaticMul = 1.28;
+                substrateCoverageBias = 0.08;
+              }
+
+              const nacreField = clamp01(
+                geometricField * 0.62 + familyBanding * 0.28 + familySeam * 0.1,
+              );
+              const value = clamp01(nacreField * 0.9 + lightingField * 0.1);
+              let { h, s, l } = blendPaletteColors(
+                value,
+                blendSharpness,
+                colorRange,
+                colorIntensity,
+                palette,
+              );
+              s = Math.min(100, s * nacreBrilliance * familyBrillianceMul);
+              l = Math.min(
+                97,
+                l + (nacreBrilliance * familyBrillianceMul - 1) * 6,
+              );
+              if (textureFamily === "labradorite") {
+                l = Math.max(10, l - 8);
+              }
+
+              // Drive hue shifts from the same growth geometry so iridescence follows structure.
+              const structureHueShift =
+                (familyBanding - 0.5) *
+                  (44 * nacreChromatic * familyChromaticMul) *
+                  colorRange +
+                familySeam * (14 * nacreChromatic * familyChromaticMul) -
+                (nacreField - 0.5) * 12;
+              const directionalHueShift =
+                (angleInfluence * 9 + highlightBoost * 4) *
+                (0.35 + 0.45 * nacreChromatic * familyChromaticMul);
+              const shiftedHue =
+                (h + structureHueShift + directionalHueShift + 360) % 360;
+
+              let [r, g, b] = hslToRgb(shiftedHue, s, l);
+              const i = (y * config.width + x) * 4;
+
+              const seamStrength = familySeam * seamContrast;
+              const seamDark = 1 - seamStrength * 0.68;
+              const seamWarm = seamStrength * 95;
+              r = r * seamDark + seamWarm * 0.42;
+              g = g * seamDark + seamWarm * 0.28;
+              b = b * (1 - seamStrength * 0.34);
+
+              const geometryLift = nacreField * (12 + 20 * surfacePolish);
+              r += geometryLift * 0.55;
+              g += geometryLift * 0.62;
+              b += geometryLift * 0.78;
+
+              const scratchFreq = 60 + scratchDensity * 320;
+              const scratchPhase =
+                (nx * scratchDir.x + ny * scratchDir.y) * scratchFreq +
+                noise * 6;
+              const scratchLine = Math.pow(
+                Math.abs(Math.sin(scratchPhase * Math.PI)),
+                24,
+              );
+              const scratchAmount =
+                scratchLine * scratchDensity * (1 - surfacePolish) * 45;
+              r += scratchAmount;
+              g += scratchAmount * 0.88;
+              b += scratchAmount * 0.75;
+
+              const coverage = clamp01(
+                (0.36 +
+                  nacreField * 0.58 +
+                  highlightBoost * 0.14 +
+                  substrateCoverageBias) *
+                  (1 - substrateMix) +
+                  substrateMix * (0.22 + familySeam * 0.22),
+              );
+              r = substrate.r * (1 - coverage) + r * coverage;
+              g = substrate.g * (1 - coverage) + g * coverage;
+              b = substrate.b * (1 - coverage) + b * coverage;
+
+              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+            }
+          }
+          progress.style.width = `${(y / config.height) * 100}%`;
+          if (y < config.height) {
+            animationId = requestAnimationFrame(renderChunk);
+          } else {
+            if (runId !== renderRunId) {
+              renderTask = null;
+              animationId = null;
+              return;
+            }
+            offscreenCtx.putImageData(imageData, 0, 0);
+
+            // Apply a soft blur before compositing.
+            // Keep previous frame visible during computation and swap only when ready.
+            canvas.width = config.width;
+            canvas.height = config.height;
+            ctx.globalAlpha = 1;
+            ctx.drawImage(offscreenCanvas, 0, 0);
+
+            // Overlay blurred glow layer
+            ctx.globalAlpha = 0.2;
+            ctx.filter = "blur(8px)";
+            ctx.drawImage(offscreenCanvas, 0, 0);
+
+            if (gaussianBlur > 0) {
+              ctx.globalAlpha = 0.72;
+              ctx.filter = `blur(${gaussianBlur}px)`;
+              ctx.drawImage(offscreenCanvas, 0, 0);
+            }
+
+            // Reset effects
+            ctx.globalAlpha = 1.0;
+            ctx.filter = "none";
+
+            if (config.grain) {
+              applyGrainOverlay(ctx, config.width, config.height);
+            }
+            applyExperimentalEffects(config);
+            captureDisplayBase();
+            applyCompareView();
+
+            originalImageData = new ImageData(
+              new Uint8ClampedArray(imageData.data),
+              imageData.width,
+              imageData.height,
+            );
+
+            if (!config.preview) {
+              setStatus("complete", "Complete");
+              setTimeout(() => {
+                setStatus("idle", "Idle");
+                generateBtn.disabled = false;
+              }, 500);
+            } else {
+              setStatus("idle", "Preview ready");
+            }
+
+            renderTask = null;
+            animationId = null;
+            // Save current values as "applied"
+            if (!config.preview) {
+              document
+                .querySelectorAll("#controls input, #controls select")
+                .forEach((el) => {
+                  if (el.dataset.live !== "true") {
+                    el.dataset.applied =
+                      el.type === "checkbox" ? String(el.checked) : el.value;
+                  }
+                });
+            }
+          }
+        }
+        renderTask = renderChunk;
+        animationId = requestAnimationFrame(renderChunk);
+      }
+
+      function generateOpalVein(force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        const runId = ++renderRunId;
+        const config = getRenderConfig(renderOptions);
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        simplex = createSeededSimplex(config.seed);
+
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const data = imageData.data;
+        const cellScale = config.opalCellScale || 0.009;
+        const veinDensity = config.opalVeinDensity || 0.85;
+        const fireIntensity = config.opalFire || 1.2;
+        const matrix = clamp01(config.opalMatrix || 0.52);
+        const gaussianBlur = config.gaussianBlur;
+        const boostR = config.boostR;
+        const boostG = config.boostG;
+        const boostB = config.boostB;
+
+        let y = 0;
+        const rowsPerFrame = getRowsPerFrame("opalvein", config.preview);
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        generateBtn.disabled = !config.preview;
+        progress.style.width = "0%";
+
+        function renderChunk() {
+          if (runId !== renderRunId) {
+            renderTask = null;
+            return;
+          }
+          const endY = Math.min(y + rowsPerFrame, config.height);
+          for (; y < endY; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const nx = x / config.width;
+              const ny = y / config.height;
+              const i = (y * config.width + x) * 4;
+
+              const n1 = simplex.noise2D(
+                nx * 420 * cellScale,
+                ny * 420 * cellScale,
+              );
+              const n2 =
+                simplex.noise2D(
+                  (nx + 12.37) * 820 * cellScale,
+                  (ny - 5.91) * 820 * cellScale,
+                ) * 0.5;
+              const cells = clamp01((n1 * 0.75 + n2 * 0.25 + 1) / 2);
+              const veins = Math.pow(
+                Math.abs(Math.sin((cells * 10 + n1 * 3.5) * Math.PI)),
+                1.6 + veinDensity * 1.4,
+              );
+              const edge = smoothstep(0.62 - veinDensity * 0.18, 0.92, veins);
+
+              const darkBase = 14 + matrix * 24;
+              let r = darkBase;
+              let g = darkBase + 2;
+              let b = darkBase + 5;
+
+              const fireHue = (cells * 360 + n2 * 120 + 360) % 360;
+              const fireSat = Math.min(
+                100,
+                45 + fireIntensity * 34 + edge * 14,
+              );
+              const fireLum = Math.min(90, 26 + edge * 42 + fireIntensity * 8);
+              const [fr, fg, fb] = hslToRgb(fireHue, fireSat, fireLum);
+
+              const fireMask = clamp01(edge * (0.58 + fireIntensity * 0.25));
+              r = r * (1 - fireMask) + fr * fireMask;
+              g = g * (1 - fireMask) + fg * fireMask;
+              b = b * (1 - fireMask) + fb * fireMask;
+
+              const sparkle =
+                Math.pow(
+                  clamp01((simplex.noise2D(nx * 1800, ny * 1800) + 1) / 2),
+                  16,
+                ) *
+                fireIntensity *
+                140;
+              r += sparkle * 0.65;
+              g += sparkle * 0.92;
+              b += sparkle;
+
+              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+            }
+          }
+
+          progress.style.width = `${(y / config.height) * 100}%`;
+          if (y < config.height) {
+            animationId = requestAnimationFrame(renderChunk);
+            return;
+          }
+
+          offscreenCtx.putImageData(imageData, 0, 0);
+          canvas.width = config.width;
+          canvas.height = config.height;
+          ctx.globalAlpha = 1;
+          ctx.drawImage(offscreenCanvas, 0, 0);
+
+          ctx.globalAlpha = 0.22;
+          ctx.filter = "blur(7px)";
+          ctx.drawImage(offscreenCanvas, 0, 0);
+          if (gaussianBlur > 0) {
+            ctx.globalAlpha = 0.72;
+            ctx.filter = `blur(${gaussianBlur}px)`;
+            ctx.drawImage(offscreenCanvas, 0, 0);
+          }
+          ctx.globalAlpha = 1;
+          ctx.filter = "none";
+
+          if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+          applyExperimentalEffects(config);
+          captureDisplayBase();
+          applyCompareView();
+
+          originalImageData = ctx.getImageData(
+            0,
+            0,
+            config.width,
+            config.height,
+          );
+          if (!config.preview) {
+            setStatus("complete", "Opal rendered");
+            setTimeout(() => {
+              setStatus("idle", "Idle");
+              generateBtn.disabled = false;
+            }, 450);
+          } else {
+            setStatus("idle", "Preview ready");
+          }
+          renderTask = null;
+          animationId = null;
+        }
+
+        renderTask = renderChunk;
+        animationId = requestAnimationFrame(renderChunk);
+      }
+
+      function generateLabradoriteFlash(force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        const runId = ++renderRunId;
+        const config = getRenderConfig(renderOptions);
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        simplex = createSeededSimplex(config.seed);
+
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const data = imageData.data;
+        const scale = config.labradoriteScale || 0.008;
+        const bandSharpness = config.labradoriteBanding || 1.6;
+        const flashStrength = config.labradoriteFlash || 1.35;
+        const baseDarkness = clamp01(config.labradoriteDarkness || 0.68);
+        const direction = (config.labradoriteDirection || 0.33) * Math.PI * 2;
+        const dirX = Math.cos(direction);
+        const dirY = Math.sin(direction);
+        const gaussianBlur = config.gaussianBlur;
+        const boostR = config.boostR;
+        const boostG = config.boostG;
+        const boostB = config.boostB;
+
+        let y = 0;
+        const rowsPerFrame = getRowsPerFrame("labradorite", config.preview);
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        generateBtn.disabled = !config.preview;
+        progress.style.width = "0%";
+
+        function renderChunk() {
+          if (runId !== renderRunId) {
+            renderTask = null;
+            animationId = null;
+            return;
+          }
+          const endY = Math.min(y + rowsPerFrame, config.height);
+          for (; y < endY; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const nx = x / config.width - 0.5;
+              const ny = y / config.height - 0.5;
+              const i = (y * config.width + x) * 4;
+
+              const nBase = simplex.noise2D(
+                (nx + 0.5) * 680 * scale,
+                (ny + 0.5) * 680 * scale,
+              );
+              const nDetail =
+                simplex.noise2D(
+                  (nx + 1.8) * 1400 * scale,
+                  (ny - 2.4) * 1400 * scale,
+                ) * 0.45;
+              const field = nBase * 0.75 + nDetail * 0.25;
+              const directionBand = nx * dirX + ny * dirY;
+              const band = Math.pow(
+                Math.abs(
+                  Math.sin(
+                    (directionBand * (36 + bandSharpness * 22) + field * 2.1) *
+                      Math.PI,
+                  ),
+                ),
+                1.2 + bandSharpness,
+              );
+              const flashMask = clamp01(
+                band * (0.4 + flashStrength * 0.42) +
+                  clamp01((field + 1) / 2) * 0.16,
+              );
+
+              const base = 8 + (1 - baseDarkness) * 24;
+              let r = base;
+              let g = base + 2;
+              let b = base + 5;
+
+              const hue = (178 + field * 48 + directionBand * 90 + 360) % 360;
+              const sat = Math.min(
+                100,
+                42 + flashStrength * 28 + flashMask * 20,
+              );
+              const lum = Math.min(88, 18 + flashMask * 52);
+              const [fr, fg, fb] = hslToRgb(hue, sat, lum);
+
+              r = r * (1 - flashMask) + fr * flashMask;
+              g = g * (1 - flashMask) + fg * flashMask;
+              b = b * (1 - flashMask) + fb * flashMask;
+
+              const spark =
+                Math.pow(
+                  clamp01(
+                    (simplex.noise2D((nx + 4.2) * 2600, (ny - 1.3) * 2600) +
+                      1) /
+                      2,
+                  ),
+                  18,
+                ) *
+                flashStrength *
+                170;
+              r += spark * 0.45;
+              g += spark * 0.8;
+              b += spark;
+
+              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+            }
+          }
+
+          progress.style.width = `${(y / config.height) * 100}%`;
+          if (y < config.height) {
+            animationId = requestAnimationFrame(renderChunk);
+            return;
+          }
+
+          offscreenCtx.putImageData(imageData, 0, 0);
+          canvas.width = config.width;
+          canvas.height = config.height;
+          ctx.globalAlpha = 1;
+          ctx.drawImage(offscreenCanvas, 0, 0);
+
+          ctx.globalAlpha = 0.24;
+          ctx.filter = "blur(9px)";
+          ctx.drawImage(offscreenCanvas, 0, 0);
+          if (gaussianBlur > 0) {
+            ctx.globalAlpha = 0.72;
+            ctx.filter = `blur(${gaussianBlur}px)`;
+            ctx.drawImage(offscreenCanvas, 0, 0);
+          }
+          ctx.globalAlpha = 1;
+          ctx.filter = "none";
+
+          if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+          applyExperimentalEffects(config);
+          captureDisplayBase();
+          applyCompareView();
+
+          originalImageData = ctx.getImageData(
+            0,
+            0,
+            config.width,
+            config.height,
+          );
+          if (!config.preview) {
+            setStatus("complete", "Labradorite rendered");
+            setTimeout(() => {
+              setStatus("idle", "Idle");
+              generateBtn.disabled = false;
+            }, 450);
+          } else {
+            setStatus("idle", "Preview ready");
+          }
+          renderTask = null;
+          animationId = null;
+        }
+
+        renderTask = renderChunk;
+        animationId = requestAnimationFrame(renderChunk);
+      }
+
+      function generateMarbleInk(force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        const runId = ++renderRunId;
+        const config = getRenderConfig(renderOptions);
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        simplex = createSeededSimplex(config.seed);
+
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const data = imageData.data;
+        const flowScale = config.marbleFlowScale || 0.007;
+        const veinFreq = config.marbleVeinFreq || 1.2;
+        const contrast = config.marbleContrast || 0.78;
+        const inkDrift = clamp01(config.marbleInkDrift || 0.42);
+        const stoneLightness = clamp01(config.marbleLightness || 0.72);
+        const gaussianBlur = config.gaussianBlur;
+        const boostR = config.boostR;
+        const boostG = config.boostG;
+        const boostB = config.boostB;
+
+        let y = 0;
+        const rowsPerFrame = getRowsPerFrame("marbleink", config.preview);
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        generateBtn.disabled = !config.preview;
+        progress.style.width = "0%";
+
+        function renderChunk() {
+          if (runId !== renderRunId) {
+            renderTask = null;
+            animationId = null;
+            return;
+          }
+          const endY = Math.min(y + rowsPerFrame, config.height);
+          for (; y < endY; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const nx = x / config.width;
+              const ny = y / config.height;
+              const i = (y * config.width + x) * 4;
+
+              const warp1 =
+                simplex.noise2D(nx * 900 * flowScale, ny * 900 * flowScale) *
+                inkDrift *
+                0.32;
+              const warp2 =
+                simplex.noise2D(
+                  (nx + 4.7) * 1600 * flowScale,
+                  (ny - 1.8) * 1600 * flowScale,
+                ) *
+                inkDrift *
+                0.18;
+              const px = nx + warp1;
+              const py = ny + warp2;
+
+              const n = simplex.noise2D(
+                px * 1200 * flowScale,
+                py * 1200 * flowScale,
+              );
+              const n2 =
+                simplex.noise2D(
+                  (px + 2.3) * 2400 * flowScale,
+                  (py - 2.1) * 2400 * flowScale,
+                ) * 0.4;
+              const flow = n * 0.7 + n2 * 0.3;
+              const vein = Math.pow(
+                Math.abs(
+                  Math.sin((flow * veinFreq * 4.2 + py * 3.2) * Math.PI),
+                ),
+                1.4 + contrast * 1.7,
+              );
+              const veinMask = smoothstep(0.62 - contrast * 0.2, 0.96, vein);
+
+              const stone = Math.round(145 + stoneLightness * 92 + flow * 9);
+              let r = stone;
+              let g = stone - 4;
+              let b = stone - 10;
+
+              const warmVein = 42 + contrast * 38;
+              r = r * (1 - veinMask) + warmVein * veinMask;
+              g = g * (1 - veinMask) + (warmVein - 10) * veinMask;
+              b = b * (1 - veinMask) + (warmVein - 18) * veinMask;
+
+              const cloud = clamp01(
+                (simplex.noise2D(px * 400 * flowScale, py * 400 * flowScale) +
+                  1) /
+                  2,
+              );
+              r += cloud * 14;
+              g += cloud * 11;
+              b += cloud * 7;
+
+              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+            }
+          }
+
+          progress.style.width = `${(y / config.height) * 100}%`;
+          if (y < config.height) {
+            animationId = requestAnimationFrame(renderChunk);
+            return;
+          }
+
+          offscreenCtx.putImageData(imageData, 0, 0);
+          canvas.width = config.width;
+          canvas.height = config.height;
+          ctx.globalAlpha = 1;
+          ctx.drawImage(offscreenCanvas, 0, 0);
+
+          ctx.globalAlpha = 0.18;
+          ctx.filter = "blur(5px)";
+          ctx.drawImage(offscreenCanvas, 0, 0);
+          if (gaussianBlur > 0) {
+            ctx.globalAlpha = 0.72;
+            ctx.filter = `blur(${gaussianBlur}px)`;
+            ctx.drawImage(offscreenCanvas, 0, 0);
+          }
+          ctx.globalAlpha = 1;
+          ctx.filter = "none";
+
+          if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+          applyExperimentalEffects(config);
+          captureDisplayBase();
+          applyCompareView();
+
+          originalImageData = ctx.getImageData(
+            0,
+            0,
+            config.width,
+            config.height,
+          );
+          if (!config.preview) {
+            setStatus("complete", "Marble rendered");
+            setTimeout(() => {
+              setStatus("idle", "Idle");
+              generateBtn.disabled = false;
+            }, 450);
+          } else {
+            setStatus("idle", "Preview ready");
+          }
+          renderTask = null;
+          animationId = null;
+        }
+
+        renderTask = renderChunk;
+        animationId = requestAnimationFrame(renderChunk);
+      }
+
+      function generateRisograph(force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        generateBtn.disabled = !renderOptions.preview;
+
+        const width = canvas.width;
+        const height = canvas.height;
+
+        const config = getRenderConfig(renderOptions);
+        const dotSize = config.dotSize;
+        const threshold = config.threshold;
+
+        // Read pixel data from existing canvas content
+        const imageData = ctx.getImageData(0, 0, width, height).data;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        for (let y = 0; y < height; y += dotSize) {
+          for (let x = 0; x < width; x += dotSize) {
+            const i = (y * width + x) * 4;
+            const r = imageData[i];
+            const g = imageData[i + 1];
+            const b = imageData[i + 2];
+
+            // Calculate perceived brightness (standard grayscale conversion)
+            const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            if (brightness < threshold) {
+              ctx.fillStyle = "#000";
+              ctx.beginPath();
+              ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+        originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+
+        const { boostR, boostG, boostB, grain } = getLiveRenderOverrides();
+        adjustColorBoosts();
+        applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.8);
+        if (grain) applyGrainOverlay(ctx, config.width, config.height);
+        applyExperimentalEffects(config);
+        captureDisplayBase();
+        applyCompareView();
+
+        setTimeout(
+          () => {
+            if (!renderOptions.preview) {
+              setStatus("complete", "Riso rendered");
+              generateBtn.disabled = false;
+              setTimeout(() => setStatus("idle", "Idle"), 500);
+            } else {
+              setStatus("idle", "Preview ready");
+            }
+          },
+          renderOptions.preview ? 120 : 800,
+        );
+      }
+
+      function generateTopography(force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        generateBtn.disabled = !renderOptions.preview;
+
+        const config = getRenderConfig(renderOptions);
+        const bandCount = getInput("topoBandCount", true);
+        const renderMode = document.getElementById("topoRenderMode").value;
+        const noiseType = document.getElementById("topoNoiseType").value;
+        const ridgeStrength = config.topoRidge;
+        const warpStrength = config.topoWarp;
+        const erosionStrength = config.topoErosion;
+
+        simplex = createSeededSimplex(config.seed);
+        const baseNoise = getNoiseFunction(noiseType, simplex, config.seed);
+        const effectiveScale = 620 * config.scale;
+
+        const noiseFunc = getCombinedNoiseFunction(
+          baseNoise,
+          config.layers,
+          effectiveScale,
+        );
+        const terrainNoise = (nx, ny) => {
+          const warpAmp = 0.18 * warpStrength;
+          const wx = nx + noiseFunc(nx + 7.91, ny - 4.28) * warpAmp;
+          const wy = ny + noiseFunc(nx - 5.73, ny + 9.16) * warpAmp;
+          const n = noiseFunc(wx, wy);
+          const ridged = 1 - Math.abs(n);
+          const ridgedSigned = ridged * 2 - 1;
+          return n * (1 - ridgeStrength) + ridgedSigned * ridgeStrength;
+        };
+
+        showDebugInfo(config, {
+          effectiveScale,
+          ridgeStrength,
+          warpStrength,
+          erosionStrength,
+        });
+
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+
+        const heights = new Float32Array(config.width * config.height);
+        for (let y = 0; y < config.height; y++) {
+          for (let x = 0; x < config.width; x++) {
+            const nx = x / config.width;
+            const ny = y / config.height;
+            const n = terrainNoise(nx, ny);
+            heights[y * config.width + x] = clamp01((n + 1) / 2);
+          }
+        }
+
+        const erosionSteps = renderOptions.preview
+          ? Math.floor(erosionStrength * 2)
+          : Math.floor(erosionStrength * 4);
+        for (let s = 0; s < erosionSteps; s++) {
+          const smoothed = new Float32Array(heights.length);
+          for (let y = 0; y < config.height; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const i = y * config.width + x;
+              const left = heights[y * config.width + Math.max(0, x - 1)];
+              const right =
+                heights[y * config.width + Math.min(config.width - 1, x + 1)];
+              const up = heights[Math.max(0, y - 1) * config.width + x];
+              const down =
+                heights[Math.min(config.height - 1, y + 1) * config.width + x];
+              const avg = (left + right + up + down + heights[i]) / 5;
+              smoothed[i] =
+                heights[i] +
+                (avg - heights[i]) * (0.3 + erosionStrength * 0.45);
+            }
+          }
+          heights.set(smoothed);
+        }
+
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const data = imageData.data;
+
+        for (let y = 0; y < config.height; y++) {
+          for (let x = 0; x < config.width; x++) {
+            const i = (y * config.width + x) * 4;
+            const value = heights[y * config.width + x];
+            const band = Math.floor(value * bandCount);
+
+            let color = 255;
+            if (renderMode === "lines") {
+              // Check neighbors and highlight if band changes
+              const vRight =
+                heights[y * config.width + Math.min(config.width - 1, x + 1)];
+              const vDown =
+                heights[Math.min(config.height - 1, y + 1) * config.width + x];
+              const bRight = Math.floor(vRight * bandCount);
+              const bDown = Math.floor(vDown * bandCount);
+              color = band !== bRight || band !== bDown ? 0 : 255;
+            } else if (renderMode === "fill") {
+              const stepped = band / Math.max(1, bandCount - 1);
+              color = Math.floor(stepped * 255);
+            } else if (renderMode === "gradient") {
+              color = Math.floor(value * 255);
+            }
+
+            data[i] = data[i + 1] = data[i + 2] = color;
+            data[i + 3] = 255;
+          }
+        }
+
+        offscreenCtx.putImageData(imageData, 0, 0);
+        canvas.width = config.width;
+        canvas.height = config.height;
+        ctx.drawImage(offscreenCanvas, 0, 0);
+        originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+
+        // Post-processing
+        const { grain } = getLiveRenderOverrides();
+        adjustColorBoosts();
+        applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.75);
+        if (grain) applyGrainOverlay(ctx, config.width, config.height);
+        applyExperimentalEffects(config);
+        captureDisplayBase();
+        applyCompareView();
+
+        if (!renderOptions.preview) {
+          setStatus(
+            "complete",
+            `Topography rendered: ${bandCount} bands, ${renderMode}`,
+          );
+          setTimeout(() => {
+            setStatus("idle", "Idle");
+            generateBtn.disabled = false;
+          }, 800);
+        } else {
+          setStatus("idle", "Preview ready");
+        }
+      }
+
+      function updatePendingStatus() {
+        const pendingCount =
+          document.querySelectorAll(".pending-change").length;
+
+        if (status.dataset.state === "idle") {
+          if (pendingCount > 0) {
+            setStatus(
+              "idle",
+              `Idle: ${pendingCount} change${pendingCount > 1 ? "s" : ""} not applied`,
+            );
+          } else {
+            setStatus("idle", "Idle");
+          }
+        }
+      }
+
+      function clearPendingIndicators() {
+        document
+          .querySelectorAll("#controls input, #controls select")
+          .forEach((el) => {
+            el.classList.remove("pending-change");
+            if (el.dataset.live !== "true") {
+              el.dataset.applied =
+                el.type === "checkbox" ? String(el.checked) : el.value;
+            }
+
+            const controlRow = el.closest(".control-row");
+            if (controlRow) {
+              const label = controlRow.querySelector(".control-label");
+              if (label) label.classList.remove("pending-dot");
+            }
+          });
+
+        updatePendingStatus();
+      }
+
+      function adjustColorBoosts() {
+        if (!originalImageData) return;
+
+        const { boostR, boostG, boostB } = getLiveRenderOverrides();
+
+        const width = originalImageData.width;
+        const height = originalImageData.height;
+
+        const originalData = originalImageData.data;
+        const newImageData = ctx.createImageData(width, height);
+        const newData = newImageData.data;
+
+        for (let i = 0; i < originalData.length; i += 4) {
+          newData[i] = Math.min(255, originalData[i] * boostR); // R
+          newData[i + 1] = Math.min(255, originalData[i + 1] * boostG); // G
+          newData[i + 2] = Math.min(255, originalData[i + 2] * boostB); // B
+          newData[i + 3] = originalData[i + 3]; // A
+        }
+
+        ctx.putImageData(newImageData, 0, 0);
+        captureDisplayBase();
+        applyCompareView();
+      }
+
+      const GALLERY_STORAGE_KEY = "raden-gallery-v1";
+      const LOCK_STORAGE_KEY = "raden-random-locks-v1";
+      const PERFORMANCE_PROFILE_STORAGE_KEY = "raden-performance-profile-v1";
+      const PERF_PROFILES = {
+        fast: {
+          previewScaleGeneral: 0.36,
+          previewScaleTopography: 0.24,
+          previewDebounceMs: 40,
+          finalDebounceMs: 85,
+          rowsPerFramePreviewMul: 1.6,
+          rowsPerFrameFinalMul: 1.3,
+        },
+        balanced: {
+          previewScaleGeneral: 0.5,
+          previewScaleTopography: 0.35,
+          previewDebounceMs: 60,
+          finalDebounceMs: 110,
+          rowsPerFramePreviewMul: 1,
+          rowsPerFrameFinalMul: 1,
+        },
+        high: {
+          previewScaleGeneral: 0.66,
+          previewScaleTopography: 0.5,
+          previewDebounceMs: 90,
+          finalDebounceMs: 140,
+          rowsPerFramePreviewMul: 0.8,
+          rowsPerFrameFinalMul: 0.85,
+        },
+      };
+      const RANDOMIZABLE_CONTROL_IDS = [
+        "seed",
+        "scale",
+        "layers",
+        "range",
+        "blend",
+        "intensity",
+        "layerLength",
+        "ringSpacing",
+        "ringJitter",
+        "seamThickness",
+        "seamContrast",
+        "lightAngle",
+        "lightCurvature",
+        "lightSpread",
+        "highlightStrength",
+        "scratchDensity",
+        "scratchAngle",
+        "surfacePolish",
+        "boostR",
+        "boostG",
+        "boostB",
+        "gaussianBlur",
+        "grainToggle",
+        "fxInvert",
+        "fxChromatic",
+        "fxGlitch",
+        "fxScanline",
+        "flowMode",
+        "nacreBrilliance",
+        "nacreChromatic",
+        "nacrePalette",
+        "textureFamily",
+        "opalCellScale",
+        "opalVeinDensity",
+        "opalFire",
+        "opalMatrix",
+        "labradoriteScale",
+        "labradoriteDirection",
+        "labradoriteBanding",
+        "labradoriteFlash",
+        "labradoriteDarkness",
+        "marbleFlowScale",
+        "marbleVeinFreq",
+        "marbleContrast",
+        "marbleInkDrift",
+        "marbleLightness",
+        "substrateTone",
+        "substrateMix",
+        "topoPreset",
+        "topoNoiseType",
+        "topoBandCount",
+        "topoRenderMode",
+        "topoRidge",
+        "topoWarp",
+        "topoErosion",
+        "risoDotSize",
+        "risoThreshold",
+      ];
+      const CONTROL_INFO = {
+        scale:
+          "Base pattern scale. Lower values create larger formations; higher values create tighter detail.",
+        layers:
+          "Detail layers (noise octaves). Higher values add texture complexity but cost more render time.",
+        ringSpacing:
+          "Distance/frequency of nacre growth bands. Higher values make denser stripe patterns.",
+        substrateTone:
+          "Substrate color under nacre. Use light for pearl-like shells, dark for abalone-like shells.",
+        substrateMix:
+          "How much substrate shows through nacre. Higher mix reveals more base material.",
+        textureFamily:
+          "Switches nacre structure style. Classic is balanced, Opal adds cellular veins, Labradorite emphasizes directional flashes.",
+        lightCurvature:
+          "Bends lighting bands across the shell surface curvature.",
+        lightSpread: "Controls how broad or tight light bands appear.",
+        opalCellScale:
+          "Controls Opal cell size. Lower values create larger cell structures.",
+        opalVeinDensity:
+          "Controls how dense and sharp the vein boundaries are.",
+        opalFire: "Controls iridescent fire intensity inside opal cells.",
+        opalMatrix:
+          "Controls darkness of the host matrix around opal color pockets.",
+        labradoriteScale:
+          "Controls feature size of the labradorite flash pattern.",
+        labradoriteDirection:
+          "Rotates directional flash streaks across the surface.",
+        labradoriteBanding: "Controls sharpness and spacing of flash bands.",
+        labradoriteFlash:
+          "Controls intensity of blue-green labradorescence flashes.",
+        labradoriteDarkness: "Controls darkness of the host stone matrix.",
+        marbleFlowScale: "Controls scale of flowing marble structures.",
+        marbleVeinFreq: "Controls frequency of vein lines through the stone.",
+        marbleContrast: "Controls contrast between veins and host stone.",
+        marbleInkDrift: "Controls how much ink-like warping distorts veins.",
+        marbleLightness: "Controls base stone lightness.",
+        topoWarp:
+          "Domain warping amount for terrain. Higher values bend and flow contour structures.",
+        topoErosion:
+          "Post-noise smoothing/erosion. Higher values soften terrain and reduce sharp transitions.",
+      };
+      let lockedControlIds = new Set();
+      let galleryItems = [];
+      let compareImage = null;
+      const displayBaseCanvas = document.createElement("canvas");
+      const displayBaseCtx = displayBaseCanvas.getContext("2d");
+      let seedVariants = [];
+
+      function getPerformanceProfileKey() {
+        const selected =
+          document.getElementById("performanceProfile")?.value ||
+          localStorage.getItem(PERFORMANCE_PROFILE_STORAGE_KEY) ||
+          "balanced";
+        return PERF_PROFILES[selected] ? selected : "balanced";
+      }
+
+      function getPerformanceProfile() {
+        return PERF_PROFILES[getPerformanceProfileKey()];
+      }
+
+      function savePerformanceProfile(key) {
+        localStorage.setItem(
+          PERFORMANCE_PROFILE_STORAGE_KEY,
+          PERF_PROFILES[key] ? key : "balanced",
+        );
+      }
+
+      function getPreviewScaleForMode(mode) {
+        const perf = getPerformanceProfile();
+        return mode === "topography"
+          ? perf.previewScaleTopography
+          : perf.previewScaleGeneral;
+      }
+
+      function getRowsPerFrame(mode, preview) {
+        const perf = getPerformanceProfile();
+        let base = 12;
+        if (preview) {
+          base = mode === "motherofpearl" ? 28 : 30;
+          return Math.max(8, Math.floor(base * perf.rowsPerFramePreviewMul));
+        }
+        base = mode === "motherofpearl" ? 10 : 12;
+        return Math.max(6, Math.floor(base * perf.rowsPerFrameFinalMul));
+      }
+
+      function isControlLocked(id) {
+        return lockedControlIds.has(id);
+      }
+
+      function saveLocks() {
+        try {
+          localStorage.setItem(
+            LOCK_STORAGE_KEY,
+            JSON.stringify(Array.from(lockedControlIds)),
+          );
+        } catch (err) {
+          console.warn("Unable to persist locks", err);
+        }
+      }
+
+      function loadLocks() {
+        try {
+          const raw = localStorage.getItem(LOCK_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          lockedControlIds = new Set(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          lockedControlIds = new Set();
+        }
+      }
+
+      function setControlLock(id, locked) {
+        if (locked) {
+          lockedControlIds.add(id);
+        } else {
+          lockedControlIds.delete(id);
+        }
+        saveLocks();
+        const btn = document.querySelector(
+          `.control-lock-btn[data-lock-for="${id}"]`,
+        );
+        if (btn) {
+          btn.classList.toggle("is-locked", locked);
+          btn.setAttribute("aria-pressed", locked ? "true" : "false");
+          btn.title = locked
+            ? "Unlock randomize for this control"
+            : "Lock this control from randomize";
+        }
+      }
+
+      function buildFallbackHelpText(labelText) {
+        const plain = (labelText || "this setting")
+          .replace(/[:]/g, "")
+          .toLowerCase();
+        return `This changes ${plain}. Move it slowly and watch how the image responds.`;
+      }
+
+      function getControlHelpText(controlId, labelText) {
+        return CONTROL_INFO[controlId] || buildFallbackHelpText(labelText);
+      }
+
+      function openSectionHelpModal(sectionEl, sectionTitle) {
+        const dialog = document.getElementById("controlHelpDialog");
+        const list = document.getElementById("sectionHelpList");
+        if (!dialog || !list || !sectionEl) return;
+
+        const rows = Array.from(
+          sectionEl.querySelectorAll(".control-row"),
+        ).filter((row) => !row.hidden);
+        list.innerHTML = "";
+
+        rows.forEach((row) => {
+          const labelEl = row.querySelector(".control-label");
+          const inputEl = row.querySelector("input[id], select[id]");
+          if (!labelEl || !inputEl || !inputEl.id) return;
+          const labelText = (labelEl.textContent || inputEl.id)
+            .trim()
+            .replace(/[:]/g, "");
+          const help = getControlHelpText(inputEl.id, labelText);
+          const item = document.createElement("div");
+          const heading = document.createElement("p");
+          heading.className = "help-k";
+          heading.textContent = `${labelText} (${inputEl.id})`;
+          const body = document.createElement("p");
+          body.className = "help-v";
+          body.textContent = help;
+          item.appendChild(heading);
+          item.appendChild(body);
+          list.appendChild(item);
+        });
+
+        if (!list.childElementCount) {
+          const empty = document.createElement("p");
+          empty.className = "help-v";
+          empty.textContent =
+            "No visible properties are available in this section for the current mode.";
+          list.appendChild(empty);
+        }
+
+        document.getElementById("controlHelpTitle").textContent =
+          `${sectionTitle} Help`;
+        document.getElementById("controlHelpSubtitle").textContent =
+          "Descriptions for the properties in this section.";
+        dialog.showModal();
+      }
+
+      function enhanceSectionHelp() {
+        document.querySelectorAll("#controls .section").forEach((section) => {
+          const h3 = section.querySelector("h3");
+          if (!h3) return;
+          if (
+            h3.parentElement &&
+            h3.parentElement.classList.contains("section-heading")
+          )
+            return;
+
+          const headingWrap = document.createElement("div");
+          headingWrap.className = "section-heading";
+          const parent = h3.parentElement;
+          parent.insertBefore(headingWrap, h3);
+          headingWrap.appendChild(h3);
+
+          const helpBtn = document.createElement("button");
+          helpBtn.type = "button";
+          helpBtn.className = "ds-btn ds-btn-sm section-help-btn";
+          helpBtn.title = `Open help for ${h3.textContent}`;
+          helpBtn.setAttribute("aria-label", `Open help for ${h3.textContent}`);
+          helpBtn.innerHTML = '<i class="iconoir-info-circle"></i>';
+          helpBtn.addEventListener("click", () => {
+            openSectionHelpModal(section, h3.textContent || "Section");
+          });
+          headingWrap.appendChild(helpBtn);
+        });
+      }
+
+      function runQaChecks() {
+        const modes = [
+          "motherofpearl",
+          "opalvein",
+          "labradorite",
+          "marbleink",
+          "topography",
+          "risograph",
+        ];
+        const modeSelector = document.getElementById("modeSelector");
+        const issues = [];
+        const initialMode = modeSelector?.value || "motherofpearl";
+        const allGenerateControls = Array.from(
+          document.querySelectorAll(
+            "#tabGenerate input[id], #tabGenerate select[id]",
+          ),
+        );
+        const allGenerateInputs = Array.from(
+          document.querySelectorAll(
+            "#tabGenerate .control-row input, #tabGenerate .control-row select",
+          ),
+        );
+        const missingHelpCustom = [];
+
+        allGenerateInputs.forEach((el) => {
+          if (!el.id && !isUiOnlyControl(el)) {
+            issues.push(
+              "A visible control is missing an id and cannot support full help/locking coverage.",
+            );
+          }
+        });
+
+        allGenerateControls.forEach((el) => {
+          if (isUiOnlyControl(el)) return;
+          const row = el.closest(".control-row");
+          const label =
+            row?.querySelector(".control-label")?.textContent?.trim() || el.id;
+          const help = getControlHelpText(el.id, label);
+          if (!help || help.length < 8) {
+            issues.push(`Weak help text for ${el.id}`);
+          }
+          if (!Object.prototype.hasOwnProperty.call(CONTROL_INFO, el.id)) {
+            missingHelpCustom.push(el.id);
+          }
+        });
+
+        modes.forEach((mode) => {
+          if (!modeSelector) return;
+          modeSelector.value = mode;
+          updateVisibleSections(mode);
+          const visibleModeRows = Array.from(
+            document.querySelectorAll("#tabGenerate .control-row"),
+          ).filter((row) => !row.hidden);
+          if (visibleModeRows.length < 3) {
+            issues.push(`Mode ${mode} has too few visible controls`);
+          }
+        });
+
+        if (modeSelector) {
+          modeSelector.value = initialMode;
+          updateVisibleSections(initialMode);
+        }
+
+        const summary = [
+          `QA checks: ${issues.length === 0 ? "PASS" : "WARN"}`,
+          `Generate controls scanned: ${allGenerateControls.length}/${allGenerateInputs.length}`,
+          `Controls using fallback help: ${missingHelpCustom.length}`,
+          issues.length ? `Issues: ${issues.join(" | ")}` : "Issues: none",
+        ].join("\n");
+
+        showDebugInfo(
+          { qa: issues.length === 0 ? "PASS" : "WARN" },
+          {
+            controls_scanned: allGenerateControls.length,
+            fallback_help_count: missingHelpCustom.length,
+            issues: issues.length ? issues.join("; ") : "none",
+          },
+        );
+        setStatus(
+          issues.length === 0 ? "complete" : "error",
+          issues.length === 0 ? "QA checks passed" : "QA checks found warnings",
+        );
+        console.info(summary);
+      }
+
+      function enhanceControlUtilities() {
+        document.querySelectorAll(".control-row").forEach((row) => {
+          const label = row.querySelector(".control-label");
+          const icons = row.querySelector(".control-icons");
+          const control = row.querySelector("input[id], select[id]");
+          if (!label || !control || !control.id) return;
+          label.dataset.controlId = control.id;
+
+          if (
+            RANDOMIZABLE_CONTROL_IDS.includes(control.id) &&
+            icons &&
+            !icons.querySelector(`[data-lock-for="${control.id}"]`)
+          ) {
+            const lockBtn = document.createElement("button");
+            lockBtn.type = "button";
+            lockBtn.className = "ds-btn ds-btn-sm icon-btn control-lock-btn";
+            lockBtn.dataset.lockFor = control.id;
+            lockBtn.setAttribute("aria-pressed", "false");
+            lockBtn.innerHTML = '<i class="iconoir-lock"></i>';
+            lockBtn.addEventListener("click", (e) => {
+              e.preventDefault();
+              setControlLock(control.id, !isControlLocked(control.id));
+            });
+            icons.appendChild(lockBtn);
+            setControlLock(control.id, isControlLocked(control.id));
+          }
+        });
+      }
+
+      function captureDisplayBase() {
+        if (!canvas.width || !canvas.height) return;
+        displayBaseCanvas.width = canvas.width;
+        displayBaseCanvas.height = canvas.height;
+        displayBaseCtx.clearRect(
+          0,
+          0,
+          displayBaseCanvas.width,
+          displayBaseCanvas.height,
+        );
+        displayBaseCtx.drawImage(canvas, 0, 0);
+      }
+
+      function applyCompareView() {
+        if (!displayBaseCanvas.width || !displayBaseCanvas.height) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(displayBaseCanvas, 0, 0);
+        const compareEnabled =
+          !!document.getElementById("compareToggle")?.checked;
+        if (!compareEnabled || !compareImage) return;
+
+        const split = parseFloat(
+          document.getElementById("compareSplit")?.value || "0.5",
+        );
+        const splitPx = Math.floor(canvas.width * split);
+
+        ctx.drawImage(compareImage, 0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(splitPx, 0, canvas.width - splitPx, canvas.height);
+        ctx.clip();
+        ctx.drawImage(displayBaseCanvas, 0, 0);
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(splitPx + 0.5, 0);
+        ctx.lineTo(splitPx + 0.5, canvas.height);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function captureCompareFrame() {
+        if (!canvas.width || !canvas.height) return;
+        const img = new Image();
+        img.onload = () => {
+          compareImage = img;
+          applyCompareView();
+          setStatus("complete", "Captured compare frame");
+        };
+        img.src = canvas.toDataURL("image/png");
+      }
+
+      function renderSeedVariants() {
+        const grid = document.getElementById("seedExploreGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        seedVariants.forEach((seed) => {
+          const tile = document.createElement("div");
+          tile.className = "seed-tile";
+          const chip = document.createElement("div");
+          chip.className = "seed-chip";
+          chip.textContent = `Seed ${seed}`;
+          const applyBtn = document.createElement("button");
+          applyBtn.className = "ds-btn ds-btn-sm ds-btn-primary";
+          applyBtn.type = "button";
+          applyBtn.title = "Apply seed variant";
+          applyBtn.textContent = "Apply";
+          applyBtn.onclick = () => {
+            const seedInput = document.getElementById("seed");
+            if (!seedInput) return;
+            seedInput.value = String(seed);
+            markControlPending(seedInput);
+            updatePendingStatus();
+            scheduleFinalRender();
+          };
+          tile.appendChild(chip);
+          tile.appendChild(applyBtn);
+          grid.appendChild(tile);
+        });
+      }
+
+      function generateSeedVariants() {
+        const count = parseInt(
+          document.getElementById("seedExploreCount")?.value || "9",
+          10,
+        );
+        seedVariants = [];
+        for (let i = 0; i < Math.max(1, count); i++) {
+          seedVariants.push(Math.floor(Math.random() * 2147483647));
+        }
+        renderSeedVariants();
+      }
+
+      function applyMaterialPreset(name, options = {}) {
+        const respectLocks = !!options.respectLocks;
+        const presets = {
+          pearl_light: {
+            substrateTone: "light",
+            substrateMix: 0.42,
+            textureFamily: "classic",
+            nacrePalette: "classic",
+            nacreBrilliance: 1.22,
+            nacreChromatic: 1.05,
+            ringSpacing: 0.9,
+            ringJitter: 0.32,
+            seamThickness: 0.12,
+            seamContrast: 0.42,
+          },
+          black_pearl: {
+            substrateTone: "dark",
+            substrateMix: 0.62,
+            textureFamily: "labradorite",
+            nacrePalette: "silver",
+            nacreBrilliance: 1.35,
+            nacreChromatic: 1.22,
+            ringSpacing: 1.08,
+            ringJitter: 0.48,
+            seamThickness: 0.16,
+            seamContrast: 0.7,
+          },
+          abalone: {
+            substrateTone: "dark",
+            substrateMix: 0.58,
+            textureFamily: "opal",
+            nacrePalette: "abalone",
+            nacreBrilliance: 1.58,
+            nacreChromatic: 1.48,
+            ringSpacing: 1.24,
+            ringJitter: 0.62,
+            seamThickness: 0.19,
+            seamContrast: 0.82,
+          },
+          shell_white: {
+            substrateTone: "light",
+            substrateMix: 0.28,
+            textureFamily: "classic",
+            nacrePalette: "pinkgreen",
+            nacreBrilliance: 1.15,
+            nacreChromatic: 0.85,
+            ringSpacing: 0.74,
+            ringJitter: 0.24,
+            seamThickness: 0.1,
+            seamContrast: 0.35,
+          },
+        };
+        const preset = presets[name];
+        if (!preset) return;
+        Object.entries(preset).forEach(([id, value]) => {
+          if (respectLocks && isControlLocked(id)) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.value = String(value);
+          markControlPending(el);
+        });
+        updatePendingStatus();
+      }
+
+      function setActiveTab(tabName) {
+        const tabMap = {
+          generate: document.getElementById("tabGenerate"),
+          export: document.getElementById("tabExport"),
+          gallery: document.getElementById("tabGallery"),
+        };
+        Object.entries(tabMap).forEach(([key, el]) => {
+          if (!el) return;
+          el.hidden = key !== tabName;
+        });
+        document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
+          btn.classList.toggle("is-active", btn.dataset.tab === tabName);
+        });
+      }
+
+      function getControlState() {
+        const state = {};
+        document
+          .querySelectorAll("#controls input, #controls select")
+          .forEach((el) => {
+            if (!el.id) return;
+            state[el.id] = el.type === "checkbox" ? el.checked : el.value;
+          });
+        return state;
+      }
+
+      function applyControlState(state) {
+        Object.entries(state || {}).forEach(([id, value]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (el.type === "checkbox") {
+            el.checked = !!value;
+          } else {
+            el.value = String(value);
+          }
+        });
+        const mode = document.getElementById("modeSelector").value;
+        document.body.setAttribute("data-mode", mode);
+        updateVisibleSections(mode);
+      }
+
+      function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      function randomizeSettings() {
+        const mode = document.getElementById("modeSelector").value;
+        const smartRandom =
+          !!document.getElementById("smartRandomToggle")?.checked;
+        const randomSeed = Math.floor(Math.random() * 2147483647);
+        const set = (id, val, decimals = 2) => {
+          if (isControlLocked(id)) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          const v = typeof val === "number" ? val.toFixed(decimals) : val;
+          el.value = String(v);
+          markControlPending(el);
+        };
+        const setCheck = (id, checked) => {
+          if (isControlLocked(id)) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.checked = !!checked;
+          markControlPending(el);
+        };
+
+        set("seed", randomSeed, 0);
+        set("scale", randomBetween(0.002, 0.016), 3);
+        set("layers", Math.floor(randomBetween(2, 6)), 0);
+        set("range", randomBetween(0.55, 1.7), 2);
+        set("blend", randomBetween(0.7, 2.6), 2);
+        set("intensity", randomBetween(55, 210), 0);
+        set("layerLength", randomBetween(0.15, 1.9), 2);
+        set("boostR", randomBetween(0.9, 1.25), 2);
+        set("boostG", randomBetween(0.9, 1.25), 2);
+        set("boostB", randomBetween(0.9, 1.25), 2);
+        set("gaussianBlur", randomBetween(0.2, 3.2), 2);
+        setCheck("grainToggle", Math.random() > 0.2);
+        set("fxChromatic", randomBetween(0, 1.5), 1);
+        set("fxGlitch", randomBetween(0, 0.2), 2);
+        set("fxScanline", randomBetween(0, 0.25), 2);
+        const invertEl = document.getElementById("fxInvert");
+        if (invertEl && !isControlLocked("fxInvert")) {
+          invertEl.checked = Math.random() < 0.08;
+          markControlPending(invertEl);
+        }
+
+        if (mode === "motherofpearl") {
+          const palettes = ["classic", "abalone", "silver", "pinkgreen"];
+          const families = ["classic", "opal", "labradorite"];
+          if (smartRandom) {
+            const presetPool = [
+              "pearl_light",
+              "black_pearl",
+              "abalone",
+              "shell_white",
+            ];
+            const preset =
+              presetPool[Math.floor(Math.random() * presetPool.length)];
+            const presetEl = document.getElementById("materialPreset");
+            if (presetEl) presetEl.value = preset;
+            applyMaterialPreset(preset, { respectLocks: true });
+          }
+          set("flowMode", Math.random() > 0.5 ? "linear" : "circular");
+          set("ringSpacing", randomBetween(0.35, 1.8), 2);
+          set("ringJitter", randomBetween(0.05, 0.9), 2);
+          set("seamThickness", randomBetween(0.05, 0.3), 2);
+          set("seamContrast", randomBetween(0.15, 0.95), 2);
+          set("highlightStrength", randomBetween(0.2, 1.5), 2);
+          set("lightAngle", randomBetween(0, 1), 2);
+          set("lightCurvature", randomBetween(0.06, 0.95), 2);
+          set("lightSpread", randomBetween(0.15, 0.95), 2);
+          set("scratchDensity", randomBetween(0.05, 0.92), 2);
+          set("scratchAngle", randomBetween(0, 1), 2);
+          set("surfacePolish", randomBetween(0.1, 0.95), 2);
+          set("nacreBrilliance", randomBetween(0.9, 1.9), 2);
+          set("nacreChromatic", randomBetween(0.5, 1.8), 2);
+          set(
+            "nacrePalette",
+            palettes[Math.floor(Math.random() * palettes.length)],
+          );
+          set(
+            "textureFamily",
+            families[Math.floor(Math.random() * families.length)],
+          );
+          set("substrateTone", Math.random() > 0.5 ? "light" : "dark");
+          set("substrateMix", randomBetween(0.2, 0.75), 2);
+        } else if (mode === "opalvein") {
+          set("opalCellScale", randomBetween(0.004, 0.018), 3);
+          set("opalVeinDensity", randomBetween(0.35, 1.6), 2);
+          set("opalFire", randomBetween(0.65, 2.1), 2);
+          set("opalMatrix", randomBetween(0.25, 0.85), 2);
+        } else if (mode === "labradorite") {
+          set("labradoriteScale", randomBetween(0.003, 0.016), 3);
+          set("labradoriteDirection", randomBetween(0, 1), 2);
+          set("labradoriteBanding", randomBetween(0.7, 2.6), 2);
+          set("labradoriteFlash", randomBetween(0.7, 2.2), 2);
+          set("labradoriteDarkness", randomBetween(0.45, 0.92), 2);
+        } else if (mode === "marbleink") {
+          set("marbleFlowScale", randomBetween(0.003, 0.014), 3);
+          set("marbleVeinFreq", randomBetween(0.45, 2.4), 2);
+          set("marbleContrast", randomBetween(0.25, 1.3), 2);
+          set("marbleInkDrift", randomBetween(0.08, 0.92), 2);
+          set("marbleLightness", randomBetween(0.45, 0.94), 2);
+        } else if (mode === "topography") {
+          const presets = ["coastal", "alpine", "dunes", "volcanic"];
+          const renderModes = ["lines", "fill", "gradient"];
+          const sources = ["ridged", "simplex", "perlin", "value"];
+          const p = presets[Math.floor(Math.random() * presets.length)];
+          set("topoPreset", p);
+          applyTopoPreset(p, { respectLocks: true });
+          set(
+            "topoNoiseType",
+            sources[Math.floor(Math.random() * sources.length)],
+          );
+          set("topoBandCount", Math.floor(randomBetween(6, 18)), 0);
+          set(
+            "topoRenderMode",
+            renderModes[Math.floor(Math.random() * renderModes.length)],
+          );
+          set("topoRidge", randomBetween(0.2, 0.9), 2);
+          set("topoWarp", randomBetween(0.15, 0.75), 2);
+          set("topoErosion", randomBetween(0.1, 0.85), 2);
+        } else if (mode === "risograph") {
+          set("risoDotSize", randomBetween(3, 20), 0);
+          set("risoThreshold", randomBetween(90, 190), 0);
+        }
+
+        updatePendingStatus();
+        scheduleFinalRender();
+      }
+
+      function getExportTargetSize() {
+        const preset = document.getElementById("exportSizePreset").value;
+        const cropMode = document.getElementById("exportCropMode").value;
+        const currentW = canvas.width || 1;
+        const currentH = canvas.height || 1;
+        if (preset === "current") return { width: currentW, height: currentH };
+        if (preset === "1080-square") return { width: 1080, height: 1080 };
+        if (preset === "2160-square") return { width: 2160, height: 2160 };
+        if (preset === "1920x1080") return { width: 1920, height: 1080 };
+        if (preset === "custom") {
+          const w =
+            parseInt(document.getElementById("exportWidth").value, 10) ||
+            currentW;
+          const h =
+            parseInt(document.getElementById("exportHeight").value, 10) ||
+            currentH;
+          return { width: Math.max(1, w), height: Math.max(1, h) };
+        }
+        if (cropMode === "square") return { width: 1080, height: 1080 };
+        return { width: currentW, height: currentH };
+      }
+
+      function buildExportCanvas() {
+        const cropMode = document.getElementById("exportCropMode").value;
+        const { width: outW, height: outH } = getExportTargetSize();
+        const srcW = canvas.width;
+        const srcH = canvas.height;
+        let sx = 0;
+        let sy = 0;
+        let sw = srcW;
+        let sh = srcH;
+
+        if (cropMode === "square") {
+          const side = Math.min(srcW, srcH);
+          sx = Math.floor((srcW - side) / 2);
+          sy = Math.floor((srcH - side) / 2);
+          sw = side;
+          sh = side;
+        } else if (cropMode === "portrait") {
+          const targetAspect = 4 / 5;
+          const currentAspect = srcW / srcH;
+          if (currentAspect > targetAspect) {
+            sw = Math.floor(srcH * targetAspect);
+            sx = Math.floor((srcW - sw) / 2);
+          } else {
+            sh = Math.floor(srcW / targetAspect);
+            sy = Math.floor((srcH - sh) / 2);
+          }
+        } else if (cropMode === "landscape") {
+          const targetAspect = 16 / 9;
+          const currentAspect = srcW / srcH;
+          if (currentAspect > targetAspect) {
+            sw = Math.floor(srcH * targetAspect);
+            sx = Math.floor((srcW - sw) / 2);
+          } else {
+            sh = Math.floor(srcW / targetAspect);
+            sy = Math.floor((srcH - sh) / 2);
+          }
+        }
+
+        const out = document.createElement("canvas");
+        out.width = outW;
+        out.height = outH;
+        const outCtx = out.getContext("2d");
+        outCtx.drawImage(canvas, sx, sy, sw, sh, 0, 0, outW, outH);
+        return out;
+      }
+
+      function exportWithOptions() {
+        const mode = document.getElementById("modeSelector").value;
+        const fileType = document.getElementById("exportFileType").value;
+        const quality =
+          parseFloat(document.getElementById("exportQuality").value) || 0.92;
+        const exportCanvas = buildExportCanvas();
+        const mime =
+          fileType === "jpeg"
+            ? "image/jpeg"
+            : fileType === "webp"
+              ? "image/webp"
+              : "image/png";
+        const ext = fileType === "jpeg" ? "jpg" : fileType;
+        const dataUrl =
+          mime === "image/png"
+            ? exportCanvas.toDataURL(mime)
+            : exportCanvas.toDataURL(mime, quality);
+        const link = document.createElement("a");
+        link.download = `${mode}_output.${ext}`;
+        link.href = dataUrl;
+        link.click();
+      }
+
+      function saveGallery() {
+        localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryItems));
+      }
+
+      function loadGallery() {
+        const raw = localStorage.getItem(GALLERY_STORAGE_KEY);
+        galleryItems = raw ? JSON.parse(raw) : [];
+      }
+
+      function renderGallery() {
+        const grid = document.getElementById("galleryGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        galleryItems.forEach((item) => {
+          const tile = document.createElement("div");
+          tile.className = "gallery-tile";
+          const img = document.createElement("img");
+          img.src = item.thumbnail;
+          img.alt = item.label;
+
+          const label = document.createElement("div");
+          label.textContent = item.label;
+          label.style.fontSize = "12px";
+          label.style.color = "var(--ds-text-muted)";
+
+          const actions = document.createElement("div");
+          actions.className = "gallery-actions";
+          const delBtn = document.createElement("button");
+          delBtn.className = "ds-btn ds-btn-sm";
+          delBtn.textContent = "Delete";
+          delBtn.onclick = () => {
+            galleryItems = galleryItems.filter((g) => g.id !== item.id);
+            saveGallery();
+            renderGallery();
+          };
+
+          const recallBtn = document.createElement("button");
+          recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary";
+          recallBtn.textContent = "Recall";
+          recallBtn.onclick = () => {
+            applyControlState(item.settings);
+            setActiveTab("generate");
+            scheduleFinalRender();
+          };
+
+          actions.appendChild(delBtn);
+          actions.appendChild(recallBtn);
+          tile.appendChild(img);
+          tile.appendChild(label);
+          tile.appendChild(actions);
+          grid.appendChild(tile);
+        });
+      }
+
+      function saveSnapshot() {
+        const thumbCanvas = buildExportCanvas();
+        const tiny = document.createElement("canvas");
+        tiny.width = 220;
+        tiny.height = 220;
+        const tctx = tiny.getContext("2d");
+        tctx.drawImage(thumbCanvas, 0, 0, tiny.width, tiny.height);
+        const mode = document.getElementById("modeSelector").value;
+        const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        const item = {
+          id,
+          label: `${mode} ${new Date().toLocaleString()}`,
+          thumbnail: tiny.toDataURL("image/jpeg", 0.7),
+          settings: getControlState(),
+        };
+        galleryItems.unshift(item);
+        galleryItems = galleryItems.slice(0, 60);
+        saveGallery();
+        renderGallery();
+        setStatus("complete", "Snapshot saved");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const mode = document.getElementById("modeSelector").value;
+        document.body.setAttribute("data-mode", mode);
+        updateVisibleSections(mode);
+        setStatus("idle", "Idle");
+        setActiveTab("generate");
+
+        const settingsBtn = document.getElementById("settingsBtn");
+        const settingsMenu = document.getElementById("settingsMenu");
+        const debugPanelToggle = document.getElementById("debugPanelToggle");
+        const setSettingsOpen = (open) => {
+          if (!settingsBtn || !settingsMenu) return;
+          settingsMenu.hidden = !open;
+          settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        };
+
+        if (settingsBtn && settingsMenu) {
+          settingsBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setSettingsOpen(settingsMenu.hidden);
+          });
+          settingsMenu.addEventListener("click", (e) => e.stopPropagation());
+          document.addEventListener("click", () => setSettingsOpen(false));
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              setSettingsOpen(false);
+            }
+          });
+        }
+        if (debugPanelToggle) {
+          debugPanelToggle.checked = false;
+          debugPanelToggle.addEventListener("change", (e) => {
+            toggleDebugPanel(!!e.target.checked);
+          });
+        }
+
+        loadGallery();
+        renderGallery();
+        loadLocks();
+        const performanceProfile =
+          document.getElementById("performanceProfile");
+        if (performanceProfile) {
+          const savedProfile =
+            localStorage.getItem(PERFORMANCE_PROFILE_STORAGE_KEY) || "balanced";
+          const key = PERF_PROFILES[savedProfile] ? savedProfile : "balanced";
+          performanceProfile.value = key;
+          savePerformanceProfile(key);
+        }
+        toggleDebugPanel(false);
+        enhanceControlUtilities();
+        enhanceSectionHelp();
+
+        const topoPresetEl = document.getElementById("topoPreset");
+        if (topoPresetEl && topoPresetEl.value !== "custom") {
+          applyTopoPreset(topoPresetEl.value);
+          clearPendingIndicators();
+        }
+
+        const savedTheme =
+          localStorage.getItem("raden-theme") ||
+          document.documentElement.dataset.theme ||
+          "steel-night";
+        document.documentElement.dataset.theme = savedTheme;
+        if (themeSelect) themeSelect.value = savedTheme;
+
+        document
+          .querySelectorAll("#controls input, #controls select")
+          .forEach((el) => {
+            if (el.dataset.live !== "true") {
+              el.dataset.applied =
+                el.type === "checkbox" ? String(el.checked) : el.value;
+            }
+          });
+
+        updatePendingStatus();
+        startGeneration();
+        generateSeedVariants();
+      });
+
+      document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          setActiveTab(btn.dataset.tab);
+        });
+      });
+
+      document.getElementById("randomizeBtn").addEventListener("click", () => {
+        randomizeSettings();
+      });
+
+      document
+        .getElementById("performanceProfile")
+        .addEventListener("change", (e) => {
+          savePerformanceProfile(e.target.value);
+          scheduleFinalRender();
+        });
+
+      document
+        .getElementById("runQaChecksBtn")
+        .addEventListener("click", () => {
+          runQaChecks();
+        });
+
+      document
+        .getElementById("applyMaterialPresetBtn")
+        .addEventListener("click", () => {
+          const preset =
+            document.getElementById("materialPreset")?.value || "pearl_light";
+          applyMaterialPreset(preset);
+          scheduleFinalRender();
+        });
+
+      document
+        .getElementById("exportFromPanelBtn")
+        .addEventListener("click", () => {
+          exportWithOptions();
+        });
+
+      document
+        .getElementById("saveSnapshotBtn")
+        .addEventListener("click", () => {
+          saveSnapshot();
+        });
+
+      document
+        .getElementById("captureCompareBtn")
+        .addEventListener("click", () => {
+          captureCompareFrame();
+        });
+
+      document
+        .getElementById("controlHelpCloseBtn")
+        .addEventListener("click", () => {
+          document.getElementById("controlHelpDialog")?.close();
+        });
+
+      document
+        .getElementById("compareToggle")
+        .addEventListener("change", () => {
+          applyCompareView();
+        });
+
+      document.getElementById("compareSplit").addEventListener("input", () => {
+        applyCompareView();
+      });
+
+      document
+        .getElementById("seedExploreBtn")
+        .addEventListener("click", () => {
+          generateSeedVariants();
+        });
+
+      document
+        .getElementById("clearGalleryBtn")
+        .addEventListener("click", () => {
+          galleryItems = [];
+          saveGallery();
+          renderGallery();
+        });
+
+      document
+        .getElementById("exportSizePreset")
+        .addEventListener("change", (e) => {
+          const preset = e.target.value;
+          const w = document.getElementById("exportWidth");
+          const h = document.getElementById("exportHeight");
+          if (preset === "1080-square") {
+            w.value = "1080";
+            h.value = "1080";
+          } else if (preset === "1920x1080") {
+            w.value = "1920";
+            h.value = "1080";
+          } else if (preset === "2160-square") {
+            w.value = "2160";
+            h.value = "2160";
+          } else if (preset === "current") {
+            w.value = String(canvas.width || 1920);
+            h.value = String(canvas.height || 1080);
+          }
+        });
+
+      document
+        .getElementById("modeSelector")
+        .addEventListener("change", (e) => {
+          const mode = e.target.value;
+          document.body.setAttribute("data-mode", mode);
+          updateVisibleSections(mode);
+          scheduleFinalRender();
+        });
+
+      const topoPreset = document.getElementById("topoPreset");
+      if (topoPreset) {
+        topoPreset.addEventListener("change", (e) => {
+          applyTopoPreset(e.target.value);
+          if (document.getElementById("modeSelector").value === "topography") {
+            scheduleFinalRender();
+          }
+        });
+      }
+
+      if (themeSelect) {
+        themeSelect.addEventListener("change", (e) => {
+          const selectedTheme = e.target.value;
+          document.documentElement.dataset.theme = selectedTheme;
+          localStorage.setItem("raden-theme", selectedTheme);
+        });
+      }
+
+      document
+        .querySelectorAll("#controls input, #controls select")
+        .forEach((el) => {
+          if (el.dataset.live !== "true") {
+            el.addEventListener("input", () => {
+              if (!el.closest("#tabGenerate")) return;
+              if (isUiOnlyControl(el)) return;
+              markControlPending(el);
+              schedulePreviewRender(el);
+              updatePendingStatus();
+            });
+
+            el.addEventListener("change", () => {
+              if (!el.closest("#tabGenerate")) return;
+              if (isUiOnlyControl(el)) return;
+              scheduleFinalRender();
+            });
+          }
+        });
+    </script>
+  </body>
+</html>
