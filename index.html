@@ -12,7 +12,7 @@
     />
     <style>
       :root {
-        --raden-panel-width: 480px;
+        --raden-panel-width: 520px;
         --raden-grid-gap: var(--ds-space-3);
         --raden-frame-pad: var(--ds-space-3);
         --raden-section-gap: var(--ds-space-3);
@@ -390,8 +390,45 @@
         width: 100%;
       }
 
-      .res-inputs span {
+        .res-inputs span {
+          color: var(--ds-text-muted);
+        }
+
+        .layer-quad {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: var(--ds-space-2);
+          align-items: start;
+          width: 100%;
+        }
+
+      .riso-layer-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+
+      .riso-layer-row .control-label {
+        min-width: 2.25rem;
+        white-space: nowrap;
+      }
+
+      .layer-field {
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .layer-field-label {
+        font-size: var(--ds-fs-1);
         color: var(--ds-text-muted);
+        letter-spacing: var(--ds-label-spacing);
+        text-transform: var(--ds-label-transform);
+        white-space: nowrap;
+      }
+
+      .layer-field input[type="number"] {
+        min-height: var(--ds-control-h-sm);
+        padding: 6px 8px;
       }
 
       .pending-change {
@@ -566,6 +603,12 @@
           grid-row: 2;
         }
       }
+
+      @media (max-width: 720px) {
+        .layer-quad {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
     </style>
   </head>
 
@@ -657,6 +700,14 @@
                   <option value="opalvein">Opal Vein</option>
                   <option value="labradorite">Labradorite Flash</option>
                   <option value="marbleink">Marble Ink</option>
+                  <option value="agateband">Agate Bands</option>
+                  <option value="malachiteflow">Malachite Flow</option>
+                  <option value="lichengrowth">Lichen Growth</option>
+                  <option value="icebloom">Ice Crystal Bloom</option>
+                  <option value="riverdelta">River Delta</option>
+                  <option value="bubblefilm">Bubble Film</option>
+                  <option value="risoimage">Riso Image</option>
+                  <option value="pixelretro">Pixel Retro</option>
                   <option value="risograph">Risograph</option>
                   <option value="topography">Topography</option>
                 </select>
@@ -697,7 +748,7 @@
             <h3>Seed + Resolution</h3>
             <div
               class="control-row"
-              data-mode="motherofpearl, topography, opalvein, labradorite, marbleink"
+              data-mode="motherofpearl, topography, opalvein, labradorite, marbleink, agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm, risoimage, pixelretro"
             >
               <div class="control-label">Seed:</div>
               <div class="control-input">
@@ -1569,6 +1620,343 @@
             </div>
           </div>
 
+          <div
+            class="section"
+            data-mode="agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm"
+          >
+            <h3>Natural Geometry</h3>
+            <div class="control-row">
+              <div class="control-label">Base Scale:</div>
+              <div class="control-input">
+                <input type="range" id="naturalScale" min="0.002" max="0.03" step="0.001" value="0.008" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Warp:</div>
+              <div class="control-input">
+                <input type="range" id="naturalWarp" min="0" max="1" step="0.01" value="0.35" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Turbulence:</div>
+              <div class="control-input">
+                <input type="range" id="naturalTurbulence" min="0" max="1.5" step="0.01" value="0.62" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Anisotropy:</div>
+              <div class="control-input">
+                <input type="range" id="naturalAnisotropy" min="0" max="1" step="0.01" value="0.25" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div
+            class="section"
+            data-mode="risoimage, pixelretro"
+          >
+            <h3>Image Source</h3>
+            <div class="control-row">
+              <div class="control-label">Upload Image:</div>
+              <div class="control-input">
+                <input type="file" id="imageUpload" accept="image/*" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Fit Mode:</div>
+              <div class="control-input">
+                <select id="imageFitMode" data-live="false">
+                  <option value="contain">Contain</option>
+                  <option value="cover">Cover</option>
+                  <option value="stretch">Stretch</option>
+                  <option value="center">Center</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Crop Scale:</div>
+              <div class="control-input">
+                <input type="range" id="imageCropScale" min="0.2" max="3" step="0.01" value="1" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Rotate:</div>
+              <div class="control-input">
+                <input type="range" id="imageRotate" min="-180" max="180" step="1" value="0" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="risoimage">
+            <h3>Riso Layers + Quantization</h3>
+            <div class="control-row">
+              <div class="control-label">Render Style:</div>
+              <div class="control-input">
+                <select id="risoRenderStyle" data-live="false">
+                  <option value="original">Original V1</option>
+                  <option value="legacy">Legacy (Fun)</option>
+                  <option value="layered">Layered Separation</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Layer Count:</div>
+              <div class="control-input">
+                <input type="number" id="risoLayerCount" min="2" max="6" step="1" value="3" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Palette Preset:</div>
+              <div class="control-input">
+                <select id="risoPalettePreset" data-live="false">
+                  <option value="warm-duo">Warm Duo</option>
+                  <option value="cmyk-lite">CMYK Lite</option>
+                  <option value="fluoro">Fluoro</option>
+                  <option value="mono-noir">Mono Noir</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Quant Method:</div>
+              <div class="control-input">
+                <select id="risoQuantMethod" data-live="false">
+                  <option value="kmeans">K-Means</option>
+                  <option value="median-cut">Median Cut</option>
+                  <option value="fixed-palette">Fixed Palette</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Angle Step:</div>
+              <div class="control-input">
+                <input type="range" id="risoLayerAngleStep" min="0" max="90" step="1" value="22" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Layer Opacity:</div>
+              <div class="control-input">
+                <input type="range" id="risoLayerOpacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Tone Overlap:</div>
+              <div class="control-input">
+                <input type="range" id="risoLayerOverlap" min="0" max="1" step="0.01" value="0.35" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Color Split Bias:</div>
+              <div class="control-input">
+                <input type="range" id="risoColorSplit" min="0" max="1" step="0.01" value="0.55" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="risoimage" data-riso-engine="layered">
+            <h3>Riso Layer Overrides</h3>
+            <div class="control-row riso-layer-row" data-layer-index="1">
+              <div class="control-label">L1</div>
+              <div class="control-input">
+                <div class="layer-quad">
+                  <label class="layer-field" for="risoL1Angle"><span class="layer-field-label">Angle</span><input type="number" id="risoL1Angle" min="-180" max="180" step="1" value="0" data-live="false" /></label>
+                  <label class="layer-field" for="risoL1Opacity"><span class="layer-field-label">Opacity</span><input type="number" id="risoL1Opacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" /></label>
+                  <label class="layer-field" for="risoL1ToneMin"><span class="layer-field-label">Tone Min</span><input type="number" id="risoL1ToneMin" min="0" max="1" step="0.01" value="0" data-live="false" /></label>
+                  <label class="layer-field" for="risoL1ToneMax"><span class="layer-field-label">Tone Max</span><input type="number" id="risoL1ToneMax" min="0" max="1" step="0.01" value="0.35" data-live="false" /></label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row riso-layer-row" data-layer-index="2">
+              <div class="control-label">L2</div>
+              <div class="control-input">
+                <div class="layer-quad">
+                  <label class="layer-field" for="risoL2Angle"><span class="layer-field-label">Angle</span><input type="number" id="risoL2Angle" min="-180" max="180" step="1" value="22" data-live="false" /></label>
+                  <label class="layer-field" for="risoL2Opacity"><span class="layer-field-label">Opacity</span><input type="number" id="risoL2Opacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" /></label>
+                  <label class="layer-field" for="risoL2ToneMin"><span class="layer-field-label">Tone Min</span><input type="number" id="risoL2ToneMin" min="0" max="1" step="0.01" value="0.18" data-live="false" /></label>
+                  <label class="layer-field" for="risoL2ToneMax"><span class="layer-field-label">Tone Max</span><input type="number" id="risoL2ToneMax" min="0" max="1" step="0.01" value="0.58" data-live="false" /></label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row riso-layer-row" data-layer-index="3">
+              <div class="control-label">L3</div>
+              <div class="control-input">
+                <div class="layer-quad">
+                  <label class="layer-field" for="risoL3Angle"><span class="layer-field-label">Angle</span><input type="number" id="risoL3Angle" min="-180" max="180" step="1" value="44" data-live="false" /></label>
+                  <label class="layer-field" for="risoL3Opacity"><span class="layer-field-label">Opacity</span><input type="number" id="risoL3Opacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" /></label>
+                  <label class="layer-field" for="risoL3ToneMin"><span class="layer-field-label">Tone Min</span><input type="number" id="risoL3ToneMin" min="0" max="1" step="0.01" value="0.42" data-live="false" /></label>
+                  <label class="layer-field" for="risoL3ToneMax"><span class="layer-field-label">Tone Max</span><input type="number" id="risoL3ToneMax" min="0" max="1" step="0.01" value="0.78" data-live="false" /></label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row riso-layer-row" data-layer-index="4">
+              <div class="control-label">L4</div>
+              <div class="control-input">
+                <div class="layer-quad">
+                  <label class="layer-field" for="risoL4Angle"><span class="layer-field-label">Angle</span><input type="number" id="risoL4Angle" min="-180" max="180" step="1" value="66" data-live="false" /></label>
+                  <label class="layer-field" for="risoL4Opacity"><span class="layer-field-label">Opacity</span><input type="number" id="risoL4Opacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" /></label>
+                  <label class="layer-field" for="risoL4ToneMin"><span class="layer-field-label">Tone Min</span><input type="number" id="risoL4ToneMin" min="0" max="1" step="0.01" value="0.62" data-live="false" /></label>
+                  <label class="layer-field" for="risoL4ToneMax"><span class="layer-field-label">Tone Max</span><input type="number" id="risoL4ToneMax" min="0" max="1" step="0.01" value="0.9" data-live="false" /></label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row riso-layer-row" data-layer-index="5">
+              <div class="control-label">L5</div>
+              <div class="control-input">
+                <div class="layer-quad">
+                  <label class="layer-field" for="risoL5Angle"><span class="layer-field-label">Angle</span><input type="number" id="risoL5Angle" min="-180" max="180" step="1" value="88" data-live="false" /></label>
+                  <label class="layer-field" for="risoL5Opacity"><span class="layer-field-label">Opacity</span><input type="number" id="risoL5Opacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" /></label>
+                  <label class="layer-field" for="risoL5ToneMin"><span class="layer-field-label">Tone Min</span><input type="number" id="risoL5ToneMin" min="0" max="1" step="0.01" value="0.76" data-live="false" /></label>
+                  <label class="layer-field" for="risoL5ToneMax"><span class="layer-field-label">Tone Max</span><input type="number" id="risoL5ToneMax" min="0" max="1" step="0.01" value="0.96" data-live="false" /></label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row riso-layer-row" data-layer-index="6">
+              <div class="control-label">L6</div>
+              <div class="control-input">
+                <div class="layer-quad">
+                  <label class="layer-field" for="risoL6Angle"><span class="layer-field-label">Angle</span><input type="number" id="risoL6Angle" min="-180" max="180" step="1" value="110" data-live="false" /></label>
+                  <label class="layer-field" for="risoL6Opacity"><span class="layer-field-label">Opacity</span><input type="number" id="risoL6Opacity" min="0.1" max="1" step="0.01" value="0.72" data-live="false" /></label>
+                  <label class="layer-field" for="risoL6ToneMin"><span class="layer-field-label">Tone Min</span><input type="number" id="risoL6ToneMin" min="0" max="1" step="0.01" value="0.84" data-live="false" /></label>
+                  <label class="layer-field" for="risoL6ToneMax"><span class="layer-field-label">Tone Max</span><input type="number" id="risoL6ToneMax" min="0" max="1" step="0.01" value="1" data-live="false" /></label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="risoimage, pixelretro">
+            <h3>Dither Controls</h3>
+            <div class="control-row">
+              <div class="control-label">Method:</div>
+              <div class="control-input">
+                <select id="ditherMethod" data-live="false">
+                  <option value="ordered">Ordered</option>
+                  <option value="error-diffusion">Error Diffusion</option>
+                  <option value="stochastic">Stochastic</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Dot Shape:</div>
+              <div class="control-input">
+                <select id="ditherDotShape" data-live="false">
+                  <option value="circle">Circle</option>
+                  <option value="square">Square</option>
+                  <option value="diamond">Diamond</option>
+                  <option value="line">Line</option>
+                  <option value="cross">Cross</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Dot Size:</div>
+              <div class="control-input">
+                <input type="range" id="ditherDotSize" min="1" max="32" step="1" value="8" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Dot Spread:</div>
+              <div class="control-input">
+                <input type="range" id="ditherDotSpread" min="0" max="1" step="0.01" value="0.25" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Uniformity:</div>
+              <div class="control-input">
+                <input type="range" id="ditherUniformity" min="0" max="1" step="0.01" value="0.8" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="risoimage, pixelretro">
+            <h3>Palette Constraints</h3>
+            <div class="control-row">
+              <div class="control-label">Palette Preset:</div>
+              <div class="control-input">
+                <select id="palettePreset" data-live="false">
+                  <option value="gb">Game Boy</option>
+                  <option value="cga">CGA</option>
+                  <option value="ega">EGA</option>
+                  <option value="pc98">PC-98</option>
+                  <option value="snes-lite">SNES Lite</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Palette Size:</div>
+              <div class="control-input">
+                <input type="number" id="paletteSize" min="2" max="64" step="1" value="8" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Color Depth (bits):</div>
+              <div class="control-input">
+                <input type="number" id="colorDepthBits" min="1" max="8" step="1" value="4" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div class="section" data-mode="pixelretro">
+            <h3>Retro Output</h3>
+            <div class="control-row">
+              <div class="control-label">Pixel Block Size:</div>
+              <div class="control-input">
+                <input type="range" id="pixelBlockSize" min="1" max="24" step="1" value="4" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Bayer Size:</div>
+              <div class="control-input">
+                <select id="ditherBayerSize" data-live="false">
+                  <option value="2">2</option>
+                  <option value="4">4</option>
+                  <option value="8" selected>8</option>
+                  <option value="16">16</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Scanline Strength:</div>
+              <div class="control-input">
+                <input type="range" id="scanlineStrength" min="0" max="1" step="0.01" value="0.25" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
           <div id="experimentalSection" class="section" data-mode="all">
             <h3>Experimental FX</h3>
             <div class="control-row">
@@ -2018,6 +2406,7 @@
           "materialPreset",
           "seedExploreCount",
           "compareToggle",
+          "imageUpload",
           "debugPanelToggle",
           "themeSelect",
         ].includes(el.id);
@@ -2253,6 +2642,21 @@
           const shouldShow = modes.includes("all") || modes.includes(mode);
           row.hidden = !shouldShow;
         });
+        updateRisoEngineVisibility();
+      }
+
+      function updateRisoEngineVisibility() {
+        const mode = document.getElementById("modeSelector")?.value;
+        const style =
+          document.getElementById("risoRenderStyle")?.value || "original";
+        const showSeparation = mode === "risoimage" && style !== "legacy";
+        const showLayered = mode === "risoimage" && style === "layered";
+        document.querySelectorAll('[data-riso-engine="separation"]').forEach((el) => {
+          el.hidden = !showSeparation;
+        });
+        document.querySelectorAll('[data-riso-engine="layered"]').forEach((el) => {
+          el.hidden = !showLayered;
+        });
       }
 
       function applyTopoPreset(name, options = {}) {
@@ -2479,6 +2883,31 @@
           1,
           Math.floor(requestedHeight * scaleFactor),
         );
+        const risoLayerOverrides = Array.from({ length: 6 }, (_, index) => {
+          const layer = index + 1;
+          const angle = getInput(`risoL${layer}Angle`);
+          const opacity = getInput(`risoL${layer}Opacity`);
+          const toneMinRaw = getInput(`risoL${layer}ToneMin`);
+          const toneMaxRaw = getInput(`risoL${layer}ToneMax`);
+          const toneMin = clamp01(
+            Math.min(
+              Number.isFinite(toneMinRaw) ? toneMinRaw : 0,
+              Number.isFinite(toneMaxRaw) ? toneMaxRaw : 1,
+            ),
+          );
+          const toneMax = clamp01(
+            Math.max(
+              Number.isFinite(toneMinRaw) ? toneMinRaw : 0,
+              Number.isFinite(toneMaxRaw) ? toneMaxRaw : 1,
+            ),
+          );
+          return {
+            angle: Number.isFinite(angle) ? angle : null,
+            opacity: Number.isFinite(opacity) ? clamp01(opacity) : null,
+            toneMin: Number.isFinite(toneMin) ? toneMin : null,
+            toneMax: Number.isFinite(toneMax) ? toneMax : null,
+          };
+        });
 
         return {
           width: targetWidth,
@@ -2543,6 +2972,34 @@
           topoRidge: getInput("topoRidge"),
           topoWarp: getInput("topoWarp"),
           topoErosion: getInput("topoErosion"),
+          naturalScale: getInput("naturalScale"),
+          naturalWarp: getInput("naturalWarp"),
+          naturalTurbulence: getInput("naturalTurbulence"),
+          naturalAnisotropy: getInput("naturalAnisotropy"),
+          imageFitMode: document.getElementById("imageFitMode")?.value || "contain",
+          imageCropScale: getInput("imageCropScale"),
+          imageRotate: getInput("imageRotate"),
+          risoLayerCount: getInput("risoLayerCount", true),
+          risoPalettePreset: document.getElementById("risoPalettePreset")?.value || "warm-duo",
+          risoQuantMethod: document.getElementById("risoQuantMethod")?.value || "kmeans",
+          risoRenderStyle:
+            document.getElementById("risoRenderStyle")?.value || "original",
+          risoLayerAngleStep: getInput("risoLayerAngleStep"),
+          risoLayerOpacity: getInput("risoLayerOpacity"),
+          risoLayerOverlap: getInput("risoLayerOverlap"),
+          risoColorSplit: getInput("risoColorSplit"),
+          risoLayerOverrides,
+          ditherMethod: document.getElementById("ditherMethod")?.value || "ordered",
+          ditherDotShape: document.getElementById("ditherDotShape")?.value || "circle",
+          ditherDotSize: getInput("ditherDotSize", true),
+          ditherDotSpread: getInput("ditherDotSpread"),
+          ditherUniformity: getInput("ditherUniformity"),
+          palettePreset: document.getElementById("palettePreset")?.value || "gb",
+          paletteSize: getInput("paletteSize", true),
+          colorDepthBits: getInput("colorDepthBits", true),
+          pixelBlockSize: getInput("pixelBlockSize", true),
+          ditherBayerSize: document.getElementById("ditherBayerSize")?.value || "8",
+          scanlineStrength: getInput("scanlineStrength"),
         };
       }
 
@@ -2565,6 +3022,18 @@
           case "risograph":
             generateRisograph(force, renderOptions);
             break;
+          case "risoimage":
+          case "pixelretro":
+            generateImageEffectMode(mode, force, renderOptions);
+            break;
+          case "agateband":
+          case "malachiteflow":
+          case "lichengrowth":
+          case "icebloom":
+          case "riverdelta":
+          case "bubblefilm":
+            generatePhase4ModePlaceholder(mode, force, renderOptions);
+            break;
           case "topography":
             generateTopography(force, renderOptions);
             break;
@@ -2572,6 +3041,577 @@
             console.warn("Unknown mode:", mode);
             break;
         }
+      }
+
+      function generatePhase4ModePlaceholder(mode, force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        const config = getRenderConfig(renderOptions);
+        showDebugInfo(config, { phase4_mode: mode, status: "scaffold" });
+        setStatus(
+          renderOptions.preview ? "idle" : "complete",
+          renderOptions.preview
+            ? `Preview ready (${mode} scaffold)`
+            : `Phase 4 scaffold active: ${mode}`,
+        );
+      }
+
+      function hexToRgb(hex) {
+        const raw = (hex || "").trim();
+        const m = raw.match(/^#([0-9a-f]{6})$/i);
+        if (!m) return { r: 0, g: 0, b: 0 };
+        return {
+          r: parseInt(m[1].slice(0, 2), 16),
+          g: parseInt(m[1].slice(2, 4), 16),
+          b: parseInt(m[1].slice(4, 6), 16),
+        };
+      }
+
+      function getPaletteColors(mode, preset, requestedSize) {
+        const source =
+          mode === "risoimage" ? RISO_PALETTES[preset] : RETRO_PALETTES[preset];
+        const fallback =
+          mode === "risoimage" ? RISO_PALETTES["warm-duo"] : RETRO_PALETTES.gb;
+        const base = (source && source.length ? source : fallback).map(hexToRgb);
+        const size = Math.max(2, Math.min(64, requestedSize || base.length));
+        if (size <= base.length) return base.slice(0, size);
+        const out = [...base];
+        while (out.length < size) {
+          out.push(base[out.length % base.length]);
+        }
+        return out;
+      }
+
+      function nearestPaletteColor(r, g, b, palette) {
+        let best = palette[0];
+        let bestDist = Infinity;
+        for (let i = 0; i < palette.length; i++) {
+          const p = palette[i];
+          const dr = r - p.r;
+          const dg = g - p.g;
+          const db = b - p.b;
+          const d = dr * dr + dg * dg + db * db;
+          if (d < bestDist) {
+            bestDist = d;
+            best = p;
+          }
+        }
+        return best;
+      }
+
+      function nearestPaletteIndex(r, g, b, palette) {
+        let bestIndex = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < palette.length; i++) {
+          const p = palette[i];
+          const dr = r - p.r;
+          const dg = g - p.g;
+          const db = b - p.b;
+          const d = dr * dr + dg * dg + db * db;
+          if (d < bestDist) {
+            bestDist = d;
+            bestIndex = i;
+          }
+        }
+        return bestIndex;
+      }
+
+      function getBayerMatrix(size) {
+        const target = Math.max(2, Math.min(16, size));
+        const cache = getBayerMatrix._cache || (getBayerMatrix._cache = {});
+        if (cache[target]) return cache[target];
+        if (target === 2) {
+          cache[2] = [
+            [0, 2],
+            [3, 1],
+          ];
+          return cache[2];
+        }
+        const half = getBayerMatrix(target / 2);
+        const out = Array.from({ length: target }, () =>
+          new Array(target).fill(0),
+        );
+        for (let y = 0; y < target / 2; y++) {
+          for (let x = 0; x < target / 2; x++) {
+            const v = half[y][x] * 4;
+            out[y][x] = v;
+            out[y][x + target / 2] = v + 2;
+            out[y + target / 2][x] = v + 3;
+            out[y + target / 2][x + target / 2] = v + 1;
+          }
+        }
+        cache[target] = out;
+        return out;
+      }
+
+      function orderedNoise(x, y, size) {
+        const matrix = getBayerMatrix(size);
+        const n = matrix.length;
+        const v = matrix[y % n][x % n];
+        return (v + 0.5) / (n * n) - 0.5;
+      }
+
+      function buildImageSourceCanvas(config) {
+        const srcCanvas = document.createElement("canvas");
+        srcCanvas.width = config.width;
+        srcCanvas.height = config.height;
+        const sctx = srcCanvas.getContext("2d");
+        sctx.fillStyle = "#f2efe8";
+        sctx.fillRect(0, 0, srcCanvas.width, srcCanvas.height);
+
+        const sourceImage =
+          uploadedImage ||
+          (canvas.width > 0 && canvas.height > 0 ? canvas : null);
+        if (!sourceImage) {
+          return srcCanvas;
+        }
+
+        const fit = config.imageFitMode || "contain";
+        const zoom = Math.max(0.1, config.imageCropScale || 1);
+        const rotate = ((config.imageRotate || 0) * Math.PI) / 180;
+        const sw = sourceImage.width;
+        const sh = sourceImage.height;
+        let dw = srcCanvas.width;
+        let dh = srcCanvas.height;
+
+        if (fit === "contain") {
+          const scale = Math.min(srcCanvas.width / sw, srcCanvas.height / sh);
+          dw = sw * scale;
+          dh = sh * scale;
+        } else if (fit === "cover") {
+          const scale = Math.max(srcCanvas.width / sw, srcCanvas.height / sh);
+          dw = sw * scale;
+          dh = sh * scale;
+        } else if (fit === "center") {
+          dw = sw;
+          dh = sh;
+        } else if (fit === "stretch") {
+          dw = srcCanvas.width;
+          dh = srcCanvas.height;
+        }
+
+        dw *= zoom;
+        dh *= zoom;
+
+        sctx.save();
+        sctx.translate(srcCanvas.width / 2, srcCanvas.height / 2);
+        sctx.rotate(rotate);
+        sctx.drawImage(sourceImage, -dw / 2, -dh / 2, dw, dh);
+        sctx.restore();
+        return srcCanvas;
+      }
+
+      function loadImageFromFile(file) {
+        return new Promise((resolve, reject) => {
+          if (!file) {
+            reject(new Error("No file provided"));
+            return;
+          }
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Unable to decode image"));
+          };
+          img.src = url;
+        });
+      }
+
+      function finalizeImageModeRender(config, completeLabel) {
+        canvas.width = config.width;
+        canvas.height = config.height;
+        ctx.globalAlpha = 1;
+        ctx.filter = "none";
+        ctx.drawImage(offscreenCanvas, 0, 0);
+
+        if (config.gaussianBlur > 0.01) {
+          ctx.globalAlpha = 0.72;
+          ctx.filter = `blur(${config.gaussianBlur}px)`;
+          ctx.drawImage(offscreenCanvas, 0, 0);
+          ctx.globalAlpha = 1;
+          ctx.filter = "none";
+        }
+
+        if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
+        applyExperimentalEffects(config);
+        captureDisplayBase();
+        applyCompareView();
+
+        originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+        if (!config.preview) {
+          setStatus("complete", completeLabel);
+          setTimeout(() => {
+            setStatus("idle", "Idle");
+            generateBtn.disabled = false;
+          }, 420);
+        } else {
+          setStatus("idle", "Preview ready");
+        }
+        renderTask = null;
+        animationId = null;
+      }
+
+      function getDitherShapeMask(shape, fx, fy) {
+        if (shape === "circle") return Math.sqrt(fx * fx + fy * fy) <= 1 ? 1 : 0;
+        if (shape === "diamond") return Math.abs(fx) + Math.abs(fy) <= 1 ? 1 : 0;
+        if (shape === "line") return Math.abs(fy) < 0.34 ? 1 : 0;
+        if (shape === "cross") return Math.abs(fx) < 0.24 || Math.abs(fy) < 0.24 ? 1 : 0;
+        return 1;
+      }
+
+      function renderRisoImageLegacy(config, srcData, out, palette, cell, spread, uniformity, shape) {
+        const d = out.data;
+        const angle = ((config.risoLayerAngleStep || 22) % 180) * (Math.PI / 180);
+        const ca = Math.cos(angle);
+        const sa = Math.sin(angle);
+
+        for (let y = 0; y < config.height; y++) {
+          for (let x = 0; x < config.width; x++) {
+            const i = (y * config.width + x) * 4;
+            const r = srcData[i];
+            const g = srcData[i + 1];
+            const b = srcData[i + 2];
+
+            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            const mx = Math.max(r, g, b);
+            const mn = Math.min(r, g, b);
+            const saturation = (mx - mn) / 255;
+            const ink = clamp01((1 - lum) * 0.82 + saturation * 0.34);
+            if (ink <= 0.025) continue;
+
+            const rx = x * ca - y * sa;
+            const ry = x * sa + y * ca;
+            const noise = orderedNoise(
+              Math.abs(Math.floor(rx)),
+              Math.abs(Math.floor(ry)),
+              4,
+            );
+            const jitter = (Math.random() - 0.5) * (1 - uniformity) * 0.24;
+            const threshold = 0.46 + noise * spread * 0.62 + jitter;
+            if (ink <= threshold) continue;
+
+            const fx = ((((rx % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+            const fy = ((((ry % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+            const mask = getDitherShapeMask(shape, fx, fy);
+            if (!mask) continue;
+
+            const c = nearestPaletteColor(r, g, b, palette);
+            const alpha = clamp01((0.24 + ink * 0.86) * (0.75 + saturation * 0.35));
+            d[i] = d[i] * (1 - alpha) + c.r * alpha;
+            d[i + 1] = d[i + 1] * (1 - alpha) + c.g * alpha;
+            d[i + 2] = d[i + 2] * (1 - alpha) + c.b * alpha;
+          }
+        }
+      }
+
+      function renderRisoImageOriginal(config, srcData, out, palette, cell, spread, uniformity, shape) {
+        const d = out.data;
+        const layerCount = Math.max(2, Math.min(6, config.risoLayerCount || 3));
+        const angleStep = (config.risoLayerAngleStep || 22) * (Math.PI / 180);
+        const layerOpacity = clamp01(config.risoLayerOpacity || 0.72);
+        const overlap = clamp01(config.risoLayerOverlap || 0.35);
+        const colorSplit = clamp01(config.risoColorSplit || 0.55);
+
+        for (let layer = 0; layer < layerCount; layer++) {
+          const color = palette[layer];
+          const center = layerCount === 1 ? 0.5 : layer / (layerCount - 1);
+          const bandHalf = (1 / layerCount) * (1 + overlap * 1.9);
+          const angle = layer * angleStep;
+          const ca = Math.cos(angle);
+          const sa = Math.sin(angle);
+
+          for (let y = 0; y < config.height; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const i = (y * config.width + x) * 4;
+              const r = srcData[i];
+              const g = srcData[i + 1];
+              const b = srcData[i + 2];
+
+              const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+              const tone = 1 - lum;
+              const toneWeight = clamp01(
+                1 - Math.abs(tone - center) / Math.max(0.0001, bandHalf),
+              );
+              if (toneWeight <= 0.001) continue;
+
+              const nearestIndex = nearestPaletteIndex(r, g, b, palette);
+              const idxDist =
+                layerCount > 1
+                  ? Math.abs(nearestIndex - layer) / (layerCount - 1)
+                  : 0;
+              const splitAffinity = 1 - idxDist;
+              const splitWeight = (1 - colorSplit) + splitAffinity * colorSplit;
+              const inkStrength = clamp01(toneWeight * splitWeight);
+              if (inkStrength <= 0.03) continue;
+
+              const rx = x * ca - y * sa;
+              const ry = x * sa + y * ca;
+              const noise = orderedNoise(
+                Math.abs(Math.floor(rx)),
+                Math.abs(Math.floor(ry)),
+                4,
+              );
+              const randomJitter = (Math.random() - 0.5) * (1 - uniformity) * 0.22;
+              const threshold =
+                0.58 -
+                inkStrength * 0.52 +
+                noise * spread * 0.72 +
+                randomJitter;
+              if (inkStrength <= threshold) continue;
+
+              const fx = ((((rx % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+              const fy = ((((ry % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+              const mask = getDitherShapeMask(shape, fx, fy);
+              if (!mask) continue;
+
+              const a = clamp01(layerOpacity * inkStrength * 1.12);
+              d[i] = d[i] * (1 - a) + color.r * a;
+              d[i + 1] = d[i + 1] * (1 - a) + color.g * a;
+              d[i + 2] = d[i + 2] * (1 - a) + color.b * a;
+            }
+          }
+        }
+      }
+
+      function renderRisoImage(config) {
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        const srcCanvas = buildImageSourceCanvas(config);
+        const sctx = srcCanvas.getContext("2d");
+        const srcData = sctx.getImageData(0, 0, config.width, config.height).data;
+        const out = offscreenCtx.createImageData(config.width, config.height);
+        const d = out.data;
+
+        const layerCount = Math.max(2, Math.min(6, config.risoLayerCount || 3));
+        const palette = getPaletteColors(
+          "risoimage",
+          config.risoPalettePreset,
+          layerCount,
+        );
+        const cell = Math.max(1, config.ditherDotSize || 8);
+        const spread = clamp01(config.ditherDotSpread || 0.25);
+        const uniformity = clamp01(config.ditherUniformity || 0.8);
+        const shape = config.ditherDotShape || "circle";
+        const layerOpacity = clamp01(config.risoLayerOpacity || 0.72);
+        const overlap = clamp01(config.risoLayerOverlap || 0.35);
+        const colorSplit = clamp01(config.risoColorSplit || 0.55);
+
+        for (let i = 0; i < d.length; i += 4) {
+          d[i] = 245;
+          d[i + 1] = 241;
+          d[i + 2] = 233;
+          d[i + 3] = 255;
+        }
+
+        const risoStyle = config.risoRenderStyle || "original";
+        if (risoStyle === "legacy") {
+          renderRisoImageLegacy(
+            config,
+            srcData,
+            out,
+            palette,
+            cell,
+            spread,
+            uniformity,
+            shape,
+          );
+          offscreenCtx.putImageData(out, 0, 0);
+          return;
+        }
+        if (risoStyle === "original") {
+          renderRisoImageOriginal(
+            config,
+            srcData,
+            out,
+            palette,
+            cell,
+            spread,
+            uniformity,
+            shape,
+          );
+          offscreenCtx.putImageData(out, 0, 0);
+          return;
+        }
+
+        for (let layer = 0; layer < layerCount; layer++) {
+          const color = palette[layer];
+          const center = layerCount === 1 ? 0.5 : layer / (layerCount - 1);
+          const bandHalf = (1 / layerCount) * (1 + overlap * 1.9);
+          const defaultToneMin = clamp01(center - bandHalf);
+          const defaultToneMax = clamp01(center + bandHalf);
+          const layerOverride =
+            Array.isArray(config.risoLayerOverrides) &&
+            config.risoLayerOverrides[layer]
+              ? config.risoLayerOverrides[layer]
+              : null;
+          const toneMin = Number.isFinite(layerOverride?.toneMin)
+            ? clamp01(layerOverride.toneMin)
+            : defaultToneMin;
+          const toneMax = Number.isFinite(layerOverride?.toneMax)
+            ? clamp01(layerOverride.toneMax)
+            : defaultToneMax;
+          const toneLo = Math.min(toneMin, toneMax);
+          const toneHi = Math.max(toneMin, toneMax);
+          const toneCenter = (toneLo + toneHi) * 0.5;
+          const toneHalf = Math.max(0.0001, (toneHi - toneLo) * 0.5);
+          const angleDeg = Number.isFinite(layerOverride?.angle)
+            ? layerOverride.angle
+            : layer * (config.risoLayerAngleStep || 22);
+          const angle = angleDeg * (Math.PI / 180);
+          const ca = Math.cos(angle);
+          const sa = Math.sin(angle);
+          const currentLayerOpacity = Number.isFinite(layerOverride?.opacity)
+            ? clamp01(layerOverride.opacity)
+            : layerOpacity;
+
+          for (let y = 0; y < config.height; y++) {
+            for (let x = 0; x < config.width; x++) {
+              const i = (y * config.width + x) * 4;
+              const r = srcData[i];
+              const g = srcData[i + 1];
+              const b = srcData[i + 2];
+
+              const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+              const tone = 1 - lum;
+              const toneWeight = clamp01(
+                1 - Math.abs(tone - toneCenter) / toneHalf,
+              );
+              if (toneWeight <= 0.001) continue;
+
+              const nearestIndex = nearestPaletteIndex(r, g, b, palette);
+              const idxDist =
+                layerCount > 1
+                  ? Math.abs(nearestIndex - layer) / (layerCount - 1)
+                  : 0;
+              const splitAffinity = 1 - idxDist;
+              const splitWeight = (1 - colorSplit) + splitAffinity * colorSplit;
+              const inkStrength = clamp01(toneWeight * splitWeight);
+              if (inkStrength <= 0.03) continue;
+
+              const rx = x * ca - y * sa;
+              const ry = x * sa + y * ca;
+              const noise = orderedNoise(
+                Math.abs(Math.floor(rx)),
+                Math.abs(Math.floor(ry)),
+                4,
+              );
+              const randomJitter = (Math.random() - 0.5) * (1 - uniformity) * 0.22;
+              const threshold =
+                0.58 -
+                inkStrength * 0.52 +
+                noise * spread * 0.72 +
+                randomJitter;
+              if (inkStrength <= threshold) continue;
+
+              const fx = ((((rx % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+              const fy = ((((ry % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+              const mask = getDitherShapeMask(shape, fx, fy);
+              if (!mask) continue;
+
+              const a = clamp01(currentLayerOpacity * inkStrength * 1.12);
+              d[i] = d[i] * (1 - a) + color.r * a;
+              d[i + 1] = d[i + 1] * (1 - a) + color.g * a;
+              d[i + 2] = d[i + 2] * (1 - a) + color.b * a;
+            }
+          }
+        }
+
+        offscreenCtx.putImageData(out, 0, 0);
+      }
+
+      function renderPixelRetro(config) {
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        const srcCanvas = buildImageSourceCanvas(config);
+        const sctx = srcCanvas.getContext("2d");
+        const srcData = sctx.getImageData(0, 0, config.width, config.height).data;
+        const out = offscreenCtx.createImageData(config.width, config.height);
+        const d = out.data;
+
+        const block = Math.max(1, config.pixelBlockSize || 4);
+        const palette = getPaletteColors(
+          "pixelretro",
+          config.palettePreset,
+          Math.max(2, Math.min(64, config.paletteSize || 8)),
+        );
+        const bayerSize = Math.max(
+          2,
+          Math.min(16, parseInt(config.ditherBayerSize || "8", 10) || 8),
+        );
+        const depthSteps = Math.max(2, Math.pow(2, Math.max(1, config.colorDepthBits || 4)));
+        const scanline = clamp01(config.scanlineStrength || 0.25);
+
+        for (let by = 0; by < config.height; by += block) {
+          for (let bx = 0; bx < config.width; bx += block) {
+            const cx = Math.min(config.width - 1, bx + Math.floor(block / 2));
+            const cy = Math.min(config.height - 1, by + Math.floor(block / 2));
+            const ci = (cy * config.width + cx) * 4;
+            let r = srcData[ci];
+            let g = srcData[ci + 1];
+            let b = srcData[ci + 2];
+
+            const n = orderedNoise(bx, by, bayerSize) * 36;
+            r = Math.max(0, Math.min(255, Math.round((r + n) / 255 * (depthSteps - 1)) * (255 / (depthSteps - 1))));
+            g = Math.max(0, Math.min(255, Math.round((g + n) / 255 * (depthSteps - 1)) * (255 / (depthSteps - 1))));
+            b = Math.max(0, Math.min(255, Math.round((b + n) / 255 * (depthSteps - 1)) * (255 / (depthSteps - 1))));
+
+            const c = nearestPaletteColor(r, g, b, palette);
+            for (let y = by; y < Math.min(config.height, by + block); y++) {
+              for (let x = bx; x < Math.min(config.width, bx + block); x++) {
+                const i = (y * config.width + x) * 4;
+                let rr = c.r;
+                let gg = c.g;
+                let bb = c.b;
+                if (scanline > 0 && y % 2 === 1) {
+                  const k = 1 - scanline * 0.45;
+                  rr *= k;
+                  gg *= k;
+                  bb *= k;
+                }
+                d[i] = rr;
+                d[i + 1] = gg;
+                d[i + 2] = bb;
+                d[i + 3] = 255;
+              }
+            }
+          }
+        }
+
+        offscreenCtx.putImageData(out, 0, 0);
+      }
+
+      function generateImageEffectMode(mode, force = false, renderOptions = {}) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+        const config = getRenderConfig(renderOptions);
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        generateBtn.disabled = !config.preview;
+        progress.style.width = "35%";
+        if (mode === "risoimage") {
+          renderRisoImage(config);
+          const styleKey = config.risoRenderStyle || "original";
+          const styleLabel =
+            styleKey === "legacy"
+              ? "Legacy"
+              : styleKey === "layered"
+                ? "Layered"
+                : "Original V1";
+          finalizeImageModeRender(config, `Riso image rendered (${styleLabel})`);
+        } else {
+          renderPixelRetro(config);
+          finalizeImageModeRender(config, "Pixel retro rendered");
+        }
+        progress.style.width = "100%";
       }
 
       function generateMotherOfPearl(force = false, renderOptions = {}) {
@@ -3691,6 +4731,56 @@
         "marbleContrast",
         "marbleInkDrift",
         "marbleLightness",
+        "naturalScale",
+        "naturalWarp",
+        "naturalTurbulence",
+        "naturalAnisotropy",
+        "imageFitMode",
+        "imageCropScale",
+        "imageRotate",
+        "risoLayerCount",
+        "risoPalettePreset",
+        "risoQuantMethod",
+        "risoRenderStyle",
+        "risoLayerAngleStep",
+        "risoLayerOpacity",
+        "risoLayerOverlap",
+        "risoColorSplit",
+        "risoL1Angle",
+        "risoL1Opacity",
+        "risoL1ToneMin",
+        "risoL1ToneMax",
+        "risoL2Angle",
+        "risoL2Opacity",
+        "risoL2ToneMin",
+        "risoL2ToneMax",
+        "risoL3Angle",
+        "risoL3Opacity",
+        "risoL3ToneMin",
+        "risoL3ToneMax",
+        "risoL4Angle",
+        "risoL4Opacity",
+        "risoL4ToneMin",
+        "risoL4ToneMax",
+        "risoL5Angle",
+        "risoL5Opacity",
+        "risoL5ToneMin",
+        "risoL5ToneMax",
+        "risoL6Angle",
+        "risoL6Opacity",
+        "risoL6ToneMin",
+        "risoL6ToneMax",
+        "ditherMethod",
+        "ditherDotShape",
+        "ditherDotSize",
+        "ditherDotSpread",
+        "ditherUniformity",
+        "palettePreset",
+        "paletteSize",
+        "colorDepthBits",
+        "pixelBlockSize",
+        "ditherBayerSize",
+        "scanlineStrength",
         "substrateTone",
         "substrateMix",
         "topoPreset",
@@ -3743,6 +4833,56 @@
           "Domain warping amount for terrain. Higher values bend and flow contour structures.",
         topoErosion:
           "Post-noise smoothing/erosion. Higher values soften terrain and reduce sharp transitions.",
+        naturalScale:
+          "Controls the overall feature size for natural-pattern scaffolds.",
+        naturalWarp:
+          "Controls how strongly natural structures bend and distort.",
+        naturalTurbulence:
+          "Adds extra irregularity to natural forms.",
+        naturalAnisotropy:
+          "Stretches structures in a preferred direction.",
+        imageFitMode:
+          "Defines how an uploaded image fits inside the render frame.",
+        imageCropScale:
+          "Zoom level for the uploaded image framing.",
+        imageRotate:
+          "Rotates the uploaded image before processing.",
+        risoLayerCount:
+          "Target number of color layers used for risograph separation.",
+        risoQuantMethod:
+          "Method used to separate image colors into printable layer groups.",
+        risoRenderStyle:
+          "Original V1 restores the first Riso Image separation behavior. Legacy gives playful one-pass dots, and Layered adds per-layer overrides.",
+        risoLayerAngleStep:
+          "Angle difference between each ink layer to reduce moire and improve print separation.",
+        risoLayerOpacity:
+          "Base opacity applied per simulated ink layer.",
+        risoLayerOverlap:
+          "How much neighboring tone bands overlap between layers.",
+        risoColorSplit:
+          "How strongly pixel color family influences which layer receives ink.",
+        ditherMethod:
+          "Dithering algorithm used to convert tones into printable patterns.",
+        ditherDotShape:
+          "Shape used for halftone/dither marks.",
+        ditherDotSize:
+          "Base size of dither dots.",
+        ditherDotSpread:
+          "Controls spacing and spread of dither dots.",
+        ditherUniformity:
+          "Controls regular vs organic dither distribution.",
+        palettePreset:
+          "Selects a constrained target palette for retro/image stylization.",
+        paletteSize:
+          "Maximum number of colors allowed in the reduced palette.",
+        colorDepthBits:
+          "Bit-depth cap used for retro palette reduction.",
+        pixelBlockSize:
+          "Size of pixel blocks in retro output.",
+        ditherBayerSize:
+          "Matrix size for ordered/Bayer dithering patterns.",
+        scanlineStrength:
+          "Strength of horizontal scanline effect in retro output.",
       };
       let lockedControlIds = new Set();
       let galleryItems = [];
@@ -3750,6 +4890,24 @@
       const displayBaseCanvas = document.createElement("canvas");
       const displayBaseCtx = displayBaseCanvas.getContext("2d");
       let seedVariants = [];
+      let uploadedImage = null;
+      let uploadedImageName = "";
+
+      const RETRO_PALETTES = {
+        gb: ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"],
+        cga: ["#000000", "#55ffff", "#ff55ff", "#ffffff"],
+        ega: ["#000000", "#0000aa", "#00aa00", "#00aaaa", "#aa0000", "#aa00aa", "#aa5500", "#aaaaaa", "#555555", "#5555ff", "#55ff55", "#55ffff", "#ff5555", "#ff55ff", "#ffff55", "#ffffff"],
+        pc98: ["#101018", "#1e2a4a", "#3b5f9b", "#6c91d9", "#d8e7ff", "#6b3f2a", "#a66b43", "#d9a066", "#f2d29b", "#6a2a4a", "#a5487c", "#d17bb1", "#f0b7df", "#264a3d", "#3f7a67", "#6eb49b"],
+        "snes-lite": ["#140c1c", "#442434", "#30346d", "#4e4a4e", "#854c30", "#346524", "#d04648", "#757161", "#597dce", "#d27d2c", "#8595a1", "#6daa2c", "#d2aa99", "#6dc2ca", "#dad45e", "#deeed6"],
+      };
+
+      const RISO_PALETTES = {
+        "warm-duo": ["#1a1a1a", "#ff5a3c", "#f3d6b5", "#ffffff"],
+        "cmyk-lite": ["#00a0d2", "#ff3f8e", "#ffd400", "#111111"],
+        fluoro: ["#00e5ff", "#ff2ec4", "#ffe600", "#1a1a1a"],
+        "mono-noir": ["#111111", "#4d4d4d", "#8d8d8d", "#f4f1ea"],
+        custom: ["#1a1a1a", "#5e5e5e", "#b5b5b5", "#f4f1ea"],
+      };
 
       function getPerformanceProfileKey() {
         const selected =
@@ -3840,7 +4998,36 @@
       }
 
       function getControlHelpText(controlId, labelText) {
+        const layerMatch = controlId.match(
+          /^risoL([1-6])(Angle|Opacity|ToneMin|ToneMax)$/,
+        );
+        if (layerMatch) {
+          const layer = layerMatch[1];
+          const field = layerMatch[2];
+          if (field === "Angle") {
+            return `Layer ${layer} screen angle. Changing this rotates that layer's dot grid and can reduce moire artifacts.`;
+          }
+          if (field === "Opacity") {
+            return `Layer ${layer} ink strength. Lower values print lighter; higher values print denser color.`;
+          }
+          if (field === "ToneMin") {
+            return `Layer ${layer} lower tone bound. Source tones below this value are excluded from this layer.`;
+          }
+          return `Layer ${layer} upper tone bound. Source tones above this value are excluded from this layer.`;
+        }
         return CONTROL_INFO[controlId] || buildFallbackHelpText(labelText);
+      }
+
+      function updateRisoLayerOverrideRows() {
+        const layerCountEl = document.getElementById("risoLayerCount");
+        const layerCount = Math.max(
+          2,
+          Math.min(6, parseInt(layerCountEl?.value || "3", 10) || 3),
+        );
+        document.querySelectorAll(".riso-layer-row").forEach((row) => {
+          const idx = parseInt(row.dataset.layerIndex || "1", 10);
+          row.hidden = idx > layerCount;
+        });
       }
 
       function openSectionHelpModal(sectionEl, sectionTitle) {
@@ -3923,6 +5110,14 @@
           "opalvein",
           "labradorite",
           "marbleink",
+          "agateband",
+          "malachiteflow",
+          "lichengrowth",
+          "icebloom",
+          "riverdelta",
+          "bubblefilm",
+          "risoimage",
+          "pixelretro",
           "topography",
           "risograph",
         ];
@@ -4212,6 +5407,7 @@
           .querySelectorAll("#controls input, #controls select")
           .forEach((el) => {
             if (!el.id) return;
+            if (el.type === "file") return;
             state[el.id] = el.type === "checkbox" ? el.checked : el.value;
           });
         return state;
@@ -4221,6 +5417,7 @@
         Object.entries(state || {}).forEach(([id, value]) => {
           const el = document.getElementById(id);
           if (!el) return;
+          if (el.type === "file") return;
           if (el.type === "checkbox") {
             el.checked = !!value;
           } else {
@@ -4357,9 +5554,54 @@
         } else if (mode === "risograph") {
           set("risoDotSize", randomBetween(3, 20), 0);
           set("risoThreshold", randomBetween(90, 190), 0);
+        } else if (mode === "risoimage") {
+          const fitModes = ["contain", "cover", "stretch", "center"];
+          const ditherMethods = ["ordered", "error-diffusion", "stochastic", "hybrid"];
+          const dotShapes = ["circle", "square", "diamond", "line", "cross"];
+          const risoPresets = ["warm-duo", "cmyk-lite", "fluoro", "mono-noir"];
+          const risoStyles = ["original", "legacy", "layered"];
+          const layerCount = Math.floor(randomBetween(2, 6));
+          set("imageFitMode", fitModes[Math.floor(Math.random() * fitModes.length)]);
+          set("imageCropScale", randomBetween(0.45, 2.25), 2);
+          set("imageRotate", randomBetween(-45, 45), 0);
+          set("risoRenderStyle", risoStyles[Math.floor(Math.random() * risoStyles.length)]);
+          set("risoLayerCount", layerCount, 0);
+          set("risoPalettePreset", risoPresets[Math.floor(Math.random() * risoPresets.length)]);
+          set("risoLayerAngleStep", randomBetween(10, 48), 0);
+          set("risoLayerOpacity", randomBetween(0.45, 0.92), 2);
+          set("risoLayerOverlap", randomBetween(0.1, 0.75), 2);
+          set("risoColorSplit", randomBetween(0.2, 0.95), 2);
+          for (let layer = 1; layer <= 6; layer++) {
+            const center = layerCount === 1 ? 0.5 : (layer - 1) / (layerCount - 1);
+            const width = randomBetween(0.1, 0.36);
+            const toneMin = clamp01(center - width * randomBetween(0.45, 0.95));
+            const toneMax = clamp01(center + width * randomBetween(0.45, 0.95));
+            set(`risoL${layer}Angle`, randomBetween(-180, 180), 0);
+            set(`risoL${layer}Opacity`, randomBetween(0.35, 0.95), 2);
+            set(`risoL${layer}ToneMin`, Math.min(toneMin, toneMax), 2);
+            set(`risoL${layer}ToneMax`, Math.max(toneMin, toneMax), 2);
+          }
+          set("ditherMethod", ditherMethods[Math.floor(Math.random() * ditherMethods.length)]);
+          set("ditherDotShape", dotShapes[Math.floor(Math.random() * dotShapes.length)]);
+          set("ditherDotSize", Math.floor(randomBetween(3, 16)), 0);
+          set("ditherDotSpread", randomBetween(0.05, 0.65), 2);
+          set("ditherUniformity", randomBetween(0.35, 1), 2);
+        } else if (mode === "pixelretro") {
+          const retroPalettes = ["gb", "cga", "ega", "pc98", "snes-lite"];
+          set("imageFitMode", Math.random() > 0.5 ? "contain" : "cover");
+          set("imageCropScale", randomBetween(0.6, 1.7), 2);
+          set("imageRotate", randomBetween(-20, 20), 0);
+          set("palettePreset", retroPalettes[Math.floor(Math.random() * retroPalettes.length)]);
+          set("paletteSize", Math.floor(randomBetween(4, 16)), 0);
+          set("colorDepthBits", Math.floor(randomBetween(2, 7)), 0);
+          set("pixelBlockSize", Math.floor(randomBetween(2, 12)), 0);
+          set("ditherBayerSize", ["2", "4", "8", "16"][Math.floor(Math.random() * 4)]);
+          set("scanlineStrength", randomBetween(0, 0.65), 2);
         }
 
         updatePendingStatus();
+        updateRisoEngineVisibility();
+        updateRisoLayerOverrideRows();
         scheduleFinalRender();
       }
 
@@ -4534,6 +5776,7 @@
         const mode = document.getElementById("modeSelector").value;
         document.body.setAttribute("data-mode", mode);
         updateVisibleSections(mode);
+        updateRisoLayerOverrideRows();
         setStatus("idle", "Idle");
         setActiveTab("generate");
 
@@ -4605,6 +5848,7 @@
           });
 
         updatePendingStatus();
+        updateRisoLayerOverrideRows();
         startGeneration();
         generateSeedVariants();
       });
@@ -4716,8 +5960,54 @@
           const mode = e.target.value;
           document.body.setAttribute("data-mode", mode);
           updateVisibleSections(mode);
+          updateRisoLayerOverrideRows();
           scheduleFinalRender();
         });
+
+      const risoLayerCountEl = document.getElementById("risoLayerCount");
+      if (risoLayerCountEl) {
+        risoLayerCountEl.addEventListener("input", () => {
+          updateRisoLayerOverrideRows();
+        });
+      }
+
+      const risoRenderStyleEl = document.getElementById("risoRenderStyle");
+      if (risoRenderStyleEl) {
+        risoRenderStyleEl.addEventListener("change", () => {
+          updateRisoEngineVisibility();
+          updateRisoLayerOverrideRows();
+        });
+      }
+
+      const imageUploadInput = document.getElementById("imageUpload");
+      if (imageUploadInput) {
+        imageUploadInput.addEventListener("change", async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) {
+            uploadedImage = null;
+            uploadedImageName = "";
+            setStatus("idle", "Image source cleared");
+            scheduleFinalRender();
+            return;
+          }
+          try {
+            const img = await loadImageFromFile(file);
+            uploadedImage = img;
+            uploadedImageName = file.name || "uploaded image";
+            setStatus("complete", `Image loaded: ${uploadedImageName}`);
+            const modeEl = document.getElementById("modeSelector");
+            if (modeEl && !["risoimage", "pixelretro"].includes(modeEl.value)) {
+              modeEl.value = "risoimage";
+              document.body.setAttribute("data-mode", "risoimage");
+              updateVisibleSections("risoimage");
+            }
+            scheduleFinalRender();
+          } catch (err) {
+            console.error(err);
+            setStatus("error", "Unable to load image");
+          }
+        });
+      }
 
       const topoPreset = document.getElementById("topoPreset");
       if (topoPreset) {
