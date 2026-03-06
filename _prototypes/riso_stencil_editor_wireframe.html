@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Riso Stencil Editor Wireframe</title>
+    <style>
+      :root {
+        --bg: #11151a;
+        --bg-2: #1a212b;
+        --panel: #202a36;
+        --line: #344358;
+        --text: #e9eef7;
+        --muted: #9db0c9;
+        --accent: #74c0fc;
+        --ok: #7adf91;
+        --warn: #ffd166;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: linear-gradient(180deg, var(--bg), #0e1217 58%);
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 320px 1fr 360px;
+        gap: 12px;
+        padding: 12px;
+      }
+      .card {
+        background: color-mix(in oklab, var(--panel) 92%, transparent);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+      h1 {
+        font-size: 16px;
+      }
+      h2 {
+        font-size: 14px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .stack {
+        display: grid;
+        gap: 10px;
+      }
+      .stencils {
+        display: grid;
+        gap: 8px;
+      }
+      .stencil-row {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px;
+        display: grid;
+        gap: 6px;
+      }
+      .stencil-row.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 40%, transparent);
+      }
+      .row-top {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center;
+        gap: 6px;
+      }
+      .chip {
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .btn,
+      button,
+      select,
+      input[type="number"],
+      input[type="range"] {
+        font: inherit;
+      }
+      .btn,
+      button {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg-2);
+        color: var(--text);
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      .btn.primary {
+        border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+        color: #d8eeff;
+      }
+      .btn.toggle.on {
+        border-color: color-mix(in oklab, var(--ok) 45%, var(--line));
+        color: #d9ffe2;
+      }
+      .subrow {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .field {
+        display: grid;
+        gap: 4px;
+      }
+      .field label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .field input[type="number"],
+      .field select {
+        width: 100%;
+        padding: 6px 8px;
+        background: #10151d;
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .channel {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px;
+        display: grid;
+        gap: 8px;
+      }
+      .channel.c {
+        border-color: #45c4d8;
+      }
+      .channel.m {
+        border-color: #db5ea7;
+      }
+      .channel.y {
+        border-color: #e7c44d;
+      }
+      .channel.k {
+        border-color: #8a98aa;
+      }
+      .ch-head {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 6px;
+        align-items: center;
+      }
+      .tiny {
+        font-size: 11px;
+      }
+      .preview-shell {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 10px;
+        height: 100%;
+      }
+      .tabs {
+        display: inline-grid;
+        grid-auto-flow: column;
+        gap: 6px;
+      }
+      .tab.on {
+        border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+        color: #d8eeff;
+      }
+      .preview-box {
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        min-height: 280px;
+        background:
+          radial-gradient(circle at 20% 10%, #263244 0%, transparent 40%),
+          radial-gradient(circle at 80% 90%, #1d2734 0%, transparent 35%),
+          #0d1218;
+      }
+      .hint {
+        border-left: 2px solid var(--warn);
+        padding-left: 8px;
+        color: #ffe7a8;
+        font-size: 12px;
+      }
+      @media (max-width: 1280px) {
+        body {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="card stack">
+      <h1>Stencil Slots (Wireframe)</h1>
+      <p class="muted tiny">
+        Select a slot, define its mask, then tune CMYK channels for that mask.
+      </p>
+      <div class="stencils" id="stencilList"></div>
+      <div class="subrow">
+        <button class="btn primary" id="addStencilBtn">Add Slot</button>
+        <button class="btn" id="dupStencilBtn">Duplicate</button>
+      </div>
+    </section>
+
+    <section class="card stack">
+      <h2>Selected Stencil Builder</h2>
+      <div class="hint">
+        Flow: isolate region first -> verify mask -> tune channel print behavior.
+      </div>
+
+      <div class="card stack">
+        <h3>Mask Builder</h3>
+        <div class="grid-2">
+          <div class="field">
+            <label>Mask Mode</label>
+            <select id="maskMode">
+              <option value="hue">Hue Range</option>
+              <option value="tone">Tone Range</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Stencil Name</label>
+            <input type="number" id="stencilNameDummy" value="1" />
+          </div>
+        </div>
+        <div id="hueFields" class="grid-2">
+          <div class="field">
+            <label>Hue Center (0-360)</label>
+            <input type="range" min="0" max="360" value="160" />
+          </div>
+          <div class="field">
+            <label>Hue Tolerance</label>
+            <input type="range" min="0" max="180" value="40" />
+          </div>
+          <div class="field">
+            <label>Min Saturation</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.2" />
+          </div>
+          <div class="field">
+            <label>Min Brightness</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.15" />
+          </div>
+        </div>
+        <div id="toneFields" class="grid-2" hidden>
+          <div class="field">
+            <label>Tone Min (0 light -> 1 dark)</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.2" />
+          </div>
+          <div class="field">
+            <label>Tone Max (0 light -> 1 dark)</label>
+            <input type="range" min="0" max="1" step="0.01" value="0.65" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h3>Ink Recipe (Per Channel)</h3>
+        <div class="grid-4">
+          <div class="channel c">
+            <div class="ch-head"><span class="chip">C</span><span class="tiny muted">Cyan</span><button class="btn toggle on">On</button></div>
+            <div class="field"><label>Angle</label><input type="number" value="15" /></div>
+            <div class="field"><label>Dot Size</label><input type="number" value="6" /></div>
+            <div class="field"><label>Spread</label><input type="range" min="0" max="1" step="0.01" value="0.35" /></div>
+            <div class="field"><label>Opacity</label><input type="range" min="0" max="1" step="0.01" value="0.7" /></div>
+          </div>
+          <div class="channel m">
+            <div class="ch-head"><span class="chip">M</span><span class="tiny muted">Magenta</span><button class="btn toggle on">On</button></div>
+            <div class="field"><label>Angle</label><input type="number" value="45" /></div>
+            <div class="field"><label>Dot Size</label><input type="number" value="6" /></div>
+            <div class="field"><label>Spread</label><input type="range" min="0" max="1" step="0.01" value="0.35" /></div>
+            <div class="field"><label>Opacity</label><input type="range" min="0" max="1" step="0.01" value="0.7" /></div>
+          </div>
+          <div class="channel y">
+            <div class="ch-head"><span class="chip">Y</span><span class="tiny muted">Yellow</span><button class="btn toggle on">On</button></div>
+            <div class="field"><label>Angle</label><input type="number" value="75" /></div>
+            <div class="field"><label>Dot Size</label><input type="number" value="6" /></div>
+            <div class="field"><label>Spread</label><input type="range" min="0" max="1" step="0.01" value="0.35" /></div>
+            <div class="field"><label>Opacity</label><input type="range" min="0" max="1" step="0.01" value="0.7" /></div>
+          </div>
+          <div class="channel k">
+            <div class="ch-head"><span class="chip">K</span><span class="tiny muted">Key/Black</span><button class="btn toggle">Off</button></div>
+            <div class="field"><label>Angle</label><input type="number" value="0" /></div>
+            <div class="field"><label>Dot Size</label><input type="number" value="5" /></div>
+            <div class="field"><label>Spread</label><input type="range" min="0" max="1" step="0.01" value="0.2" /></div>
+            <div class="field"><label>Opacity</label><input type="range" min="0" max="1" step="0.01" value="0.5" /></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card preview-shell">
+      <h2>Preview Inspector</h2>
+      <div class="tabs">
+        <button class="btn tab on" data-tab="mask">Mask</button>
+        <button class="btn tab" data-tab="channels">Channels</button>
+        <button class="btn tab" data-tab="composite">Composite</button>
+      </div>
+      <div class="preview-box" id="previewBox">
+        <div>
+          <h3 id="previewTitle">Mask Preview</h3>
+          <p class="muted" id="previewText">
+            Shows isolated pixels for selected stencil only.
+          </p>
+        </div>
+      </div>
+      <div class="card tiny muted">
+        Note: this is wireframe-only. It does not change the main renderer.
+      </div>
+    </section>
+
+    <script>
+      const state = {
+        active: 0,
+        stencils: Array.from({ length: 3 }, (_, i) => ({
+          id: i + 1,
+          mode: i === 2 ? "tone" : "hue",
+          visible: true,
+          isolate: false,
+        })),
+      };
+
+      const stencilList = document.getElementById("stencilList");
+      const maskMode = document.getElementById("maskMode");
+      const hueFields = document.getElementById("hueFields");
+      const toneFields = document.getElementById("toneFields");
+      const previewTitle = document.getElementById("previewTitle");
+      const previewText = document.getElementById("previewText");
+
+      function renderStencilList() {
+        stencilList.innerHTML = "";
+        state.stencils.forEach((s, idx) => {
+          const row = document.createElement("div");
+          row.className = "stencil-row" + (idx === state.active ? " active" : "");
+          row.innerHTML =
+            '<div class="row-top">' +
+            '<button class="btn" data-act="sel">' +
+            "S" +
+            s.id +
+            "</button>" +
+            '<span class="chip">' +
+            (s.mode === "hue" ? "Hue Range" : "Tone Range") +
+            "</span>" +
+            '<button class="btn toggle ' +
+            (s.visible ? "on" : "") +
+            '" data-act="vis">' +
+            (s.visible ? "Visible" : "Hidden") +
+            "</button>" +
+            '<button class="btn toggle ' +
+            (s.isolate ? "on" : "") +
+            '" data-act="iso">' +
+            (s.isolate ? "Isolated" : "Isolate") +
+            "</button>" +
+            "</div>" +
+            '<div class="subrow">' +
+            '<button class="btn" data-act="up">Move Up</button>' +
+            '<button class="btn" data-act="del">Delete</button>' +
+            "</div>";
+          row.querySelectorAll("button[data-act]").forEach((btn) => {
+            btn.addEventListener("click", () => handleStencilAction(idx, btn.dataset.act));
+          });
+          stencilList.appendChild(row);
+        });
+      }
+
+      function handleStencilAction(idx, act) {
+        if (act === "sel") {
+          state.active = idx;
+          syncActiveStencilUi();
+        } else if (act === "vis") {
+          state.stencils[idx].visible = !state.stencils[idx].visible;
+        } else if (act === "iso") {
+          state.stencils.forEach((s, i) => {
+            s.isolate = i === idx ? !s.isolate : false;
+          });
+        } else if (act === "up" && idx > 0) {
+          const tmp = state.stencils[idx - 1];
+          state.stencils[idx - 1] = state.stencils[idx];
+          state.stencils[idx] = tmp;
+          state.active = idx - 1;
+        } else if (act === "del" && state.stencils.length > 1) {
+          state.stencils.splice(idx, 1);
+          state.active = Math.max(0, Math.min(state.active, state.stencils.length - 1));
+        }
+        renderStencilList();
+      }
+
+      function syncActiveStencilUi() {
+        const s = state.stencils[state.active];
+        if (!s) return;
+        maskMode.value = s.mode;
+        hueFields.hidden = s.mode !== "hue";
+        toneFields.hidden = s.mode !== "tone";
+        renderStencilList();
+      }
+
+      maskMode.addEventListener("change", () => {
+        const s = state.stencils[state.active];
+        if (!s) return;
+        s.mode = maskMode.value;
+        syncActiveStencilUi();
+      });
+
+      document.getElementById("addStencilBtn").addEventListener("click", () => {
+        if (state.stencils.length >= 6) return;
+        state.stencils.push({
+          id: state.stencils.length + 1,
+          mode: "hue",
+          visible: true,
+          isolate: false,
+        });
+        state.active = state.stencils.length - 1;
+        syncActiveStencilUi();
+      });
+
+      document.getElementById("dupStencilBtn").addEventListener("click", () => {
+        if (state.stencils.length >= 6) return;
+        const s = state.stencils[state.active];
+        if (!s) return;
+        state.stencils.push({ ...s, id: state.stencils.length + 1, isolate: false });
+        state.active = state.stencils.length - 1;
+        syncActiveStencilUi();
+      });
+
+      document.querySelectorAll(".tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach((t) => t.classList.remove("on"));
+          btn.classList.add("on");
+          const tab = btn.dataset.tab;
+          if (tab === "mask") {
+            previewTitle.textContent = "Mask Preview";
+            previewText.textContent =
+              "Shows isolated pixels for selected stencil only.";
+          } else if (tab === "channels") {
+            previewTitle.textContent = "Channel Preview";
+            previewText.textContent =
+              "Shows CMYK dot patterns for selected stencil channel settings.";
+          } else {
+            previewTitle.textContent = "Composite Preview";
+            previewText.textContent =
+              "Shows all visible stencils combined with their channel recipes.";
+          }
+        });
+      });
+
+      syncActiveStencilUi();
+    </script>
+  </body>
+</html>

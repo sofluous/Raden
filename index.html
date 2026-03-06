@@ -431,6 +431,33 @@
         padding: 6px 8px;
       }
 
+      .riso-vis-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: var(--ds-space-1);
+        width: 100%;
+      }
+
+      .riso-vis-grid label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-height: var(--ds-control-h-sm);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-pill);
+        font-size: var(--ds-fs-1);
+        color: var(--ds-text-muted);
+        background: color-mix(in oklab, var(--ds-bg-raised) 90%, transparent);
+        padding: 2px 6px;
+        white-space: nowrap;
+      }
+
+      .riso-vis-grid label input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+      }
+
       .pending-change {
         border-color: var(--ds-warning) !important;
         box-shadow: 0 0 0 1px
@@ -607,6 +634,10 @@
       @media (max-width: 720px) {
         .layer-quad {
           grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .riso-vis-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
     </style>
@@ -1767,6 +1798,38 @@
               </div>
               <div class="control-icons"></div>
             </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Layer View:</div>
+              <div class="control-input">
+                <select id="risoLayerViewMode" data-live="false">
+                  <option value="all">All Layers</option>
+                  <option value="solo">Solo Layer</option>
+                  <option value="custom">Custom Visible Set</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Active Layer:</div>
+              <div class="control-input">
+                <input type="number" id="risoActiveLayer" min="1" max="6" step="1" value="1" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-riso-engine="separation">
+              <div class="control-label">Visible Layers:</div>
+              <div class="control-input">
+                <div class="riso-vis-grid">
+                  <label><input type="checkbox" id="risoVisibleL1" checked data-live="false" />L1</label>
+                  <label><input type="checkbox" id="risoVisibleL2" checked data-live="false" />L2</label>
+                  <label><input type="checkbox" id="risoVisibleL3" checked data-live="false" />L3</label>
+                  <label><input type="checkbox" id="risoVisibleL4" checked data-live="false" />L4</label>
+                  <label><input type="checkbox" id="risoVisibleL5" checked data-live="false" />L5</label>
+                  <label><input type="checkbox" id="risoVisibleL6" checked data-live="false" />L6</label>
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
           </div>
 
           <div class="section" data-mode="risoimage" data-riso-engine="layered">
@@ -2657,6 +2720,7 @@
         document.querySelectorAll('[data-riso-engine="layered"]').forEach((el) => {
           el.hidden = !showLayered;
         });
+        updateRisoLayerViewUi();
       }
 
       function applyTopoPreset(name, options = {}) {
@@ -2988,6 +3052,17 @@
           risoLayerOpacity: getInput("risoLayerOpacity"),
           risoLayerOverlap: getInput("risoLayerOverlap"),
           risoColorSplit: getInput("risoColorSplit"),
+          risoLayerViewMode:
+            document.getElementById("risoLayerViewMode")?.value || "all",
+          risoActiveLayer: getInput("risoActiveLayer", true),
+          risoVisibleMask: [
+            !!document.getElementById("risoVisibleL1")?.checked,
+            !!document.getElementById("risoVisibleL2")?.checked,
+            !!document.getElementById("risoVisibleL3")?.checked,
+            !!document.getElementById("risoVisibleL4")?.checked,
+            !!document.getElementById("risoVisibleL5")?.checked,
+            !!document.getElementById("risoVisibleL6")?.checked,
+          ],
           risoLayerOverrides,
           ditherMethod: document.getElementById("ditherMethod")?.value || "ordered",
           ditherDotShape: document.getElementById("ditherDotShape")?.value || "circle",
@@ -3264,6 +3339,25 @@
         return 1;
       }
 
+      function isRisoLayerVisible(layerIndex, layerCount, config) {
+        const mode = config.risoLayerViewMode || "all";
+        if (mode === "all") return true;
+        if (mode === "solo") {
+          const active = Math.max(
+            1,
+            Math.min(layerCount, config.risoActiveLayer || 1),
+          );
+          return layerIndex === active - 1;
+        }
+        if (mode === "custom") {
+          const mask = Array.isArray(config.risoVisibleMask)
+            ? config.risoVisibleMask
+            : [];
+          return !!mask[layerIndex];
+        }
+        return true;
+      }
+
       function renderRisoImageLegacy(config, srcData, out, palette, cell, spread, uniformity, shape) {
         const d = out.data;
         const angle = ((config.risoLayerAngleStep || 22) % 180) * (Math.PI / 180);
@@ -3318,6 +3412,7 @@
         const colorSplit = clamp01(config.risoColorSplit || 0.55);
 
         for (let layer = 0; layer < layerCount; layer++) {
+          if (!isRisoLayerVisible(layer, layerCount, config)) continue;
           const color = palette[layer];
           const center = layerCount === 1 ? 0.5 : layer / (layerCount - 1);
           const bandHalf = (1 / layerCount) * (1 + overlap * 1.9);
@@ -3437,8 +3532,8 @@
           offscreenCtx.putImageData(out, 0, 0);
           return;
         }
-
         for (let layer = 0; layer < layerCount; layer++) {
+          if (!isRisoLayerVisible(layer, layerCount, config)) continue;
           const color = palette[layer];
           const center = layerCount === 1 ? 0.5 : layer / (layerCount - 1);
           const bandHalf = (1 / layerCount) * (1 + overlap * 1.9);
@@ -3606,7 +3701,19 @@
               : styleKey === "layered"
                 ? "Layered"
                 : "Original V1";
-          finalizeImageModeRender(config, `Riso image rendered (${styleLabel})`);
+          const layerViewMode = config.risoLayerViewMode || "all";
+          const previewSuffix =
+            styleKey === "legacy"
+              ? ""
+              : layerViewMode === "solo"
+                ? `, Solo L${Math.max(1, config.risoActiveLayer || 1)}`
+                : layerViewMode === "custom"
+                  ? ", Custom Layer Set"
+                  : "";
+          finalizeImageModeRender(
+            config,
+            `Riso image rendered (${styleLabel}${previewSuffix})`,
+          );
         } else {
           renderPixelRetro(config);
           finalizeImageModeRender(config, "Pixel retro rendered");
@@ -4861,6 +4968,22 @@
           "How much neighboring tone bands overlap between layers.",
         risoColorSplit:
           "How strongly pixel color family influences which layer receives ink.",
+        risoLayerViewMode:
+          "Choose how layer visibility is inspected: all layers, one solo layer, or a custom visible set.",
+        risoActiveLayer:
+          "When Layer View is set to Solo, this chooses which layer index is shown.",
+        risoVisibleL1:
+          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
+        risoVisibleL2:
+          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
+        risoVisibleL3:
+          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
+        risoVisibleL4:
+          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
+        risoVisibleL5:
+          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
+        risoVisibleL6:
+          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
         ditherMethod:
           "Dithering algorithm used to convert tones into printable patterns.",
         ditherDotShape:
@@ -5028,6 +5151,66 @@
           const idx = parseInt(row.dataset.layerIndex || "1", 10);
           row.hidden = idx > layerCount;
         });
+        updateRisoLayerViewUi();
+      }
+
+      function updateRisoLayerViewUi() {
+        const mode = document.getElementById("modeSelector")?.value;
+        const style =
+          document.getElementById("risoRenderStyle")?.value || "original";
+        const viewMode =
+          document.getElementById("risoLayerViewMode")?.value || "all";
+        const layerCount = Math.max(
+          2,
+          Math.min(6, parseInt(document.getElementById("risoLayerCount")?.value || "3", 10) || 3),
+        );
+        const activeLayerInput = document.getElementById("risoActiveLayer");
+        if (activeLayerInput) {
+          activeLayerInput.max = String(layerCount);
+          const clamped = Math.max(
+            1,
+            Math.min(layerCount, parseInt(activeLayerInput.value || "1", 10) || 1),
+          );
+          activeLayerInput.value = String(clamped);
+          const activeLayerRow = activeLayerInput.closest(".control-row");
+          if (activeLayerRow)
+            activeLayerRow.hidden = !(
+              mode === "risoimage" && style !== "legacy" && viewMode === "solo"
+            );
+        }
+
+        const customRow = document
+          .getElementById("risoVisibleL1")
+          ?.closest(".control-row");
+        if (customRow) {
+          customRow.hidden = !(
+            mode === "risoimage" && style !== "legacy" && viewMode === "custom"
+          );
+        }
+
+        for (let i = 1; i <= 6; i++) {
+          const input = document.getElementById(`risoVisibleL${i}`);
+          if (!input) continue;
+          input.disabled = i > layerCount;
+          if (i > layerCount) input.checked = false;
+          if (i <= layerCount && viewMode !== "custom" && !input.checked) {
+            input.checked = true;
+          }
+        }
+        if (viewMode === "custom") {
+          let anyVisible = false;
+          for (let i = 1; i <= layerCount; i++) {
+            const input = document.getElementById(`risoVisibleL${i}`);
+            if (input?.checked) {
+              anyVisible = true;
+              break;
+            }
+          }
+          if (!anyVisible) {
+            const fallback = document.getElementById("risoVisibleL1");
+            if (fallback) fallback.checked = true;
+          }
+        }
       }
 
       function openSectionHelpModal(sectionEl, sectionTitle) {
@@ -5039,6 +5222,14 @@
           sectionEl.querySelectorAll(".control-row"),
         ).filter((row) => !row.hidden);
         list.innerHTML = "";
+        const titleKey = (sectionTitle || "").toLowerCase();
+        if (titleKey.includes("riso layers")) {
+          const intro = document.createElement("p");
+          intro.className = "help-v";
+          intro.textContent =
+            "Risograph-style separation splits your image into tone-based ink passes. Each layer is a stencil for a tone range: Tone Min/Max chooses what brightness it prints, Angle rotates its screen pattern, and Opacity controls ink strength. Overlap blends neighboring layers for smoother transitions. Layer View lets you inspect all layers, a single layer, or a custom visible set. The current UI is capped to 6 layers for performance and readability, but the concept itself can scale beyond that.";
+          list.appendChild(intro);
+        }
 
         rows.forEach((row) => {
           const labelEl = row.querySelector(".control-label");
@@ -5571,6 +5762,11 @@
           set("risoLayerOpacity", randomBetween(0.45, 0.92), 2);
           set("risoLayerOverlap", randomBetween(0.1, 0.75), 2);
           set("risoColorSplit", randomBetween(0.2, 0.95), 2);
+          set("risoLayerViewMode", "all");
+          set("risoActiveLayer", 1, 0);
+          for (let i = 1; i <= 6; i++) {
+            set(`risoVisibleL${i}`, true);
+          }
           for (let layer = 1; layer <= 6; layer++) {
             const center = layerCount === 1 ? 0.5 : (layer - 1) / (layerCount - 1);
             const width = randomBetween(0.1, 0.36);
@@ -5976,6 +6172,26 @@
         risoRenderStyleEl.addEventListener("change", () => {
           updateRisoEngineVisibility();
           updateRisoLayerOverrideRows();
+        });
+      }
+
+      const risoLayerViewModeEl = document.getElementById("risoLayerViewMode");
+      if (risoLayerViewModeEl) {
+        risoLayerViewModeEl.addEventListener("change", () => {
+          updateRisoLayerViewUi();
+        });
+      }
+      const risoActiveLayerEl = document.getElementById("risoActiveLayer");
+      if (risoActiveLayerEl) {
+        risoActiveLayerEl.addEventListener("change", () => {
+          updateRisoLayerViewUi();
+        });
+      }
+      for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById(`risoVisibleL${i}`);
+        if (!el) continue;
+        el.addEventListener("change", () => {
+          updateRisoLayerViewUi();
         });
       }
 
