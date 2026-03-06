@@ -2283,6 +2283,7 @@
     <div id="progress"></div>
     <canvas id="canvas"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
+    <script src="./src/shared/math_color_palette.js"></script>
     <script>
       let debugVisible = false;
 
@@ -2343,14 +2344,19 @@
       }
 
       function clamp01(v) {
+        if (window.RadenShared?.clamp01) return window.RadenShared.clamp01(v);
         return Math.max(0, Math.min(1, v));
       }
 
       function lerp(a, b, t) {
+        if (window.RadenShared?.lerp) return window.RadenShared.lerp(a, b, t);
         return a + (b - a) * t;
       }
 
       function smoothstep(edge0, edge1, x) {
+        if (window.RadenShared?.smoothstep) {
+          return window.RadenShared.smoothstep(edge0, edge1, x);
+        }
         const t = clamp01((x - edge0) / Math.max(1e-6, edge1 - edge0));
         return t * t * (3 - 2 * t);
       }
@@ -2373,6 +2379,7 @@
       }
 
       function fade(t) {
+        if (window.RadenShared?.fade) return window.RadenShared.fade(t);
         return t * t * t * (t * (t * 6 - 15) + 10);
       }
 
@@ -2593,6 +2600,7 @@
       }
 
       function fract(n) {
+        if (window.RadenShared?.fract) return window.RadenShared.fract(n);
         return n - Math.floor(n);
       }
 
@@ -2639,6 +2647,9 @@
       }
 
       function hslToRgb(h, s, l) {
+        if (window.RadenShared?.hslToRgb) {
+          return window.RadenShared.hslToRgb(h, s, l);
+        }
         s /= 100;
         l /= 100;
         const k = (n) => (n + h / 30) % 12;
@@ -3133,6 +3144,7 @@
       }
 
       function hexToRgb(hex) {
+        if (window.RadenShared?.hexToRgb) return window.RadenShared.hexToRgb(hex);
         const raw = (hex || "").trim();
         const m = raw.match(/^#([0-9a-f]{6})$/i);
         if (!m) return { r: 0, g: 0, b: 0 };
@@ -3159,6 +3171,9 @@
       }
 
       function nearestPaletteColor(r, g, b, palette) {
+        if (window.RadenShared?.nearestPaletteColor) {
+          return window.RadenShared.nearestPaletteColor(r, g, b, palette);
+        }
         let best = palette[0];
         let bestDist = Infinity;
         for (let i = 0; i < palette.length; i++) {
@@ -3176,6 +3191,9 @@
       }
 
       function nearestPaletteIndex(r, g, b, palette) {
+        if (window.RadenShared?.nearestPaletteIndex) {
+          return window.RadenShared.nearestPaletteIndex(r, g, b, palette);
+        }
         let bestIndex = 0;
         let bestDist = Infinity;
         for (let i = 0; i < palette.length; i++) {
