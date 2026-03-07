@@ -13,11 +13,12 @@
     <style>
       :root {
         --raden-panel-width: 520px;
-        --raden-grid-gap: var(--ds-space-3);
-        --raden-frame-pad: var(--ds-space-3);
+        --raden-grid-gap: var(--ds-shell-gap, var(--ds-space-3));
+        --raden-frame-pad: var(--ds-shell-pad, var(--ds-space-3));
         --raden-section-gap: var(--ds-space-3);
         --raden-row-gap: var(--ds-space-2);
-        --raden-row-label-width: 11.5rem;
+        --raden-row-label-width: var(--ds-field-label-w, 11.5rem);
+        --raden-row-action-w: var(--ds-field-action-w, calc(var(--ds-control-h-sm) + 8px));
       }
 
       html,
@@ -51,7 +52,7 @@
 
       #controls {
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        grid-template-rows: auto minmax(0, 1fr) auto;
         min-height: 0;
         border: var(--ds-border-w) var(--ds-border-style) var(--ds-card-border);
         border-radius: var(--ds-card-radius);
@@ -102,9 +103,9 @@
       }
 
       .panel-tab-btn.is-active {
-        border-color: var(--ds-accent);
-        background: color-mix(in oklab, var(--ds-accent) 18%, var(--ds-btn-bg));
-        color: var(--ds-text);
+        border-color: var(--ds-tab-active-border, var(--ds-accent));
+        background: var(--ds-tab-active-bg, color-mix(in oklab, var(--ds-accent) 18%, var(--ds-btn-bg)));
+        color: var(--ds-tab-active-fg, var(--ds-text));
       }
 
       .panel-settings-btn {
@@ -120,9 +121,9 @@
       }
 
       .panel-settings-btn[aria-expanded="true"] {
-        border-color: var(--ds-accent);
-        color: var(--ds-text);
-        background: color-mix(in oklab, var(--ds-accent) 15%, var(--ds-btn-bg));
+        border-color: var(--ds-tab-active-border, var(--ds-accent));
+        color: var(--ds-tab-active-fg, var(--ds-text));
+        background: var(--ds-tab-active-bg, color-mix(in oklab, var(--ds-accent) 15%, var(--ds-btn-bg)));
       }
 
       .settings-menu {
@@ -201,6 +202,9 @@
         text-transform: var(--ds-label-transform);
         color: var(--ds-text-muted);
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
       }
 
       #controls .section[hidden] {
@@ -223,11 +227,12 @@
         display: grid;
         grid-template-columns: minmax(
             130px,
-            var(--raden-row-label-width)
-          ) minmax(0, 1fr) auto;
+            var(--ds-field-label-w, var(--raden-row-label-width))
+          ) minmax(0, 1fr) minmax(var(--ds-field-action-w, var(--raden-row-action-w)), auto);
         align-items: center;
-        gap: var(--ds-space-2);
+        gap: var(--ds-field-row-gap, var(--ds-space-2));
         min-width: 0;
+        min-height: var(--ds-control-h-sm);
       }
 
       .control-label {
@@ -243,12 +248,60 @@
         grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: var(--ds-space-2);
+        min-height: var(--ds-section-head-h, var(--ds-control-h-sm));
+        cursor: pointer;
+      }
+
+      .section-heading-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .section-icon-btn {
+        appearance: none;
+        color: var(--ds-text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition:
+          color var(--ds-dur-fast) var(--ds-ease-standard),
+          background var(--ds-dur-fast) var(--ds-ease-standard),
+          opacity var(--ds-dur-fast) var(--ds-ease-standard),
+          transform var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .section-icon-btn:hover,
+      .section-icon-btn:focus-visible {
+        color: var(--ds-icon-action-fg-hover);
       }
 
       .section-help-btn {
-        min-width: var(--ds-control-h-sm);
-        min-height: var(--ds-control-h-sm);
-        padding: 0;
+        opacity: 0;
+        transform: translateY(-1px);
+        pointer-events: none;
+        margin-left: 2px;
+      }
+
+      .section-heading h3:hover .section-help-btn,
+      .section-heading h3:focus-within .section-help-btn,
+      .section-help-btn:focus-visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .section-collapse-btn .section-chevron {
+        transition: transform var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .section.is-collapsed .section-collapse-btn .section-chevron {
+        transform: rotate(-90deg);
+      }
+
+      .section.is-collapsed > :not(.section-heading) {
+        display: none !important;
       }
 
       .help-detail-grid {
@@ -271,7 +324,7 @@
       }
 
       .control-label::before {
-        content: "•";
+        content: "�";
         color: var(--ds-warning);
         margin-right: 6px;
         opacity: 0;
@@ -291,7 +344,8 @@
         display: flex;
         gap: 6px;
         justify-content: flex-end;
-        min-width: 0;
+        min-width: var(--ds-field-action-w, var(--raden-row-action-w));
+        width: auto;
       }
 
       .icon-btn {
@@ -299,9 +353,19 @@
         align-items: center;
         justify-content: center;
         min-width: var(--ds-control-h-sm);
-        min-height: var(--ds-control-h-sm);
+        min-height: var(--ds-btn-icon-size-sm);
         padding: 0 8px;
+        margin: 0;
         gap: 6px;
+        box-sizing: border-box;
+      }
+
+      .icon-btn.icon-only {
+        width: var(--ds-btn-icon-size-sm);
+        height: var(--ds-btn-icon-size-sm);
+        min-width: var(--ds-btn-icon-size-sm);
+        min-height: var(--ds-btn-icon-size-sm);
+        padding: 0;
       }
 
       .icon-btn i {
@@ -310,28 +374,29 @@
       }
 
       .control-lock-btn {
-        opacity: 0;
-        transition:
-          opacity var(--ds-dur-fast) var(--ds-ease-standard),
-          transform var(--ds-dur-fast) var(--ds-ease-standard);
-        transform: translateX(2px);
-      }
-
-      .control-row:hover .control-lock-btn,
-      .control-row:focus-within .control-lock-btn,
-      .control-lock-btn.is-locked {
         opacity: 1;
-        transform: translateX(0);
+        transition:
+          color var(--ds-dur-fast) var(--ds-ease-standard),
+          opacity var(--ds-dur-fast) var(--ds-ease-standard),
+          background var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .control-lock-btn.is-faint {
+        color: var(--ds-icon-action-fg);
+        opacity: 0.24;
+        background: transparent;
       }
 
       .control-lock-btn.is-locked {
-        border-color: var(--ds-warning);
-        color: var(--ds-warning);
-        background: color-mix(
-          in oklab,
-          var(--ds-warning) 15%,
-          var(--ds-btn-bg)
-        );
+        color: var(--ds-icon-action-fg-active);
+        opacity: 1;
+        background: transparent;
+      }
+
+      .control-lock-btn.is-preview {
+        color: var(--ds-icon-action-fg-hover);
+        opacity: 1;
+        background: var(--ds-icon-action-hover-bg);
       }
 
       .seed-grid {
@@ -478,26 +543,108 @@
       }
 
       .gallery-tile {
+        position: relative;
         display: grid;
+        grid-template-columns: 1fr;
         gap: 6px;
-        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border: 1px solid
+          color-mix(in oklab, var(--ds-accent-strong) 28%, var(--ds-border));
         border-radius: var(--ds-radius-2);
-        background: color-mix(in oklab, var(--ds-bg-raised) 90%, transparent);
+        background: color-mix(
+          in oklab,
+          var(--ds-bg-raised) 92%,
+          color-mix(in oklab, var(--ds-accent-strong) 48%, black) 8%
+        );
         padding: 6px;
+        transition:
+          border-color var(--ds-dur-fast) var(--ds-ease-standard),
+          box-shadow var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .gallery-tile:focus-visible {
+        border-color: color-mix(
+          in oklab,
+          var(--ds-accent) 55%,
+          var(--ds-border-strong)
+        );
+        box-shadow: 0 0 0 1px
+          color-mix(in oklab, var(--ds-accent) 55%, transparent);
+      }
+
+      .gallery-tile.is-selected {
+        border-color: color-mix(
+          in oklab,
+          var(--ds-accent) 58%,
+          var(--ds-border-strong)
+        );
+        box-shadow: 0 0 0 1px
+          color-mix(in oklab, var(--ds-accent) 45%, transparent);
       }
 
       .gallery-tile img {
         width: 100%;
         aspect-ratio: 1 / 1;
         object-fit: cover;
-        border-radius: 6px;
-        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        display: block;
+        border: 1px solid
+          color-mix(in oklab, var(--ds-accent-strong) 28%, var(--ds-border));
+        background: var(--ds-bg-elevated);
+      }
+
+      .snapshot-meta {
+        min-width: 0;
+      }
+
+      .snapshot-name {
+        color: var(--ds-text);
+        font: 700 0.64rem/1.2 var(--ds-font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .snapshot-sub {
+        color: var(--ds-text-muted);
+        font-size: 0.62rem;
+        margin-top: 2px;
       }
 
       .gallery-actions {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 6px;
+        position: absolute;
+        left: 6px;
+        right: 6px;
+        bottom: 6px;
+        z-index: 2;
+        padding: 6px;
+        border: 1px solid
+          color-mix(in oklab, var(--ds-accent-strong) 24%, var(--ds-border));
+        background: color-mix(in oklab, var(--ds-bg-elevated) 90%, transparent);
+        backdrop-filter: blur(2px);
+        opacity: 0;
+        transform: translateY(3px);
+        pointer-events: none;
+        transition:
+          opacity var(--ds-dur-fast) var(--ds-ease-standard),
+          transform var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .gallery-actions .btn {
+        width: 100%;
+        min-width: 0;
+        padding: 0.35rem 0.45rem;
+      }
+
+      .gallery-tile:hover .gallery-actions,
+      .gallery-tile:focus-within .gallery-actions,
+      .gallery-tile.is-selected .gallery-actions {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
       }
 
       #themeSelect {
@@ -528,11 +675,17 @@
 
       #control-actions {
         display: flex;
+        align-items: center;
         gap: var(--ds-space-2);
         flex-wrap: wrap;
         justify-content: flex-end;
         padding: var(--ds-space-2) var(--ds-space-3);
         border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+      }
+
+      #control-actions #status {
+        margin-right: auto;
+        max-width: min(62%, 320px);
       }
 
       #status {
@@ -584,16 +737,81 @@
         transition: width var(--ds-dur-fast) linear;
       }
 
-      #canvas {
+      #canvasViewport {
+        position: relative;
         width: 100%;
         height: 100%;
-        display: block;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
         border-radius: var(--ds-card-radius);
         border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
         box-shadow: var(--ds-card-shadow);
         background: var(--ds-bg-raised);
-        min-width: 0;
-        min-height: 0;
+        cursor: default;
+      }
+
+      #canvasViewport.is-pannable {
+        cursor: grab;
+      }
+
+      #canvasViewport.is-panning {
+        cursor: grabbing;
+      }
+
+      #canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      #exportCropOverlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      #exportCropFrame {
+        position: absolute;
+        border: 2px solid color-mix(in oklab, var(--ds-focus) 70%, white);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+        pointer-events: auto;
+        cursor: move;
+      }
+
+      .crop-handle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.6);
+        background: color-mix(in oklab, var(--ds-focus) 85%, white);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
+      }
+
+      .crop-handle.tl {
+        left: -6px;
+        top: -6px;
+        cursor: nwse-resize;
+      }
+
+      .crop-handle.tr {
+        right: -6px;
+        top: -6px;
+        cursor: nesw-resize;
+      }
+
+      .crop-handle.bl {
+        left: -6px;
+        bottom: -6px;
+        cursor: nesw-resize;
+      }
+
+      .crop-handle.br {
+        right: -6px;
+        bottom: -6px;
+        cursor: nwse-resize;
       }
 
       #debugPanel {
@@ -622,7 +840,7 @@
           grid-template-rows: minmax(0, 1fr) minmax(240px, 45vh);
         }
 
-        #canvas {
+        #canvasViewport {
           grid-row: 1;
         }
 
@@ -676,7 +894,7 @@
           </div>
           <button
             id="settingsBtn"
-            class="panel-settings-btn icon-btn"
+            class="panel-settings-btn icon-btn icon-only ds-icon-action"
             type="button"
             aria-expanded="false"
             aria-controls="settingsMenu"
@@ -776,7 +994,7 @@
           </div>
           <!-- 1. SEED & RESOLUTION -->
           <div class="section" data-mode="all">
-            <h3>Seed + Resolution</h3>
+            <h3>Seed + Render Size</h3>
             <div
               class="control-row"
               data-mode="motherofpearl, topography, opalvein, labradorite, marbleink, agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm, risoimage, pixelretro"
@@ -789,13 +1007,14 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Preset:</div>
+              <div class="control-label">Render Size Preset:</div>
               <div class="control-input">
                 <select id="resolutionPreset">
                   <option value="">Auto (Window Size)</option>
                   <option value="1920x1080">HD (1920x1080)</option>
                   <option value="1080x1080">Square (1080x1080)</option>
                   <option value="3840x2160">4K (3840x2160)</option>
+                  <option value="4096x4096">4K Square (4096x4096)</option>
                   <option value="custom">Custom</option>
                 </select>
               </div>
@@ -803,13 +1022,14 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Dimensions:</div>
+              <div class="control-label">Render Size (px, max 4096):</div>
               <div class="control-input">
                 <div class="res-inputs">
                   <input
                     type="number"
                     id="renderWidth"
                     min="1"
+                    max="4096"
                     placeholder="Width"
                   />
                   <span>x</span>
@@ -817,7 +1037,62 @@
                     type="number"
                     id="renderHeight"
                     min="1"
+                    max="4096"
                     placeholder="Height"
+                  />
+                </div>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Canvas View Zoom:</div>
+              <div class="control-input">
+                <input
+                  type="range"
+                  id="canvasViewZoom"
+                  min="0.25"
+                  max="2"
+                  step="0.01"
+                  value="1"
+                  data-live="true"
+                />
+              </div>
+              <div class="control-icons">
+                <button
+                  id="resetCanvasViewBtn"
+                  class="ds-btn ds-btn-sm"
+                  type="button"
+                  title="Reset canvas view"
+                >
+                  <span>Reset View</span>
+                </button>
+              </div>
+            </div>
+            <div class="control-row">
+              <div class="control-label">Canvas Pan:</div>
+              <div class="control-input">
+                <div class="res-inputs">
+                  <input
+                    type="number"
+                    id="canvasPanX"
+                    min="-2000"
+                    max="2000"
+                    step="1"
+                    value="0"
+                    placeholder="X"
+                    data-live="true"
+                  />
+                  <span>/</span>
+                  <input
+                    type="number"
+                    id="canvasPanY"
+                    min="-2000"
+                    max="2000"
+                    step="1"
+                    value="0"
+                    placeholder="Y"
+                    data-live="true"
                   />
                 </div>
               </div>
@@ -2090,7 +2365,7 @@
                   type="button"
                   title="Capture current frame as A"
                 >
-                  <i class="iconoir-camera"></i>
+                  <i class="iconoir-screenshot"></i>
                   <span>Compare Capture</span>
                 </button>
               </div>
@@ -2163,10 +2438,11 @@
               <div class="control-icons"></div>
             </div>
             <div class="control-row">
-              <div class="control-label">Crop:</div>
+              <div class="control-label">Crop Mode:</div>
               <div class="control-input">
                 <select id="exportCropMode">
                   <option value="full">Full Canvas</option>
+                  <option value="custom">Custom (Drag Handles)</option>
                   <option value="square">Square</option>
                   <option value="portrait">Portrait (4:5)</option>
                   <option value="landscape">Landscape (16:9)</option>
@@ -2175,20 +2451,14 @@
               <div class="control-icons"></div>
             </div>
             <div class="control-row">
-              <div class="control-label">Size Preset:</div>
+              <div class="control-label">Resize Export:</div>
               <div class="control-input">
-                <select id="exportSizePreset">
-                  <option value="current">Current</option>
-                  <option value="1080-square">1080 Square</option>
-                  <option value="1920x1080">1920x1080</option>
-                  <option value="2160-square">2160 Square</option>
-                  <option value="custom">Custom</option>
-                </select>
+                <input type="checkbox" id="exportResizeEnabled" />
               </div>
               <div class="control-icons"></div>
             </div>
             <div class="control-row">
-              <div class="control-label">Output Size:</div>
+              <div class="control-label">Resize To (px):</div>
               <div class="control-input">
                 <div class="res-inputs">
                   <input type="number" id="exportWidth" min="1" value="1920" />
@@ -2225,35 +2495,25 @@
           </div>
         </div>
       </div>
-      <div id="control-footer">
-        <div id="status" data-state="idle">Idle</div>
-        <button
-          id="generateBtn"
-          class="ds-btn ds-btn-primary"
-          onclick="startGeneration()"
-          style="display: none"
-        >
-          Generate
-        </button>
-      </div>
       <div id="control-actions">
+        <div id="status" data-state="idle">Idle</div>
         <button
           id="randomizeBtn"
           class="ds-btn icon-btn"
           type="button"
           title="Randomize settings"
         >
-          <i class="iconoir-refresh"></i>
+          <i class="iconoir-dice-three"></i>
           <span>Randomize</span>
         </button>
         <button
           id="saveSnapshotBtn"
           class="ds-btn ds-btn-primary icon-btn"
           type="button"
-          title="Save snapshot"
+          title="Snapshot"
         >
-          <i class="iconoir-camera"></i>
-          <span>Save Snapshot</span>
+          <i class="iconoir-media-image-plus"></i>
+          <span>Snapshot</span>
         </button>
       </div>
     </div>
@@ -2281,35 +2541,51 @@
     </dialog>
 
     <div id="progress"></div>
-    <canvas id="canvas"></canvas>
+    <div id="canvasViewport">
+      <canvas id="canvas"></canvas>
+      <div id="exportCropOverlay" hidden>
+        <div id="exportCropFrame">
+          <span class="crop-handle tl" data-handle="tl"></span>
+          <span class="crop-handle tr" data-handle="tr"></span>
+          <span class="crop-handle bl" data-handle="bl"></span>
+          <span class="crop-handle br" data-handle="br"></span>
+        </div>
+      </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
     <script src="./src/shared/math_color_palette.js"></script>
+    <script src="./src/state/configBuilder.js"></script>
+    <script src="./src/state/persistence.js"></script>
+    <script src="./src/core/status.js"></script>
+    <script src="./src/core/scheduler.js"></script>
     <script>
       let debugVisible = false;
+      let statusController = null;
+      let schedulerController = null;
 
       function showDebugInfo(config, extras = {}) {
+        if (statusController?.showDebugInfo) {
+          statusController.showDebugInfo(config, extras);
+          return;
+        }
         const panel = document.getElementById("debugPanel");
         if (!panel) return;
-
         if (!debugVisible) {
           panel.style.display = "none";
           return;
         }
-
-        let info = "Debug Info\n";
-        for (const [key, val] of Object.entries(config)) {
-          info += `${key}: ${val}\n`;
-        }
-
-        for (const [key, val] of Object.entries(extras)) {
-          info += `${key}: ${val}\n`;
-        }
-
-        panel.innerText = info;
+        const lines = ["Debug Info"];
+        Object.entries(config || {}).forEach(([key, val]) => lines.push(`${key}: ${val}`));
+        Object.entries(extras || {}).forEach(([key, val]) => lines.push(`${key}: ${val}`));
+        panel.innerText = lines.join("\n");
         panel.style.display = "block";
       }
 
       function toggleDebugPanel(forceState) {
+        if (statusController?.toggleDebugPanel) {
+          debugVisible = statusController.toggleDebugPanel(forceState);
+          return;
+        }
         if (typeof forceState === "boolean") {
           debugVisible = forceState;
         } else {
@@ -2339,6 +2615,9 @@
       }
 
       function getInput(id, asInteger = false) {
+        if (window.RadenState?.getInputValue) {
+          return window.RadenState.getInputValue(id, asInteger);
+        }
         const val = document.getElementById(id).value;
         return asInteger ? parseInt(val, 10) : parseFloat(val);
       }
@@ -2362,6 +2641,9 @@
       }
 
       function resolveSeed() {
+        if (window.RadenState?.resolveSeedValue) {
+          return window.RadenState.resolveSeedValue("seed");
+        }
         const seedInput = document.getElementById("seed");
         let seed = parseInt(seedInput.value, 10);
         if (!Number.isFinite(seed)) {
@@ -2440,13 +2722,179 @@
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       const offscreenCanvas = document.createElement("canvas");
       const offscreenCtx = offscreenCanvas.getContext("2d");
+      const MAX_RENDER_DIMENSION = 4096;
+      const MAX_RENDER_PIXELS = MAX_RENDER_DIMENSION * MAX_RENDER_DIMENSION;
 
       const progress = document.getElementById("progress");
       const status = document.getElementById("status");
 
       function setStatus(state, message) {
+        if (statusController?.setStatus) {
+          statusController.setStatus(state, message);
+          return;
+        }
         status.dataset.state = state;
         status.textContent = message;
+      }
+
+      function setProgressPercent(percent) {
+        if (statusController?.setProgressPercent) {
+          statusController.setProgressPercent(percent);
+          return;
+        }
+        const value = Number(percent);
+        const clamped = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+        progress.style.width = `${clamped}%`;
+      }
+
+      function normalizeRenderSize(width, height) {
+        let w = Math.max(1, Math.min(MAX_RENDER_DIMENSION, Math.floor(width)));
+        let h = Math.max(1, Math.min(MAX_RENDER_DIMENSION, Math.floor(height)));
+        const pixels = w * h;
+        if (pixels > MAX_RENDER_PIXELS) {
+          const scale = Math.sqrt(MAX_RENDER_PIXELS / pixels);
+          w = Math.max(1, Math.floor(w * scale));
+          h = Math.max(1, Math.floor(h * scale));
+        }
+        return { width: w, height: h };
+      }
+
+      function getViewWindowState(destWidth = canvas.width, destHeight = canvas.height) {
+        const zoomInput = document.getElementById("canvasViewZoom");
+        const panXInput = document.getElementById("canvasPanX");
+        const panYInput = document.getElementById("canvasPanY");
+        const viewRect = canvas.getBoundingClientRect();
+        const viewScaleX = destWidth / Math.max(1, viewRect.width || destWidth);
+        const viewScaleY = destHeight / Math.max(1, viewRect.height || destHeight);
+        const zoom = Math.max(
+          0.25,
+          Math.min(2, parseFloat(zoomInput?.value || "1") || 1),
+        );
+        const desiredPanXDisplay = parseInt(panXInput?.value || "0", 10) || 0;
+        const desiredPanYDisplay = parseInt(panYInput?.value || "0", 10) || 0;
+        const desiredPanX = desiredPanXDisplay * viewScaleX;
+        const desiredPanY = desiredPanYDisplay * viewScaleY;
+        const drawW = destWidth * zoom;
+        const drawH = destHeight * zoom;
+        const maxPanX = Math.max(0, (drawW - destWidth) * 0.5);
+        const maxPanY = Math.max(0, (drawH - destHeight) * 0.5);
+        const panX = Math.max(-maxPanX, Math.min(maxPanX, desiredPanX));
+        const panY = Math.max(-maxPanY, Math.min(maxPanY, desiredPanY));
+        const panXDisplay = panX / viewScaleX;
+        const panYDisplay = panY / viewScaleY;
+        if (panXInput && Math.round(panXDisplay) !== desiredPanXDisplay) {
+          panXInput.value = String(Math.round(panXDisplay));
+        }
+        if (panYInput && Math.round(panYDisplay) !== desiredPanYDisplay) {
+          panYInput.value = String(Math.round(panYDisplay));
+        }
+        const dx = (destWidth - drawW) * 0.5 + panX;
+        const dy = (destHeight - drawH) * 0.5 + panY;
+        return { zoom, panX, panY, drawW, drawH, dx, dy };
+      }
+
+      function drawSourceInView(source) {
+        if (!source || !source.width || !source.height) return;
+        const state = getViewWindowState(canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(source, state.dx, state.dy, state.drawW, state.drawH);
+      }
+
+      function ensureViewportCanvasSize() {
+        const viewport = document.getElementById("canvasViewport");
+        if (!viewport) return;
+        const vw = Math.max(1, Math.floor(viewport.clientWidth || 1));
+        const vh = Math.max(1, Math.floor(viewport.clientHeight || 1));
+        if (canvas.width !== vw || canvas.height !== vh) {
+          canvas.width = vw;
+          canvas.height = vh;
+        }
+      }
+
+      function applyCanvasViewTransform() {
+        applyCompareView();
+      }
+
+      function resetCanvasView() {
+        const zoomInput = document.getElementById("canvasViewZoom");
+        const panXInput = document.getElementById("canvasPanX");
+        const panYInput = document.getElementById("canvasPanY");
+        if (zoomInput) zoomInput.value = "1";
+        if (panXInput) panXInput.value = "0";
+        if (panYInput) panYInput.value = "0";
+        applyCanvasViewTransform();
+      }
+
+      function updateCanvasViewportCursor() {
+        const viewport = document.getElementById("canvasViewport");
+        const zoom = parseFloat(document.getElementById("canvasViewZoom")?.value || "1") || 1;
+        if (!viewport) return;
+        viewport.classList.toggle("is-pannable", zoom > 1.01);
+        viewport.classList.toggle("is-panning", !!viewportPanState);
+      }
+
+      function initCanvasViewportInteractions() {
+        const viewport = document.getElementById("canvasViewport");
+        const zoomInput = document.getElementById("canvasViewZoom");
+        const panXInput = document.getElementById("canvasPanX");
+        const panYInput = document.getElementById("canvasPanY");
+        if (!viewport || !zoomInput || !panXInput || !panYInput) return;
+
+        viewport.addEventListener(
+          "wheel",
+          (e) => {
+            if (e.ctrlKey || e.metaKey) return;
+            e.preventDefault();
+            const current = parseFloat(zoomInput.value || "1") || 1;
+            const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
+            const next = Math.max(0.25, Math.min(2, current * factor));
+            if (Math.abs(next - current) < 0.0001) return;
+            zoomInput.value = next.toFixed(2);
+            applyCanvasViewTransform();
+            updateExportCropOverlay();
+            updateCanvasViewportCursor();
+          },
+          { passive: false },
+        );
+
+        viewport.addEventListener("pointerdown", (e) => {
+          if (e.button !== 0) return;
+          if (e.target?.closest?.("#exportCropFrame")) return;
+          const zoom = parseFloat(zoomInput.value || "1") || 1;
+          if (zoom <= 1.01) return;
+          viewportPanState = {
+            pointerId: e.pointerId,
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            startPanX: parseInt(panXInput.value || "0", 10) || 0,
+            startPanY: parseInt(panYInput.value || "0", 10) || 0,
+          };
+          viewport.setPointerCapture(e.pointerId);
+          updateCanvasViewportCursor();
+          e.preventDefault();
+        });
+
+        viewport.addEventListener("pointermove", (e) => {
+          if (!viewportPanState || viewportPanState.pointerId !== e.pointerId) return;
+          const dx = e.clientX - viewportPanState.startClientX;
+          const dy = e.clientY - viewportPanState.startClientY;
+          panXInput.value = String(Math.round(viewportPanState.startPanX + dx));
+          panYInput.value = String(Math.round(viewportPanState.startPanY + dy));
+          applyCanvasViewTransform();
+          updateExportCropOverlay();
+        });
+
+        const stopPan = (e) => {
+          if (!viewportPanState) return;
+          if (typeof e?.pointerId === "number" && viewportPanState.pointerId !== e.pointerId) return;
+          viewportPanState = null;
+          updateCanvasViewportCursor();
+        };
+        viewport.addEventListener("pointerup", stopPan);
+        viewport.addEventListener("pointercancel", stopPan);
+        viewport.addEventListener("lostpointercapture", stopPan);
+
+        updateCanvasViewportCursor();
       }
 
       let simplex;
@@ -2456,33 +2904,68 @@
       let renderRunId = 0;
       let previewDebounceId = null;
       let finalDebounceId = null;
+      const HEAVY_CONTROL_IDS = [
+        "renderWidth",
+        "renderHeight",
+        "resolutionPreset",
+        "layers",
+        "scale",
+        "topoErosion",
+        "topoBandCount",
+        "topoNoiseType",
+        "topoPreset",
+      ];
+      const UI_ONLY_CONTROL_IDS = [
+        "materialPreset",
+        "seedExploreCount",
+        "compareToggle",
+        "imageUpload",
+        "debugPanelToggle",
+        "themeSelect",
+        "canvasViewZoom",
+        "canvasPanX",
+        "canvasPanY",
+      ];
+      statusController = window.RadenCoreStatus?.createStatusController
+        ? window.RadenCoreStatus.createStatusController({
+            statusEl: status,
+            progressEl: progress,
+            debugPanelEl: document.getElementById("debugPanel"),
+            debugToggleEl: document.getElementById("debugPanelToggle"),
+            debugVisible,
+          })
+        : null;
+      schedulerController = window.RadenCoreScheduler?.createScheduler
+        ? window.RadenCoreScheduler.createScheduler({
+            heavyControlIds: HEAVY_CONTROL_IDS,
+            uiOnlyControlIds: UI_ONLY_CONTROL_IDS,
+            getPerformanceProfile: () => getPerformanceProfile(),
+            startGeneration: (...args) => startGeneration(...args),
+          })
+        : null;
+      if (statusController?.isDebugVisible) {
+        debugVisible = statusController.isDebugVisible();
+      }
 
       function isHeavyControl(el) {
-        return [
-          "renderWidth",
-          "renderHeight",
-          "resolutionPreset",
-          "layers",
-          "scale",
-          "topoErosion",
-          "topoBandCount",
-          "topoNoiseType",
-          "topoPreset",
-        ].includes(el.id);
+        if (schedulerController?.isHeavyControl) {
+          return schedulerController.isHeavyControl(el);
+        }
+        return HEAVY_CONTROL_IDS.includes(el.id);
       }
 
       function isUiOnlyControl(el) {
-        return [
-          "materialPreset",
-          "seedExploreCount",
-          "compareToggle",
-          "imageUpload",
-          "debugPanelToggle",
-          "themeSelect",
-        ].includes(el.id);
+        if (schedulerController?.isUiOnlyControl) {
+          return schedulerController.isUiOnlyControl(el);
+        }
+        return UI_ONLY_CONTROL_IDS.includes(el.id);
       }
 
       function schedulePreviewRender(triggerEl) {
+        if (schedulerController?.schedulePreviewRender) {
+          schedulerController.schedulePreviewRender(triggerEl);
+          return;
+        }
         if (!triggerEl || isHeavyControl(triggerEl)) return;
         const perf = getPerformanceProfile();
         if (finalDebounceId) {
@@ -2498,6 +2981,10 @@
       }
 
       function scheduleFinalRender() {
+        if (schedulerController?.scheduleFinalRender) {
+          schedulerController.scheduleFinalRender();
+          return;
+        }
         const perf = getPerformanceProfile();
         if (previewDebounceId) {
           clearTimeout(previewDebounceId);
@@ -2815,9 +3302,13 @@
 
           if (preset && preset !== "custom") {
             const [w, h] = preset.split("x").map(Number);
-            if (parseInt(wInput.value) !== w || parseInt(hInput.value) !== h) {
-              wInput.value = w;
-              hInput.value = h;
+            const normalized = normalizeRenderSize(w, h);
+            if (
+              parseInt(wInput.value, 10) !== normalized.width ||
+              parseInt(hInput.value, 10) !== normalized.height
+            ) {
+              wInput.value = String(normalized.width);
+              hInput.value = String(normalized.height);
               markControlPending(wInput);
               markControlPending(hInput);
             }
@@ -2830,6 +3321,23 @@
           updatePendingStatus();
           scheduleFinalRender();
         });
+
+      function normalizeRenderSizeInputs() {
+        const wInput = document.getElementById("renderWidth");
+        const hInput = document.getElementById("renderHeight");
+        if (!wInput || !hInput) return;
+        const w = parseInt(wInput.value, 10);
+        const h = parseInt(hInput.value, 10);
+        if (!Number.isFinite(w) || !Number.isFinite(h)) return;
+        const normalized = normalizeRenderSize(w, h);
+        if (normalized.width !== w || normalized.height !== h) {
+          wInput.value = String(normalized.width);
+          hInput.value = String(normalized.height);
+          markControlPending(wInput);
+          markControlPending(hInput);
+          updatePendingStatus();
+        }
+      }
 
       function applyGrainOverlay(ctx, width, height) {
         const grainImage = ctx.getImageData(0, 0, width, height);
@@ -2935,28 +3443,50 @@
         }
       }
       function getRenderConfig(renderOptions = {}) {
+        if (window.RadenState?.buildRenderConfig) {
+          const localGetInput = (id, asInteger = false) => {
+            const val = document.getElementById(id).value;
+            return asInteger ? parseInt(val, 10) : parseFloat(val);
+          };
+          const localResolveSeed = () => {
+            const seedInput = document.getElementById("seed");
+            let seed = parseInt(seedInput.value, 10);
+            if (!Number.isFinite(seed)) {
+              seed = Math.floor(Math.random() * 2147483647);
+              seedInput.value = String(seed);
+            }
+            return seed;
+          };
+          return window.RadenState.buildRenderConfig(renderOptions, {
+            canvas,
+            getPreviewScaleForMode,
+            clamp01,
+            getInput: localGetInput,
+            resolveSeed: localResolveSeed,
+          });
+        }
         const seed = resolveSeed();
-        const fallbackWidth = Math.max(
-          1,
-          Math.floor(canvas.clientWidth || window.innerWidth - 400),
-        );
-        const fallbackHeight = Math.max(
-          1,
-          Math.floor(canvas.clientHeight || window.innerHeight),
-        );
+        const viewport = canvas?.parentElement;
+        const viewportWidth =
+          (viewport && viewport.clientWidth) || canvas.clientWidth || window.innerWidth - 400;
+        const viewportHeight =
+          (viewport && viewport.clientHeight) || canvas.clientHeight || window.innerHeight;
+        const fallbackWidth = Math.max(1, Math.floor(viewportWidth));
+        const fallbackHeight = Math.max(1, Math.floor(viewportHeight));
         const mode = document.getElementById("modeSelector").value;
         const requestedWidth = getInput("renderWidth", true) || fallbackWidth;
         const requestedHeight =
           getInput("renderHeight", true) || fallbackHeight;
+        const normalizedSize = normalizeRenderSize(requestedWidth, requestedHeight);
         const previewScale = getPreviewScaleForMode(mode);
         const scaleFactor = renderOptions.preview ? previewScale : 1;
         const targetWidth = Math.max(
           1,
-          Math.floor(requestedWidth * scaleFactor),
+          Math.floor(normalizedSize.width * scaleFactor),
         );
         const targetHeight = Math.max(
           1,
-          Math.floor(requestedHeight * scaleFactor),
+          Math.floor(normalizedSize.height * scaleFactor),
         );
         const risoLayerOverrides = Array.from({ length: 6 }, (_, index) => {
           const layer = index + 1;
@@ -2987,8 +3517,8 @@
         return {
           width: targetWidth,
           height: targetHeight,
-          outputWidth: requestedWidth,
-          outputHeight: requestedHeight,
+          outputWidth: normalizedSize.width,
+          outputHeight: normalizedSize.height,
           preview: !!renderOptions.preview,
           seed,
           layers: getInput("layers", true),
@@ -3340,7 +3870,7 @@
           setStatus("complete", completeLabel);
           setTimeout(() => {
             setStatus("idle", "Idle");
-            generateBtn.disabled = false;
+            if (generateBtn) generateBtn.disabled = false;
           }, 420);
         } else {
           setStatus("idle", "Preview ready");
@@ -3708,8 +4238,8 @@
         }
         const config = getRenderConfig(renderOptions);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
-        generateBtn.disabled = !config.preview;
-        progress.style.width = "35%";
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(35);
         if (mode === "risoimage") {
           renderRisoImage(config);
           const styleKey = config.risoRenderStyle || "original";
@@ -3736,7 +4266,7 @@
           renderPixelRetro(config);
           finalizeImageModeRender(config, "Pixel retro rendered");
         }
-        progress.style.width = "100%";
+        setProgressPercent(100);
       }
 
       function generateMotherOfPearl(force = false, renderOptions = {}) {
@@ -3818,9 +4348,9 @@
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("motherofpearl", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
-        generateBtn.disabled = !config.preview;
+        if (generateBtn) generateBtn.disabled = !config.preview;
 
-        progress.style.width = "0%";
+        setProgressPercent(0);
 
         function renderChunk() {
           if (runId !== renderRunId) {
@@ -3977,7 +4507,7 @@
               writePixel(data, i, r, g, b, boostR, boostG, boostB);
             }
           }
-          progress.style.width = `${(y / config.height) * 100}%`;
+          setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
             animationId = requestAnimationFrame(renderChunk);
           } else {
@@ -4027,7 +4557,7 @@
               setStatus("complete", "Complete");
               setTimeout(() => {
                 setStatus("idle", "Idle");
-                generateBtn.disabled = false;
+                if (generateBtn) generateBtn.disabled = false;
               }, 500);
             } else {
               setStatus("idle", "Preview ready");
@@ -4085,8 +4615,8 @@
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("opalvein", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
-        generateBtn.disabled = !config.preview;
-        progress.style.width = "0%";
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
 
         function renderChunk() {
           if (runId !== renderRunId) {
@@ -4149,7 +4679,7 @@
             }
           }
 
-          progress.style.width = `${(y / config.height) * 100}%`;
+          setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
             animationId = requestAnimationFrame(renderChunk);
             return;
@@ -4187,7 +4717,7 @@
             setStatus("complete", "Opal rendered");
             setTimeout(() => {
               setStatus("idle", "Idle");
-              generateBtn.disabled = false;
+              if (generateBtn) generateBtn.disabled = false;
             }, 450);
           } else {
             setStatus("idle", "Preview ready");
@@ -4236,8 +4766,8 @@
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("labradorite", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
-        generateBtn.disabled = !config.preview;
-        progress.style.width = "0%";
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
 
         function renderChunk() {
           if (runId !== renderRunId) {
@@ -4313,7 +4843,7 @@
             }
           }
 
-          progress.style.width = `${(y / config.height) * 100}%`;
+          setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
             animationId = requestAnimationFrame(renderChunk);
             return;
@@ -4351,7 +4881,7 @@
             setStatus("complete", "Labradorite rendered");
             setTimeout(() => {
               setStatus("idle", "Idle");
-              generateBtn.disabled = false;
+              if (generateBtn) generateBtn.disabled = false;
             }, 450);
           } else {
             setStatus("idle", "Preview ready");
@@ -4398,8 +4928,8 @@
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("marbleink", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
-        generateBtn.disabled = !config.preview;
-        progress.style.width = "0%";
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
 
         function renderChunk() {
           if (runId !== renderRunId) {
@@ -4469,7 +4999,7 @@
             }
           }
 
-          progress.style.width = `${(y / config.height) * 100}%`;
+          setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
             animationId = requestAnimationFrame(renderChunk);
             return;
@@ -4507,7 +5037,7 @@
             setStatus("complete", "Marble rendered");
             setTimeout(() => {
               setStatus("idle", "Idle");
-              generateBtn.disabled = false;
+              if (generateBtn) generateBtn.disabled = false;
             }, 450);
           } else {
             setStatus("idle", "Preview ready");
@@ -4524,7 +5054,7 @@
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
-        generateBtn.disabled = !renderOptions.preview;
+        if (generateBtn) generateBtn.disabled = !renderOptions.preview;
 
         const width = canvas.width;
         const height = canvas.height;
@@ -4571,7 +5101,7 @@
           () => {
             if (!renderOptions.preview) {
               setStatus("complete", "Riso rendered");
-              generateBtn.disabled = false;
+              if (generateBtn) generateBtn.disabled = false;
               setTimeout(() => setStatus("idle", "Idle"), 500);
             } else {
               setStatus("idle", "Preview ready");
@@ -4585,7 +5115,7 @@
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
-        generateBtn.disabled = !renderOptions.preview;
+        if (generateBtn) generateBtn.disabled = !renderOptions.preview;
 
         const config = getRenderConfig(renderOptions);
         const bandCount = getInput("topoBandCount", true);
@@ -4713,7 +5243,7 @@
           );
           setTimeout(() => {
             setStatus("idle", "Idle");
-            generateBtn.disabled = false;
+            if (generateBtn) generateBtn.disabled = false;
           }, 800);
         } else {
           setStatus("idle", "Preview ready");
@@ -4783,6 +5313,7 @@
       const GALLERY_STORAGE_KEY = "raden-gallery-v1";
       const LOCK_STORAGE_KEY = "raden-random-locks-v1";
       const PERFORMANCE_PROFILE_STORAGE_KEY = "raden-performance-profile-v1";
+      const THEME_STORAGE_KEY = "raden-theme";
       const PERF_PROFILES = {
         fast: {
           previewScaleGeneral: 0.36,
@@ -4919,6 +5450,26 @@
         "risoThreshold",
       ];
       const CONTROL_INFO = {
+        resolutionPreset:
+          "Sets the render canvas size. Auto uses your window size. Custom lets you enter pixel dimensions.",
+        renderWidth:
+          "Render width in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
+        renderHeight:
+          "Render height in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
+        canvasViewZoom:
+          "Display-only zoom for previewing detail. Does not change generation or export resolution.",
+        canvasPanX:
+          "Display-only horizontal pan for the canvas view.",
+        canvasPanY:
+          "Display-only vertical pan for the canvas view.",
+        exportCropMode:
+          "Choose the export crop frame. Custom enables draggable/resizable crop handles over the canvas view.",
+        exportResizeEnabled:
+          "When enabled, export is resized to the custom width/height below. When disabled, export keeps the crop size.",
+        exportWidth:
+          "Target export width in pixels when Resize Export is enabled.",
+        exportHeight:
+          "Target export height in pixels when Resize Export is enabled.",
         scale:
           "Base pattern scale. Lower values create larger formations; higher values create tighter detail.",
         layers:
@@ -5027,7 +5578,12 @@
       };
       let lockedControlIds = new Set();
       let galleryItems = [];
+      let selectedGalleryItemId = null;
       let compareImage = null;
+      let exportCropRect = null;
+      let exportCropModeActive = "full";
+      let cropDragState = null;
+      let viewportPanState = null;
       const displayBaseCanvas = document.createElement("canvas");
       const displayBaseCtx = displayBaseCanvas.getContext("2d");
       let seedVariants = [];
@@ -5051,11 +5607,20 @@
       };
 
       function getPerformanceProfileKey() {
-        const selected =
-          document.getElementById("performanceProfile")?.value ||
+        const persistence = window.RadenPersistence;
+        const selected = document.getElementById("performanceProfile")?.value;
+        if (persistence && typeof persistence.getPerformanceProfileKey === "function") {
+          return persistence.getPerformanceProfileKey({
+            profiles: PERF_PROFILES,
+            selected,
+            storageKey: PERFORMANCE_PROFILE_STORAGE_KEY,
+          });
+        }
+        const saved =
+          selected ||
           localStorage.getItem(PERFORMANCE_PROFILE_STORAGE_KEY) ||
           "balanced";
-        return PERF_PROFILES[selected] ? selected : "balanced";
+        return PERF_PROFILES[saved] ? saved : "balanced";
       }
 
       function getPerformanceProfile() {
@@ -5063,10 +5628,16 @@
       }
 
       function savePerformanceProfile(key) {
-        localStorage.setItem(
-          PERFORMANCE_PROFILE_STORAGE_KEY,
-          PERF_PROFILES[key] ? key : "balanced",
-        );
+        const persistence = window.RadenPersistence;
+        if (persistence && typeof persistence.savePerformanceProfile === "function") {
+          persistence.savePerformanceProfile({
+            key,
+            profiles: PERF_PROFILES,
+            storageKey: PERFORMANCE_PROFILE_STORAGE_KEY,
+          });
+          return;
+        }
+        localStorage.setItem(PERFORMANCE_PROFILE_STORAGE_KEY, PERF_PROFILES[key] ? key : "balanced");
       }
 
       function getPreviewScaleForMode(mode) {
@@ -5092,17 +5663,31 @@
       }
 
       function saveLocks() {
+        const persistence = window.RadenPersistence;
+        if (persistence && typeof persistence.saveLocks === "function") {
+          persistence.saveLocks({
+            storageKey: LOCK_STORAGE_KEY,
+            lockedControlIds,
+          });
+          return;
+        }
         try {
-          localStorage.setItem(
-            LOCK_STORAGE_KEY,
-            JSON.stringify(Array.from(lockedControlIds)),
-          );
+          localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(Array.from(lockedControlIds)));
         } catch (err) {
           console.warn("Unable to persist locks", err);
         }
       }
 
       function loadLocks() {
+        const persistence = window.RadenPersistence;
+        if (persistence && typeof persistence.loadLocks === "function") {
+          lockedControlIds = new Set(
+            persistence.loadLocks({
+              storageKey: LOCK_STORAGE_KEY,
+            }),
+          );
+          return;
+        }
         try {
           const raw = localStorage.getItem(LOCK_STORAGE_KEY);
           const parsed = raw ? JSON.parse(raw) : [];
@@ -5123,12 +5708,21 @@
           `.control-lock-btn[data-lock-for="${id}"]`,
         );
         if (btn) {
-          btn.classList.toggle("is-locked", locked);
-          btn.setAttribute("aria-pressed", locked ? "true" : "false");
-          btn.title = locked
-            ? "Unlock randomize for this control"
-            : "Lock this control from randomize";
+          updateControlLockButton(btn, locked, false);
         }
+      }
+
+      function updateControlLockButton(btn, locked, preview = false) {
+        if (!btn) return;
+        btn.classList.toggle("is-locked", !!locked);
+        btn.classList.toggle("is-preview", !!preview);
+        btn.classList.toggle("is-faint", !locked && !preview);
+        btn.setAttribute("aria-pressed", locked ? "true" : "false");
+        btn.title = locked
+          ? "Unlock randomize for this control"
+          : "Lock this control from randomize";
+        const icon = locked && preview ? "iconoir-lock-slash" : "iconoir-lock";
+        btn.innerHTML = `<i class="${icon}"></i>`;
       }
 
       function buildFallbackHelpText(labelText) {
@@ -5284,32 +5878,136 @@
         dialog.showModal();
       }
 
+      const SECTION_COLLAPSE_STORAGE_KEY = "raden.sectionCollapse.v1";
+
+      function loadCollapsedSections() {
+        try {
+          const raw = localStorage.getItem(SECTION_COLLAPSE_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveCollapsedSections(map) {
+        try {
+          localStorage.setItem(SECTION_COLLAPSE_STORAGE_KEY, JSON.stringify(map));
+        } catch {
+          // ignore persistence failures in restricted environments
+        }
+      }
+
+      function getSectionCollapseId(section, title) {
+        if (section.dataset.sectionId) return section.dataset.sectionId;
+        const slug = (title || "section")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 64);
+        section.dataset.sectionId = slug || "section";
+        return section.dataset.sectionId;
+      }
+
+      function setSectionCollapsed(section, collapseBtn, collapsed) {
+        section.classList.toggle("is-collapsed", !!collapsed);
+        collapseBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        collapseBtn.title = collapsed ? "Expand section" : "Collapse section";
+      }
+
       function enhanceSectionHelp() {
+        const collapsedSections = loadCollapsedSections();
         document.querySelectorAll("#controls .section").forEach((section) => {
           const h3 = section.querySelector("h3");
           if (!h3) return;
-          if (
-            h3.parentElement &&
-            h3.parentElement.classList.contains("section-heading")
-          )
-            return;
 
-          const headingWrap = document.createElement("div");
-          headingWrap.className = "section-heading";
-          const parent = h3.parentElement;
-          parent.insertBefore(headingWrap, h3);
-          headingWrap.appendChild(h3);
+          let headingWrap =
+            h3.parentElement && h3.parentElement.classList.contains("section-heading")
+              ? h3.parentElement
+              : null;
 
-          const helpBtn = document.createElement("button");
-          helpBtn.type = "button";
-          helpBtn.className = "ds-btn ds-btn-sm section-help-btn";
+          if (!headingWrap) {
+            headingWrap = document.createElement("div");
+            headingWrap.className = "section-heading";
+            const parent = h3.parentElement;
+            parent.insertBefore(headingWrap, h3);
+            headingWrap.appendChild(h3);
+          }
+
+          let actionsWrap = headingWrap.querySelector(".section-heading-actions");
+          if (!actionsWrap) {
+            actionsWrap = document.createElement("div");
+            actionsWrap.className = "section-heading-actions";
+            headingWrap.appendChild(actionsWrap);
+          }
+
+          let helpBtn = h3.querySelector(".section-help-btn");
+          if (!helpBtn) {
+            helpBtn = document.createElement("button");
+            helpBtn.type = "button";
+            helpBtn.className = "section-icon-btn section-help-btn ds-icon-action";
+            helpBtn.innerHTML = '<i class="iconoir-info-circle"></i>';
+            h3.appendChild(helpBtn);
+          }
           helpBtn.title = `Open help for ${h3.textContent}`;
           helpBtn.setAttribute("aria-label", `Open help for ${h3.textContent}`);
-          helpBtn.innerHTML = '<i class="iconoir-info-circle"></i>';
-          helpBtn.addEventListener("click", () => {
-            openSectionHelpModal(section, h3.textContent || "Section");
-          });
-          headingWrap.appendChild(helpBtn);
+          if (!helpBtn.dataset.bound) {
+            helpBtn.addEventListener("click", () => {
+              openSectionHelpModal(section, h3.textContent || "Section");
+            });
+            helpBtn.dataset.bound = "1";
+          }
+
+          let collapseBtn = actionsWrap.querySelector(".section-collapse-btn");
+          if (!collapseBtn) {
+            collapseBtn = document.createElement("button");
+            collapseBtn.type = "button";
+            collapseBtn.className =
+              "section-icon-btn section-collapse-btn ds-icon-action";
+            collapseBtn.innerHTML =
+              '<i class="iconoir-nav-arrow-down section-chevron"></i>';
+            actionsWrap.appendChild(collapseBtn);
+          }
+          collapseBtn.setAttribute(
+            "aria-label",
+            `Toggle collapse for ${h3.textContent}`,
+          );
+
+          const sectionId = getSectionCollapseId(section, h3.textContent || "Section");
+          setSectionCollapsed(section, collapseBtn, !!collapsedSections[sectionId]);
+
+          if (!collapseBtn.dataset.bound) {
+            collapseBtn.addEventListener("click", () => {
+              const collapsed = !section.classList.contains("is-collapsed");
+              collapsedSections[sectionId] = collapsed;
+              if (!collapsed) {
+                delete collapsedSections[sectionId];
+              }
+              saveCollapsedSections(collapsedSections);
+              setSectionCollapsed(section, collapseBtn, collapsed);
+            });
+            collapseBtn.dataset.bound = "1";
+          }
+
+          if (!headingWrap.dataset.collapseBound) {
+            headingWrap.addEventListener("click", (e) => {
+              if (
+                e.target.closest(
+                  ".section-heading-actions, .section-collapse-btn, .section-help-btn",
+                )
+              ) {
+                return;
+              }
+              const collapsed = !section.classList.contains("is-collapsed");
+              collapsedSections[sectionId] = collapsed;
+              if (!collapsed) {
+                delete collapsedSections[sectionId];
+              }
+              saveCollapsedSections(collapsedSections);
+              setSectionCollapsed(section, collapseBtn, collapsed);
+            });
+            headingWrap.dataset.collapseBound = "1";
+          }
         });
       }
 
@@ -5421,13 +6119,39 @@
           ) {
             const lockBtn = document.createElement("button");
             lockBtn.type = "button";
-            lockBtn.className = "ds-btn ds-btn-sm icon-btn control-lock-btn";
+            lockBtn.className =
+              "icon-btn icon-only control-lock-btn ds-icon-action";
             lockBtn.dataset.lockFor = control.id;
             lockBtn.setAttribute("aria-pressed", "false");
             lockBtn.innerHTML = '<i class="iconoir-lock"></i>';
+            lockBtn.addEventListener("mouseenter", () => {
+              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
+            });
+            lockBtn.addEventListener("mouseleave", () => {
+              updateControlLockButton(lockBtn, isControlLocked(control.id), false);
+            });
+            lockBtn.addEventListener("focus", () => {
+              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
+            });
+            lockBtn.addEventListener("blur", () => {
+              updateControlLockButton(lockBtn, isControlLocked(control.id), false);
+            });
+            lockBtn.addEventListener("pointerdown", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setControlLock(control.id, !isControlLocked(control.id));
+              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
+            });
             lockBtn.addEventListener("click", (e) => {
               e.preventDefault();
+              e.stopPropagation();
+            });
+            lockBtn.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              e.stopPropagation();
               setControlLock(control.id, !isControlLocked(control.id));
+              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
             });
             icons.appendChild(lockBtn);
             setControlLock(control.id, isControlLocked(control.id));
@@ -5449,24 +6173,28 @@
       }
 
       function applyCompareView() {
+        ensureViewportCanvasSize();
         if (!displayBaseCanvas.width || !displayBaseCanvas.height) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(displayBaseCanvas, 0, 0);
+        drawSourceInView(displayBaseCanvas);
         const compareEnabled =
           !!document.getElementById("compareToggle")?.checked;
-        if (!compareEnabled || !compareImage) return;
+        if (!compareEnabled || !compareImage) {
+          updateExportCropOverlay();
+          return;
+        }
 
         const split = parseFloat(
           document.getElementById("compareSplit")?.value || "0.5",
         );
         const splitPx = Math.floor(canvas.width * split);
-
-        ctx.drawImage(compareImage, 0, 0, canvas.width, canvas.height);
+        const state = getViewWindowState(canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(compareImage, state.dx, state.dy, state.drawW, state.drawH);
         ctx.save();
         ctx.beginPath();
         ctx.rect(splitPx, 0, canvas.width - splitPx, canvas.height);
         ctx.clip();
-        ctx.drawImage(displayBaseCanvas, 0, 0);
+        ctx.drawImage(displayBaseCanvas, state.dx, state.dy, state.drawW, state.drawH);
         ctx.restore();
 
         ctx.save();
@@ -5477,6 +6205,7 @@
         ctx.lineTo(splitPx + 0.5, canvas.height);
         ctx.stroke();
         ctx.restore();
+        updateExportCropOverlay();
       }
 
       function captureCompareFrame() {
@@ -5608,6 +6337,7 @@
         document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
           btn.classList.toggle("is-active", btn.dataset.tab === tabName);
         });
+        updateExportCropOverlay();
       }
 
       function getControlState() {
@@ -5819,71 +6549,268 @@
         scheduleFinalRender();
       }
 
-      function getExportTargetSize() {
-        const preset = document.getElementById("exportSizePreset").value;
+      function getExportSourceCanvas() {
+        if (displayBaseCanvas.width && displayBaseCanvas.height) return displayBaseCanvas;
+        return canvas;
+      }
+
+      function getCropAspect(mode) {
+        if (mode === "square") return 1;
+        if (mode === "portrait") return 4 / 5;
+        if (mode === "landscape") return 16 / 9;
+        return null;
+      }
+
+      function clampCropRect(rect, srcW, srcH, aspect = null) {
+        const minSize = 24;
+        let sw = Math.max(minSize, Math.min(srcW, rect.sw));
+        let sh = Math.max(minSize, Math.min(srcH, rect.sh));
+        if (aspect) {
+          if (sw / sh > aspect) {
+            sw = Math.max(minSize, Math.min(srcW, Math.round(sh * aspect)));
+          } else {
+            sh = Math.max(minSize, Math.min(srcH, Math.round(sw / aspect)));
+          }
+        }
+        let sx = Math.max(0, Math.min(srcW - sw, rect.sx));
+        let sy = Math.max(0, Math.min(srcH - sh, rect.sy));
+        return { sx, sy, sw, sh };
+      }
+
+      function createDefaultCropRect(mode, srcW, srcH) {
+        if (mode === "full") return { sx: 0, sy: 0, sw: srcW, sh: srcH };
+        const aspect = getCropAspect(mode);
+        if (aspect) {
+          let sw = srcW;
+          let sh = Math.round(sw / aspect);
+          if (sh > srcH) {
+            sh = srcH;
+            sw = Math.round(sh * aspect);
+          }
+          return {
+            sx: Math.floor((srcW - sw) / 2),
+            sy: Math.floor((srcH - sh) / 2),
+            sw,
+            sh,
+          };
+        }
+        const sw = Math.max(24, Math.floor(srcW * 0.8));
+        const sh = Math.max(24, Math.floor(srcH * 0.8));
+        return {
+          sx: Math.floor((srcW - sw) / 2),
+          sy: Math.floor((srcH - sh) / 2),
+          sw,
+          sh,
+        };
+      }
+
+      function getExportCropRect() {
         const cropMode = document.getElementById("exportCropMode").value;
-        const currentW = canvas.width || 1;
-        const currentH = canvas.height || 1;
-        if (preset === "current") return { width: currentW, height: currentH };
-        if (preset === "1080-square") return { width: 1080, height: 1080 };
-        if (preset === "2160-square") return { width: 2160, height: 2160 };
-        if (preset === "1920x1080") return { width: 1920, height: 1080 };
-        if (preset === "custom") {
+        const source = getExportSourceCanvas();
+        const srcW = Math.max(1, source.width || 1);
+        const srcH = Math.max(1, source.height || 1);
+        if (cropMode === "full") {
+          exportCropRect = null;
+          exportCropModeActive = cropMode;
+          return { sx: 0, sy: 0, sw: srcW, sh: srcH };
+        }
+        if (
+          !exportCropRect ||
+          exportCropModeActive !== cropMode ||
+          exportCropRect.sw > srcW ||
+          exportCropRect.sh > srcH
+        ) {
+          exportCropRect = createDefaultCropRect(cropMode, srcW, srcH);
+          exportCropModeActive = cropMode;
+        }
+        exportCropRect = clampCropRect(
+          exportCropRect,
+          srcW,
+          srcH,
+          getCropAspect(cropMode),
+        );
+        return exportCropRect;
+      }
+
+      function getExportTargetSize(cropRect) {
+        const resizeEnabled =
+          !!document.getElementById("exportResizeEnabled")?.checked;
+        if (resizeEnabled) {
           const w =
             parseInt(document.getElementById("exportWidth").value, 10) ||
-            currentW;
+            cropRect.sw;
           const h =
             parseInt(document.getElementById("exportHeight").value, 10) ||
-            currentH;
+            cropRect.sh;
           return { width: Math.max(1, w), height: Math.max(1, h) };
         }
-        if (cropMode === "square") return { width: 1080, height: 1080 };
-        return { width: currentW, height: currentH };
+        return { width: Math.max(1, cropRect.sw), height: Math.max(1, cropRect.sh) };
+      }
+
+      function syncExportSizeUi() {
+        const resizeEnabled =
+          !!document.getElementById("exportResizeEnabled")?.checked;
+        const exportWidth = document.getElementById("exportWidth");
+        const exportHeight = document.getElementById("exportHeight");
+        if (!exportWidth || !exportHeight) return;
+        const cropRect = getExportCropRect();
+        exportWidth.disabled = !resizeEnabled;
+        exportHeight.disabled = !resizeEnabled;
+        if (!resizeEnabled) {
+          exportWidth.value = String(cropRect.sw);
+          exportHeight.value = String(cropRect.sh);
+        }
+        updateExportCropOverlay();
+      }
+
+      function updateExportCropOverlay() {
+        const overlay = document.getElementById("exportCropOverlay");
+        const frame = document.getElementById("exportCropFrame");
+        const exportTab = document.getElementById("tabExport");
+        if (!overlay || !frame) return;
+        const cropMode = document.getElementById("exportCropMode")?.value || "full";
+        const shouldShow = exportTab && !exportTab.hidden && cropMode !== "full";
+        overlay.hidden = !shouldShow;
+        if (!shouldShow) return;
+        const cropRect = getExportCropRect();
+        const source = getExportSourceCanvas();
+        const srcW = Math.max(1, source.width || 1);
+        const srcH = Math.max(1, source.height || 1);
+        const rect = canvas.getBoundingClientRect();
+        const state = getViewWindowState(rect.width, rect.height);
+        const left = state.dx + (cropRect.sx / srcW) * state.drawW;
+        const top = state.dy + (cropRect.sy / srcH) * state.drawH;
+        const width = (cropRect.sw / srcW) * state.drawW;
+        const height = (cropRect.sh / srcH) * state.drawH;
+        frame.style.left = `${Math.round(left)}px`;
+        frame.style.top = `${Math.round(top)}px`;
+        frame.style.width = `${Math.max(8, Math.round(width))}px`;
+        frame.style.height = `${Math.max(8, Math.round(height))}px`;
+      }
+
+      function initCropOverlayInteractions() {
+        const overlay = document.getElementById("exportCropOverlay");
+        const frame = document.getElementById("exportCropFrame");
+        if (!overlay || !frame) return;
+
+        const beginDrag = (e, handle) => {
+          if (overlay.hidden) return;
+          const cropMode = document.getElementById("exportCropMode")?.value || "full";
+          if (cropMode === "full") return;
+          const rect = getExportCropRect();
+          cropDragState = {
+            handle,
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            startRect: { ...rect },
+          };
+          e.preventDefault();
+          e.stopPropagation();
+        };
+
+        frame.addEventListener("pointerdown", (e) => {
+          if (e.target?.dataset?.handle) return;
+          beginDrag(e, "move");
+        });
+        frame.querySelectorAll(".crop-handle").forEach((el) => {
+          el.addEventListener("pointerdown", (e) => {
+            beginDrag(e, e.currentTarget.dataset.handle || "br");
+          });
+        });
+
+        window.addEventListener("pointermove", (e) => {
+          if (!cropDragState) return;
+          const source = getExportSourceCanvas();
+          const srcW = Math.max(1, source.width || 1);
+          const srcH = Math.max(1, source.height || 1);
+          const cropMode = document.getElementById("exportCropMode")?.value || "full";
+          const aspect = getCropAspect(cropMode);
+          const rect = canvas.getBoundingClientRect();
+          const state = getViewWindowState(rect.width, rect.height);
+          const sourcePerPixelX = srcW / Math.max(1, state.drawW);
+          const sourcePerPixelY = srcH / Math.max(1, state.drawH);
+          const dx = (e.clientX - cropDragState.startClientX) * sourcePerPixelX;
+          const dy = (e.clientY - cropDragState.startClientY) * sourcePerPixelY;
+          const start = cropDragState.startRect;
+          let next = { ...start };
+
+          if (cropDragState.handle === "move") {
+            next.sx = start.sx + dx;
+            next.sy = start.sy + dy;
+          } else if (cropDragState.handle === "tl") {
+            next.sx = start.sx + dx;
+            next.sy = start.sy + dy;
+            next.sw = start.sw - dx;
+            next.sh = start.sh - dy;
+          } else if (cropDragState.handle === "tr") {
+            next.sy = start.sy + dy;
+            next.sw = start.sw + dx;
+            next.sh = start.sh - dy;
+          } else if (cropDragState.handle === "bl") {
+            next.sx = start.sx + dx;
+            next.sw = start.sw - dx;
+            next.sh = start.sh + dy;
+          } else {
+            next.sw = start.sw + dx;
+            next.sh = start.sh + dy;
+          }
+
+          if (aspect && cropDragState.handle !== "move") {
+            let sw = Math.max(24, next.sw);
+            let sh = Math.max(24, next.sh);
+            if (sw / sh > aspect) {
+              sh = sw / aspect;
+            } else {
+              sw = sh * aspect;
+            }
+            if (cropDragState.handle === "tl") {
+              next.sx = start.sx + (start.sw - sw);
+              next.sy = start.sy + (start.sh - sh);
+            } else if (cropDragState.handle === "tr") {
+              next.sx = start.sx;
+              next.sy = start.sy + (start.sh - sh);
+            } else if (cropDragState.handle === "bl") {
+              next.sx = start.sx + (start.sw - sw);
+              next.sy = start.sy;
+            } else {
+              next.sx = start.sx;
+              next.sy = start.sy;
+            }
+            next.sw = sw;
+            next.sh = sh;
+          }
+
+          exportCropRect = clampCropRect(next, srcW, srcH, aspect);
+          updateExportCropOverlay();
+          syncExportSizeUi();
+        });
+
+        window.addEventListener("pointerup", () => {
+          if (!cropDragState) return;
+          cropDragState = null;
+        });
       }
 
       function buildExportCanvas() {
-        const cropMode = document.getElementById("exportCropMode").value;
-        const { width: outW, height: outH } = getExportTargetSize();
-        const srcW = canvas.width;
-        const srcH = canvas.height;
-        let sx = 0;
-        let sy = 0;
-        let sw = srcW;
-        let sh = srcH;
-
-        if (cropMode === "square") {
-          const side = Math.min(srcW, srcH);
-          sx = Math.floor((srcW - side) / 2);
-          sy = Math.floor((srcH - side) / 2);
-          sw = side;
-          sh = side;
-        } else if (cropMode === "portrait") {
-          const targetAspect = 4 / 5;
-          const currentAspect = srcW / srcH;
-          if (currentAspect > targetAspect) {
-            sw = Math.floor(srcH * targetAspect);
-            sx = Math.floor((srcW - sw) / 2);
-          } else {
-            sh = Math.floor(srcW / targetAspect);
-            sy = Math.floor((srcH - sh) / 2);
-          }
-        } else if (cropMode === "landscape") {
-          const targetAspect = 16 / 9;
-          const currentAspect = srcW / srcH;
-          if (currentAspect > targetAspect) {
-            sw = Math.floor(srcH * targetAspect);
-            sx = Math.floor((srcW - sw) / 2);
-          } else {
-            sh = Math.floor(srcW / targetAspect);
-            sy = Math.floor((srcH - sh) / 2);
-          }
-        }
+        const source = getExportSourceCanvas();
+        const cropRect = getExportCropRect();
+        const { width: outW, height: outH } = getExportTargetSize(cropRect);
 
         const out = document.createElement("canvas");
         out.width = outW;
         out.height = outH;
         const outCtx = out.getContext("2d");
-        outCtx.drawImage(canvas, sx, sy, sw, sh, 0, 0, outW, outH);
+        outCtx.drawImage(
+          source,
+          cropRect.sx,
+          cropRect.sy,
+          cropRect.sw,
+          cropRect.sh,
+          0,
+          0,
+          outW,
+          outH,
+        );
         return out;
       }
 
@@ -5911,12 +6838,51 @@
       }
 
       function saveGallery() {
+        const persistence = window.RadenPersistence;
+        if (persistence && typeof persistence.saveGallery === "function") {
+          persistence.saveGallery({
+            storageKey: GALLERY_STORAGE_KEY,
+            items: galleryItems,
+          });
+          return;
+        }
         localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryItems));
       }
 
       function loadGallery() {
+        const persistence = window.RadenPersistence;
+        if (persistence && typeof persistence.loadGallery === "function") {
+          galleryItems = persistence.loadGallery({
+            storageKey: GALLERY_STORAGE_KEY,
+          });
+          return;
+        }
         const raw = localStorage.getItem(GALLERY_STORAGE_KEY);
         galleryItems = raw ? JSON.parse(raw) : [];
+      }
+
+      function getStoredTheme() {
+        const persistence = window.RadenPersistence;
+        const fallback = document.documentElement.dataset.theme || "steel-night";
+        if (persistence && typeof persistence.getTheme === "function") {
+          return persistence.getTheme({
+            storageKey: THEME_STORAGE_KEY,
+            fallback,
+          });
+        }
+        return localStorage.getItem(THEME_STORAGE_KEY) || fallback;
+      }
+
+      function saveTheme(theme) {
+        const persistence = window.RadenPersistence;
+        if (persistence && typeof persistence.setTheme === "function") {
+          persistence.setTheme({
+            storageKey: THEME_STORAGE_KEY,
+            theme,
+          });
+          return;
+        }
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
       }
 
       function renderGallery() {
@@ -5926,28 +6892,39 @@
         galleryItems.forEach((item) => {
           const tile = document.createElement("div");
           tile.className = "gallery-tile";
+          if (selectedGalleryItemId === item.id) tile.classList.add("is-selected");
+          tile.dataset.id = item.id;
+          tile.tabIndex = 0;
           const img = document.createElement("img");
           img.src = item.thumbnail;
           img.alt = item.label;
 
-          const label = document.createElement("div");
-          label.textContent = item.label;
-          label.style.fontSize = "12px";
-          label.style.color = "var(--ds-text-muted)";
+          const meta = document.createElement("div");
+          meta.className = "snapshot-meta";
+          const name = document.createElement("div");
+          name.className = "snapshot-name";
+          name.textContent = item.label;
+          const sub = document.createElement("div");
+          sub.className = "snapshot-sub";
+          const seedVal = item.settings?.seed;
+          sub.textContent = `seed ${seedVal === undefined || seedVal === null || seedVal === "" ? "-" : String(seedVal)}`;
+          meta.appendChild(name);
+          meta.appendChild(sub);
 
           const actions = document.createElement("div");
           actions.className = "gallery-actions";
           const delBtn = document.createElement("button");
-          delBtn.className = "ds-btn ds-btn-sm";
+          delBtn.className = "ds-btn ds-btn-sm btn";
           delBtn.textContent = "Delete";
           delBtn.onclick = () => {
             galleryItems = galleryItems.filter((g) => g.id !== item.id);
+            if (selectedGalleryItemId === item.id) selectedGalleryItemId = null;
             saveGallery();
             renderGallery();
           };
 
           const recallBtn = document.createElement("button");
-          recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary";
+          recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary btn";
           recallBtn.textContent = "Recall";
           recallBtn.onclick = () => {
             applyControlState(item.settings);
@@ -5958,8 +6935,21 @@
           actions.appendChild(delBtn);
           actions.appendChild(recallBtn);
           tile.appendChild(img);
-          tile.appendChild(label);
+          tile.appendChild(meta);
           tile.appendChild(actions);
+          tile.addEventListener("click", (e) => {
+            if (e.target.closest("button")) return;
+            selectedGalleryItemId =
+              selectedGalleryItemId === item.id ? null : item.id;
+            renderGallery();
+          });
+          tile.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            e.preventDefault();
+            selectedGalleryItemId =
+              selectedGalleryItemId === item.id ? null : item.id;
+            renderGallery();
+          });
           grid.appendChild(tile);
         });
       }
@@ -6029,9 +7019,7 @@
         const performanceProfile =
           document.getElementById("performanceProfile");
         if (performanceProfile) {
-          const savedProfile =
-            localStorage.getItem(PERFORMANCE_PROFILE_STORAGE_KEY) || "balanced";
-          const key = PERF_PROFILES[savedProfile] ? savedProfile : "balanced";
+          const key = getPerformanceProfileKey();
           performanceProfile.value = key;
           savePerformanceProfile(key);
         }
@@ -6045,10 +7033,7 @@
           clearPendingIndicators();
         }
 
-        const savedTheme =
-          localStorage.getItem("raden-theme") ||
-          document.documentElement.dataset.theme ||
-          "steel-night";
+        const savedTheme = getStoredTheme();
         document.documentElement.dataset.theme = savedTheme;
         if (themeSelect) themeSelect.value = savedTheme;
 
@@ -6065,6 +7050,11 @@
         updateRisoLayerOverrideRows();
         startGeneration();
         generateSeedVariants();
+        initCanvasViewportInteractions();
+        initCropOverlayInteractions();
+        applyCanvasViewTransform();
+        syncExportSizeUi();
+        updateCanvasViewportCursor();
       });
 
       document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
@@ -6143,30 +7133,53 @@
         .getElementById("clearGalleryBtn")
         .addEventListener("click", () => {
           galleryItems = [];
+          selectedGalleryItemId = null;
           saveGallery();
           renderGallery();
         });
 
       document
-        .getElementById("exportSizePreset")
-        .addEventListener("change", (e) => {
-          const preset = e.target.value;
-          const w = document.getElementById("exportWidth");
-          const h = document.getElementById("exportHeight");
-          if (preset === "1080-square") {
-            w.value = "1080";
-            h.value = "1080";
-          } else if (preset === "1920x1080") {
-            w.value = "1920";
-            h.value = "1080";
-          } else if (preset === "2160-square") {
-            w.value = "2160";
-            h.value = "2160";
-          } else if (preset === "current") {
-            w.value = String(canvas.width || 1920);
-            h.value = String(canvas.height || 1080);
-          }
+        .getElementById("exportResizeEnabled")
+        .addEventListener("change", () => {
+          syncExportSizeUi();
         });
+
+      document.getElementById("exportCropMode").addEventListener("change", () => {
+        exportCropRect = null;
+        exportCropModeActive = document.getElementById("exportCropMode").value;
+        syncExportSizeUi();
+      });
+
+      ["renderWidth", "renderHeight"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("change", () => {
+          normalizeRenderSizeInputs();
+        });
+      });
+
+      ["canvasViewZoom", "canvasPanX", "canvasPanY"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("input", () => {
+          applyCanvasViewTransform();
+          updateExportCropOverlay();
+          updateCanvasViewportCursor();
+        });
+      });
+
+      document
+        .getElementById("resetCanvasViewBtn")
+        ?.addEventListener("click", () => {
+          resetCanvasView();
+          updateCanvasViewportCursor();
+        });
+
+      window.addEventListener("resize", () => {
+        applyCanvasViewTransform();
+        updateExportCropOverlay();
+        updateCanvasViewportCursor();
+      });
 
       document
         .getElementById("modeSelector")
@@ -6257,7 +7270,7 @@
         themeSelect.addEventListener("change", (e) => {
           const selectedTheme = e.target.value;
           document.documentElement.dataset.theme = selectedTheme;
-          localStorage.setItem("raden-theme", selectedTheme);
+          saveTheme(selectedTheme);
         });
       }
 
