@@ -905,20 +905,12 @@
           <div id="settingsMenu" class="settings-menu" hidden>
             <div class="settings-row">
               <label for="themeSelect">Theme</label>
-              <select id="themeSelect">
-                <option value="steel-night">Steel Night</option>
-                <option value="paper-mint">Paper Mint</option>
-                <option value="amber-terminal">Amber Terminal</option>
-                <option value="neon-grid">Neon Grid</option>
-                <option value="mono-slate">Mono Slate</option>
-                <option value="tech-grid">Tech Grid</option>
-                <option value="skeuo-panel">Skeuo Panel</option>
-                <option value="industrial-terminal">Industrial Terminal</option>
-                <option value="velvet-touch">Velvet Touch</option>
-                <option value="eva-wireframe">Eva Wireframe</option>
-                <option value="eva-unit-01">Eva Unit-01</option>
-                <option value="saturn-alloy">Saturn Alloy</option>
-              </select>
+              <select
+                id="themeSelect"
+                data-ds-theme-select
+                data-ds-theme-storage="raden-theme"
+                data-ds-theme-default="industrial-terminal"
+              ></select>
             </div>
             <div class="settings-row">
               <label for="performanceProfile">Performance Profile</label>
@@ -2553,6 +2545,8 @@
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
+    <script src="../_DesignSystem/js/theme-registry.js"></script>
+    <script src="../_DesignSystem/js/theme-selector.js"></script>
     <script src="./src/shared/math_color_palette.js"></script>
     <script src="./src/state/configBuilder.js"></script>
     <script src="./src/state/persistence.js"></script>
@@ -3659,18 +3653,216 @@
         }
       }
 
+      function getNaturalModeProfile(mode) {
+        const profiles = {
+          agateband: {
+            palette: [
+              [64, 40, 30],
+              [139, 92, 67],
+              [214, 170, 129],
+              [238, 225, 205],
+            ],
+            seamColor: [89, 48, 36],
+            hueShift: 0.04,
+            ridgeBias: 0.82,
+            veinAmp: 0.34,
+          },
+          malachiteflow: {
+            palette: [
+              [8, 49, 38],
+              [22, 98, 74],
+              [58, 161, 120],
+              [171, 221, 192],
+            ],
+            seamColor: [7, 37, 29],
+            hueShift: -0.02,
+            ridgeBias: 0.9,
+            veinAmp: 0.42,
+          },
+          lichengrowth: {
+            palette: [
+              [38, 48, 32],
+              [88, 110, 68],
+              [150, 167, 106],
+              [213, 221, 180],
+            ],
+            seamColor: [30, 39, 26],
+            hueShift: 0.1,
+            ridgeBias: 0.62,
+            veinAmp: 0.26,
+          },
+          icebloom: {
+            palette: [
+              [16, 29, 52],
+              [86, 132, 171],
+              [181, 222, 245],
+              [243, 251, 255],
+            ],
+            seamColor: [219, 238, 252],
+            hueShift: 0.56,
+            ridgeBias: 0.7,
+            veinAmp: 0.2,
+          },
+          riverdelta: {
+            palette: [
+              [43, 57, 74],
+              [88, 121, 133],
+              [157, 169, 132],
+              [218, 208, 170],
+            ],
+            seamColor: [35, 48, 61],
+            hueShift: 0.18,
+            ridgeBias: 0.76,
+            veinAmp: 0.36,
+          },
+          bubblefilm: {
+            palette: [
+              [78, 50, 97],
+              [77, 146, 181],
+              [154, 223, 209],
+              [249, 227, 255],
+            ],
+            seamColor: [55, 35, 69],
+            hueShift: 0.74,
+            ridgeBias: 0.58,
+            veinAmp: 0.48,
+          },
+        };
+        return profiles[mode] || profiles.agateband;
+      }
+
+      function sampleNaturalPalette(palette, t) {
+        const clamped = clamp01(t);
+        const scaled = clamped * (palette.length - 1);
+        const index = Math.floor(scaled);
+        const nextIndex = Math.min(palette.length - 1, index + 1);
+        const mix = scaled - index;
+        const a = palette[index];
+        const b = palette[nextIndex];
+        return [
+          Math.round(lerp(a[0], b[0], mix)),
+          Math.round(lerp(a[1], b[1], mix)),
+          Math.round(lerp(a[2], b[2], mix)),
+        ];
+      }
+
       function generatePhase4ModePlaceholder(mode, force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
         const config = getRenderConfig(renderOptions);
-        showDebugInfo(config, { phase4_mode: mode, status: "scaffold" });
-        setStatus(
-          renderOptions.preview ? "idle" : "complete",
-          renderOptions.preview
-            ? `Preview ready (${mode} scaffold)`
-            : `Phase 4 scaffold active: ${mode}`,
+        const profile = getNaturalModeProfile(mode);
+        const seed = parseInt(document.getElementById("seed")?.value || "0", 10) || 1;
+        const naturalScale = Math.max(0.0005, config.naturalScale || 0.008);
+        const warp = clamp01(config.naturalWarp || 0.35);
+        const turbulence = Math.max(0, config.naturalTurbulence || 0.62);
+        const anisotropy = clamp01(config.naturalAnisotropy || 0.25);
+        const simplexBase = createSimplex(seed ^ 0x45d9f3b);
+        const simplexWarp = createSimplex(seed ^ 0x9e3779b9);
+        const simplexDetail = createSimplex(seed ^ 0x7f4a7c15);
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        const imageData = offscreenCtx.createImageData(config.width, config.height);
+        const data = imageData.data;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(30);
+
+        for (let y = 0; y < config.height; y++) {
+          const ny = (y - config.height * 0.5) / Math.max(1, config.height);
+          for (let x = 0; x < config.width; x++) {
+            const nx = (x - config.width * 0.5) / Math.max(1, config.width);
+            const i = (y * config.width + x) * 4;
+            const dirX = nx * (1 + anisotropy * 2.4);
+            const dirY = ny * (1 - anisotropy * 0.45);
+            const radial = Math.hypot(dirX, dirY);
+            const flowAngle = Math.atan2(dirY, dirX);
+            const warpFieldX =
+              simplexWarp.noise2D(dirX * naturalScale * 70 + 81.7, dirY * naturalScale * 70 - 9.4) *
+              warp *
+              2.1;
+            const warpFieldY =
+              simplexWarp.noise2D(dirX * naturalScale * 70 - 17.3, dirY * naturalScale * 70 + 53.1) *
+              warp *
+              2.1;
+            const px = dirX + warpFieldX;
+            const py = dirY + warpFieldY;
+            const baseNoise = getNoiseValue(
+              px * 180,
+              py * 180,
+              4,
+              naturalScale,
+              simplexBase,
+            );
+            const detailNoise = getNoiseValue(
+              px * 260 + 41.2,
+              py * 260 - 13.7,
+              3,
+              naturalScale * (1.2 + turbulence),
+              simplexDetail,
+            );
+            const bandAxis = Math.sin(flowAngle * (1.5 + profile.ridgeBias * 2.2)) * radial;
+            const rings = Math.sin(
+              (bandAxis * (18 + turbulence * 30) + baseNoise * (1.8 + profile.veinAmp * 4.2)) *
+                Math.PI,
+            );
+            const seams = Math.pow(clamp01(1 - Math.abs(rings)), 10 - profile.ridgeBias * 4);
+            const cellular =
+              simplexBase.noise2D(px * naturalScale * 420 + 123.4, py * naturalScale * 420 - 92.7) *
+              0.5 +
+              0.5;
+            const bloom = clamp01(
+              0.48 +
+                baseNoise * 0.3 +
+                detailNoise * 0.22 +
+                rings * 0.18 +
+                cellular * profile.veinAmp,
+            );
+            let [r, g, b] = sampleNaturalPalette(profile.palette, bloom);
+
+            if (mode === "bubblefilm" || mode === "icebloom") {
+              const iridescence =
+                0.5 +
+                0.5 *
+                  Math.sin(
+                    (radial * 38 + detailNoise * 9 + warpFieldX * 3 + warpFieldY * 2.4) * Math.PI,
+                  );
+              const [ir, ig, ib] = hslToRgb(
+                (profile.hueShift + iridescence * 0.28 + bloom * 0.08) % 1,
+                0.65,
+                0.68,
+              );
+              const mix = mode === "bubblefilm" ? 0.42 : 0.24;
+              r = Math.round(lerp(r, ir, mix));
+              g = Math.round(lerp(g, ig, mix));
+              b = Math.round(lerp(b, ib, mix));
+            }
+
+            const seamStrength = clamp01(seams * (0.75 + turbulence * 0.25));
+            r = Math.round(lerp(r, profile.seamColor[0], seamStrength));
+            g = Math.round(lerp(g, profile.seamColor[1], seamStrength));
+            b = Math.round(lerp(b, profile.seamColor[2], seamStrength));
+
+            data[i] = r;
+            data[i + 1] = g;
+            data[i + 2] = b;
+            data[i + 3] = 255;
+          }
+        }
+
+        offscreenCtx.putImageData(imageData, 0, 0);
+        setProgressPercent(78);
+        finalizeImageModeRender(
+          config,
+          `${mode.replace(/([a-z])([A-Z])/g, "$1 $2")} rendered`,
         );
+        showDebugInfo(config, { natural_mode: mode, status: "rendered" });
+        setProgressPercent(100);
       }
 
       function hexToRgb(hex) {
@@ -6861,28 +7053,20 @@
         galleryItems = raw ? JSON.parse(raw) : [];
       }
 
-      function getStoredTheme() {
-        const persistence = window.RadenPersistence;
-        const fallback = document.documentElement.dataset.theme || "steel-night";
-        if (persistence && typeof persistence.getTheme === "function") {
-          return persistence.getTheme({
-            storageKey: THEME_STORAGE_KEY,
-            fallback,
-          });
+      function initSharedThemeSelector() {
+        if (
+          !themeSelect ||
+          !window.DesignSystemThemeSelector ||
+          typeof window.DesignSystemThemeSelector.initThemeSelector !== "function"
+        ) {
+          return null;
         }
-        return localStorage.getItem(THEME_STORAGE_KEY) || fallback;
-      }
-
-      function saveTheme(theme) {
-        const persistence = window.RadenPersistence;
-        if (persistence && typeof persistence.setTheme === "function") {
-          persistence.setTheme({
-            storageKey: THEME_STORAGE_KEY,
-            theme,
-          });
-          return;
-        }
-        localStorage.setItem(THEME_STORAGE_KEY, theme);
+        return window.DesignSystemThemeSelector.initThemeSelector(themeSelect, {
+          root: document.documentElement,
+          storageKey: THEME_STORAGE_KEY,
+          defaultTheme:
+            document.documentElement.dataset.theme || "industrial-terminal",
+        });
       }
 
       function renderGallery() {
@@ -7033,9 +7217,7 @@
           clearPendingIndicators();
         }
 
-        const savedTheme = getStoredTheme();
-        document.documentElement.dataset.theme = savedTheme;
-        if (themeSelect) themeSelect.value = savedTheme;
+        initSharedThemeSelector();
 
         document
           .querySelectorAll("#controls input, #controls select")
@@ -7263,14 +7445,6 @@
           if (document.getElementById("modeSelector").value === "topography") {
             scheduleFinalRender();
           }
-        });
-      }
-
-      if (themeSelect) {
-        themeSelect.addEventListener("change", (e) => {
-          const selectedTheme = e.target.value;
-          document.documentElement.dataset.theme = selectedTheme;
-          saveTheme(selectedTheme);
         });
       }
 
