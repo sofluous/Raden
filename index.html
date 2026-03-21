@@ -211,6 +211,10 @@
         display: none;
       }
 
+      #controls .control-row[hidden] {
+        display: none !important;
+      }
+
       #postProcessingSection {
         order: 80;
       }
@@ -700,6 +704,7 @@
         color: var(--ds-text-muted);
       }
 
+      #status[data-state="queued"],
       #status[data-state="rendering"] {
         color: var(--ds-info);
         border-color: color-mix(in oklab, var(--ds-info) 62%, var(--ds-border));
@@ -1696,7 +1701,7 @@
             </div>
           </div>
 
-          <div class="section" data-mode="opalvein">
+          <div class="section" data-mode="motherofpearl, opalvein" data-family="opal">
             <h3>Opal Vein</h3>
             <div class="control-row">
               <div class="control-label">Cell Scale:</div>
@@ -1760,7 +1765,7 @@
             </div>
           </div>
 
-          <div class="section" data-mode="labradorite">
+          <div class="section" data-mode="motherofpearl, labradorite" data-family="labradorite">
             <h3>Labradorite Flash</h3>
             <div class="control-row">
               <div class="control-label">Flash Scale:</div>
@@ -1919,35 +1924,255 @@
           </div>
 
           <div
+            id="naturalGeometrySection"
             class="section"
             data-mode="agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm"
           >
             <h3>Natural Geometry</h3>
-            <div class="control-row">
+            <div class="control-row" data-control-id="naturalScale">
               <div class="control-label">Base Scale:</div>
               <div class="control-input">
                 <input type="range" id="naturalScale" min="0.002" max="0.03" step="0.001" value="0.008" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
-            <div class="control-row">
+            <div class="control-row" data-control-id="naturalWarp">
               <div class="control-label">Warp:</div>
               <div class="control-input">
                 <input type="range" id="naturalWarp" min="0" max="1" step="0.01" value="0.35" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
-            <div class="control-row">
+            <div class="control-row" data-control-id="naturalTurbulence">
               <div class="control-label">Turbulence:</div>
               <div class="control-input">
                 <input type="range" id="naturalTurbulence" min="0" max="1.5" step="0.01" value="0.62" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
-            <div class="control-row">
+            <div class="control-row" data-control-id="naturalAnisotropy">
               <div class="control-label">Anisotropy:</div>
               <div class="control-input">
                 <input type="range" id="naturalAnisotropy" min="0" max="1" step="0.01" value="0.25" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="agateband">
+              <div class="control-label">Band Frequency:</div>
+              <div class="control-input">
+                <input type="range" id="agateBandFreq" min="0.4" max="2.4" step="0.01" value="1.18" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="agateband">
+              <div class="control-label">Band Jitter:</div>
+              <div class="control-input">
+                <input type="range" id="agateBandJitter" min="0" max="1" step="0.01" value="0.34" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="riverdelta">
+              <div class="control-label">Channel Width:</div>
+              <div class="control-input">
+                <input type="range" id="deltaChannelWidth" min="0.1" max="1.3" step="0.01" value="0.48" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="riverdelta">
+              <div class="control-label">Branch Rate:</div>
+              <div class="control-input">
+                <input type="range" id="deltaBranchRate" min="0" max="1" step="0.01" value="0.52" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="malachiteflow">
+              <div class="control-label">Swirl:</div>
+              <div class="control-input">
+                <input type="range" id="malachiteSwirl" min="0" max="1" step="0.01" value="0.58" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="malachiteflow">
+              <div class="control-label">Ring Tightness:</div>
+              <div class="control-input">
+                <input type="range" id="malachiteRingTightness" min="0.4" max="2.2" step="0.01" value="1.16" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="icebloom">
+              <div class="control-label">Branch Depth:</div>
+              <div class="control-input">
+                <input type="range" id="iceBranchDepth" min="0.2" max="2.2" step="0.01" value="1.02" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="icebloom">
+              <div class="control-label">Angle Jitter:</div>
+              <div class="control-input">
+                <input type="range" id="iceBranchAngleJitter" min="0" max="1" step="0.01" value="0.28" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="lichengrowth">
+              <div class="control-label">Patch Scale:</div>
+              <div class="control-input">
+                <input type="range" id="lichenPatchScale" min="0.2" max="2.2" step="0.01" value="0.94" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="lichengrowth">
+              <div class="control-label">Branching:</div>
+              <div class="control-input">
+                <input type="range" id="lichenBranching" min="0" max="1" step="0.01" value="0.46" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="bubblefilm">
+              <div class="control-label">Cell Scale:</div>
+              <div class="control-input">
+                <input type="range" id="bubbleCellScale" min="0.2" max="2.4" step="0.01" value="1.06" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="bubblefilm">
+              <div class="control-label">Pressure Warp:</div>
+              <div class="control-input">
+                <input type="range" id="bubblePressureWarp" min="0" max="1" step="0.01" value="0.42" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div
+            id="naturalColorSection"
+            class="section"
+            data-mode="agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm"
+          >
+            <h3>Natural Color</h3>
+            <div class="control-row" data-mode="agateband">
+              <div class="control-label">Translucency:</div>
+              <div class="control-input">
+                <input type="range" id="agateTranslucency" min="0" max="1" step="0.01" value="0.58" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="riverdelta">
+              <div class="control-label">Sediment Mix:</div>
+              <div class="control-input">
+                <input type="range" id="deltaSedimentMix" min="0" max="1" step="0.01" value="0.46" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="malachiteflow">
+              <div class="control-label">Contrast:</div>
+              <div class="control-input">
+                <input type="range" id="malachiteContrast" min="0.4" max="2" step="0.01" value="1.08" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="icebloom">
+              <div class="control-label">Haze:</div>
+              <div class="control-input">
+                <input type="range" id="iceHaze" min="0" max="1" step="0.01" value="0.42" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="lichengrowth">
+              <div class="control-label">Coverage:</div>
+              <div class="control-input">
+                <input type="range" id="lichenCoverage" min="0" max="1" step="0.01" value="0.52" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="lichengrowth">
+              <div class="control-label">Moisture Tone:</div>
+              <div class="control-input">
+                <input type="range" id="lichenMoistureTone" min="0" max="1" step="0.01" value="0.48" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="bubblefilm">
+              <div class="control-label">Iridescence:</div>
+              <div class="control-input">
+                <input type="range" id="bubbleIridescence" min="0" max="1" step="0.01" value="0.72" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+          </div>
+
+          <div
+            id="naturalDetailSection"
+            class="section"
+            data-mode="agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm"
+          >
+            <h3>Natural Detail</h3>
+            <div class="control-row" data-mode="agateband">
+              <div class="control-label">Vein Density:</div>
+              <div class="control-input">
+                <input type="range" id="agateVeinDensity" min="0" max="1.5" step="0.01" value="0.74" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="agateband">
+              <div class="control-label">Edge Darken:</div>
+              <div class="control-input">
+                <input type="range" id="agateEdgeDarken" min="0" max="1" step="0.01" value="0.52" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="riverdelta">
+              <div class="control-label">Floodplain Softness:</div>
+              <div class="control-input">
+                <input type="range" id="deltaFloodplainSoftness" min="0" max="1" step="0.01" value="0.56" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="riverdelta">
+              <div class="control-label">Erosion:</div>
+              <div class="control-input">
+                <input type="range" id="deltaErosion" min="0" max="1" step="0.01" value="0.38" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="malachiteflow">
+              <div class="control-label">Ring Variance:</div>
+              <div class="control-input">
+                <input type="range" id="malachiteRingVariance" min="0" max="1" step="0.01" value="0.36" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="icebloom">
+              <div class="control-label">Frost Density:</div>
+              <div class="control-input">
+                <input type="range" id="iceFrostDensity" min="0" max="1.5" step="0.01" value="0.62" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="icebloom">
+              <div class="control-label">Melt Softness:</div>
+              <div class="control-input">
+                <input type="range" id="iceMeltSoftness" min="0" max="1" step="0.01" value="0.34" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="lichengrowth">
+              <div class="control-label">Edge Roughness:</div>
+              <div class="control-input">
+                <input type="range" id="lichenEdgeRoughness" min="0" max="1" step="0.01" value="0.58" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="bubblefilm">
+              <div class="control-label">Wall Thickness:</div>
+              <div class="control-input">
+                <input type="range" id="bubbleWallThickness" min="0.02" max="0.5" step="0.01" value="0.14" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+            <div class="control-row" data-mode="bubblefilm">
+              <div class="control-label">Breakup:</div>
+              <div class="control-input">
+                <input type="range" id="bubbleBreakup" min="0" max="1" step="0.01" value="0.36" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
@@ -2022,17 +2247,6 @@
                   <option value="fluoro">Fluoro</option>
                   <option value="mono-noir">Mono Noir</option>
                   <option value="custom">Custom</option>
-                </select>
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row">
-              <div class="control-label">Quant Method:</div>
-              <div class="control-input">
-                <select id="risoQuantMethod" data-live="false">
-                  <option value="kmeans">K-Means</option>
-                  <option value="median-cut">Median Cut</option>
-                  <option value="fixed-palette">Fixed Palette</option>
                 </select>
               </div>
               <div class="control-icons"></div>
@@ -2721,6 +2935,28 @@
 
       const progress = document.getElementById("progress");
       const status = document.getElementById("status");
+      const NATURAL_SHARED_CONTROL_VISIBILITY = {
+        agateband: new Set(["naturalScale", "naturalWarp"]),
+        malachiteflow: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "naturalTurbulence",
+          "naturalAnisotropy",
+        ]),
+        lichengrowth: new Set(["naturalScale", "naturalWarp"]),
+        icebloom: new Set(["naturalScale", "naturalWarp"]),
+        riverdelta: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "naturalTurbulence",
+          "naturalAnisotropy",
+        ]),
+        bubblefilm: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "naturalTurbulence",
+        ]),
+      };
 
       function setStatus(state, message) {
         if (statusController?.setStatus) {
@@ -2739,6 +2975,21 @@
         const value = Number(percent);
         const clamped = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
         progress.style.width = `${clamped}%`;
+      }
+
+      function setQueuedRenderFeedback(kind = "final") {
+        const pendingCount =
+          document.querySelectorAll(".pending-change").length;
+        const pendingLabel =
+          pendingCount > 0
+            ? `${pendingCount} change${pendingCount > 1 ? "s" : ""}`
+            : "update";
+        const message =
+          kind === "preview"
+            ? `Preview queued for ${pendingLabel}`
+            : `Applying ${pendingLabel}...`;
+        setStatus("queued", message);
+        setProgressPercent(kind === "preview" ? 10 : 14);
       }
 
       function normalizeRenderSize(width, height) {
@@ -2920,6 +3171,197 @@
         "canvasPanX",
         "canvasPanY",
       ];
+      const MODE_ACTIVE_CONTROL_IDS = {
+        motherofpearl: new Set([
+          "scale",
+          "layers",
+          "flowMode",
+          "layerLength",
+          "ringSpacing",
+          "ringJitter",
+          "seamThickness",
+          "seamContrast",
+          "highlightStrength",
+          "lightAngle",
+          "lightCurvature",
+          "lightSpread",
+          "scratchDensity",
+          "scratchAngle",
+          "surfacePolish",
+          "intensity",
+          "range",
+          "substrateTone",
+          "substrateMix",
+          "nacrePalette",
+          "nacreBrilliance",
+          "nacreChromatic",
+          "textureFamily",
+          "opalCellScale",
+          "opalVeinDensity",
+          "opalFire",
+          "opalMatrix",
+          "labradoriteScale",
+          "labradoriteDirection",
+          "labradoriteBanding",
+          "labradoriteFlash",
+          "labradoriteDarkness",
+        ]),
+        opalvein: new Set([
+          "opalCellScale",
+          "opalVeinDensity",
+          "opalFire",
+          "opalMatrix",
+        ]),
+        labradorite: new Set([
+          "labradoriteScale",
+          "labradoriteDirection",
+          "labradoriteBanding",
+          "labradoriteFlash",
+          "labradoriteDarkness",
+        ]),
+        marbleink: new Set([
+          "marbleFlowScale",
+          "marbleVeinFreq",
+          "marbleContrast",
+          "marbleInkDrift",
+          "marbleLightness",
+        ]),
+        topography: new Set([
+          "scale",
+          "layers",
+          "topoPreset",
+          "topoNoiseType",
+          "topoBandCount",
+          "topoRenderMode",
+          "topoRidge",
+          "topoWarp",
+          "topoErosion",
+        ]),
+        agateband: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "agateBandFreq",
+          "agateBandJitter",
+          "agateVeinDensity",
+          "agateTranslucency",
+          "agateEdgeDarken",
+        ]),
+        malachiteflow: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "naturalTurbulence",
+          "naturalAnisotropy",
+          "malachiteSwirl",
+          "malachiteRingTightness",
+          "malachiteRingVariance",
+          "malachiteContrast",
+        ]),
+        lichengrowth: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "lichenPatchScale",
+          "lichenBranching",
+          "lichenCoverage",
+          "lichenMoistureTone",
+          "lichenEdgeRoughness",
+        ]),
+        icebloom: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "iceBranchDepth",
+          "iceBranchAngleJitter",
+          "iceFrostDensity",
+          "iceMeltSoftness",
+          "iceHaze",
+        ]),
+        riverdelta: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "naturalTurbulence",
+          "naturalAnisotropy",
+          "deltaChannelWidth",
+          "deltaBranchRate",
+          "deltaSedimentMix",
+          "deltaFloodplainSoftness",
+          "deltaErosion",
+        ]),
+        bubblefilm: new Set([
+          "naturalScale",
+          "naturalWarp",
+          "naturalTurbulence",
+          "bubbleCellScale",
+          "bubblePressureWarp",
+          "bubbleIridescence",
+          "bubbleWallThickness",
+          "bubbleBreakup",
+        ]),
+        risoimage: new Set([
+          "imageFitMode",
+          "imageCropScale",
+          "imageRotate",
+          "risoRenderStyle",
+          "risoPalettePreset",
+          "risoLayerCount",
+          "risoLayerAngleStep",
+          "risoLayerOpacity",
+          "risoLayerOverlap",
+          "risoColorSplit",
+          "risoLayerViewMode",
+          "risoActiveLayer",
+          "risoVisibleL1",
+          "risoVisibleL2",
+          "risoVisibleL3",
+          "risoVisibleL4",
+          "risoVisibleL5",
+          "risoVisibleL6",
+          "risoL1Angle",
+          "risoL1Opacity",
+          "risoL1ToneMin",
+          "risoL1ToneMax",
+          "risoL2Angle",
+          "risoL2Opacity",
+          "risoL2ToneMin",
+          "risoL2ToneMax",
+          "risoL3Angle",
+          "risoL3Opacity",
+          "risoL3ToneMin",
+          "risoL3ToneMax",
+          "risoL4Angle",
+          "risoL4Opacity",
+          "risoL4ToneMin",
+          "risoL4ToneMax",
+          "risoL5Angle",
+          "risoL5Opacity",
+          "risoL5ToneMin",
+          "risoL5ToneMax",
+          "risoL6Angle",
+          "risoL6Opacity",
+          "risoL6ToneMin",
+          "risoL6ToneMax",
+          "ditherDotSize",
+          "ditherDotSpread",
+          "ditherUniformity",
+          "ditherDotShape",
+        ]),
+        pixelretro: new Set([
+          "imageFitMode",
+          "imageCropScale",
+          "imageRotate",
+          "palettePreset",
+          "paletteSize",
+          "colorDepthBits",
+          "pixelBlockSize",
+          "ditherBayerSize",
+          "scanlineStrength",
+        ]),
+        risograph: new Set([
+          "risoDotSize",
+          "risoThreshold",
+        ]),
+      };
+      const MODE_SCOPED_CONTROL_IDS = new Set(
+        Object.values(MODE_ACTIVE_CONTROL_IDS).flatMap((set) => Array.from(set)),
+      );
       statusController = window.RadenCoreStatus?.createStatusController
         ? window.RadenCoreStatus.createStatusController({
             statusEl: status,
@@ -2956,11 +3398,12 @@
       }
 
       function schedulePreviewRender(triggerEl) {
+        if (!triggerEl || isHeavyControl(triggerEl)) return;
+        setQueuedRenderFeedback("preview");
         if (schedulerController?.schedulePreviewRender) {
           schedulerController.schedulePreviewRender(triggerEl);
           return;
         }
-        if (!triggerEl || isHeavyControl(triggerEl)) return;
         const perf = getPerformanceProfile();
         if (finalDebounceId) {
           clearTimeout(finalDebounceId);
@@ -2975,6 +3418,7 @@
       }
 
       function scheduleFinalRender() {
+        setQueuedRenderFeedback("final");
         if (schedulerController?.scheduleFinalRender) {
           schedulerController.scheduleFinalRender();
           return;
@@ -3179,24 +3623,118 @@
         return NACRE_PALETTES[name] || NACRE_PALETTES.classic;
       }
 
+      function updateNaturalSharedControlVisibility(mode) {
+        const allowedControls = NATURAL_SHARED_CONTROL_VISIBILITY[mode] || null;
+        document
+          .querySelectorAll("#naturalGeometrySection .control-row[data-control-id]")
+          .forEach((row) => {
+            const controlId = row.dataset.controlId;
+            if (!allowedControls || !controlId) return;
+            row.hidden = !allowedControls.has(controlId);
+          });
+      }
+
+      function getRowControlIds(row) {
+        return Array.from(
+          row.querySelectorAll("input[id], select[id], textarea[id]"),
+        )
+          .map((el) => el.id)
+          .filter(Boolean);
+      }
+
+      function applyStrictModeControlVisibility(mode) {
+        const activeControls = MODE_ACTIVE_CONTROL_IDS[mode];
+        if (!activeControls) return;
+        document.querySelectorAll("#controls .control-row").forEach((row) => {
+          if (row.hidden) return;
+          const parentSection = row.closest(".section");
+          const isScopedRow =
+            !!row.dataset.mode ||
+            !!row.dataset.family ||
+            !!row.dataset.controlId ||
+            !!parentSection?.dataset.mode ||
+            !!parentSection?.dataset.family;
+          if (!isScopedRow) return;
+          const rowControlIds = getRowControlIds(row).filter(
+            (id) => !UI_ONLY_CONTROL_IDS.includes(id) && MODE_SCOPED_CONTROL_IDS.has(id),
+          );
+          if (!rowControlIds.length) return;
+          row.hidden = rowControlIds.every((id) => !activeControls.has(id));
+        });
+      }
+
+      function enforceNaturalModeControlVisibility(mode) {
+        const activeControls = MODE_ACTIVE_CONTROL_IDS[mode];
+        if (!activeControls) return;
+        ["naturalGeometrySection", "naturalColorSection", "naturalDetailSection"].forEach(
+          (sectionId) => {
+            document
+              .querySelectorAll(`#${sectionId} .control-row`)
+              .forEach((row) => {
+                const explicitModes = row.dataset.mode
+                  ? row.dataset.mode.split(",").map((s) => s.trim())
+                  : null;
+                if (explicitModes) {
+                  row.hidden = !explicitModes.includes(mode);
+                  return;
+                }
+                const controlId = row.dataset.controlId;
+                if (controlId) {
+                  row.hidden = !activeControls.has(controlId);
+                  return;
+                }
+                const rowControlIds = getRowControlIds(row).filter((id) =>
+                  MODE_SCOPED_CONTROL_IDS.has(id),
+                );
+                if (!rowControlIds.length) return;
+                row.hidden = rowControlIds.every((id) => !activeControls.has(id));
+              });
+          },
+        );
+      }
+
+      function isControlRelevantForMode(mode, controlId) {
+        const activeControls = MODE_ACTIVE_CONTROL_IDS[mode];
+        if (!activeControls) return true;
+        if (!MODE_SCOPED_CONTROL_IDS.has(controlId)) return true;
+        return activeControls.has(controlId);
+      }
+
       function updateVisibleSections(mode) {
+        const textureFamily =
+          document.getElementById("textureFamily")?.value || "classic";
         const allSections = document.querySelectorAll("#controls .section");
         allSections.forEach((section) => {
           const modes = section.dataset.mode
             ? section.dataset.mode.split(",").map((s) => s.trim())
             : ["all"];
-          const shouldShow = modes.includes("all") || modes.includes(mode);
+          const familyMatch =
+            !section.dataset.family ||
+            mode !== "motherofpearl" ||
+            section.dataset.family === textureFamily;
+          const shouldShow = (modes.includes("all") || modes.includes(mode)) && familyMatch;
           section.hidden = !shouldShow;
         });
 
         const allRows = document.querySelectorAll("#controls .control-row");
         allRows.forEach((row) => {
-          const modes = row.dataset.mode
-            ? row.dataset.mode.split(",").map((s) => s.trim())
-            : ["all"];
-          const shouldShow = modes.includes("all") || modes.includes(mode);
+          const parentSection = row.closest(".section");
+          const effectiveModeSource = row.dataset.mode || parentSection?.dataset.mode || "all";
+          const modes = effectiveModeSource
+            .split(",")
+            .map((s) => s.trim());
+          const effectiveFamily =
+            row.dataset.family || parentSection?.dataset.family || "";
+          const familyMatch =
+            !effectiveFamily ||
+            mode !== "motherofpearl" ||
+            effectiveFamily === textureFamily;
+          const shouldShow = (modes.includes("all") || modes.includes(mode)) && familyMatch;
           row.hidden = !shouldShow;
         });
+        updateNaturalSharedControlVisibility(mode);
+        applyStrictModeControlVisibility(mode);
+        enforceNaturalModeControlVisibility(mode);
         updateRisoEngineVisibility();
       }
 
@@ -3575,12 +4113,40 @@
           naturalWarp: getInput("naturalWarp"),
           naturalTurbulence: getInput("naturalTurbulence"),
           naturalAnisotropy: getInput("naturalAnisotropy"),
+          agateBandFreq: getInput("agateBandFreq"),
+          agateBandJitter: getInput("agateBandJitter"),
+          agateVeinDensity: getInput("agateVeinDensity"),
+          agateTranslucency: getInput("agateTranslucency"),
+          agateEdgeDarken: getInput("agateEdgeDarken"),
+          malachiteSwirl: getInput("malachiteSwirl"),
+          malachiteRingTightness: getInput("malachiteRingTightness"),
+          malachiteRingVariance: getInput("malachiteRingVariance"),
+          malachiteContrast: getInput("malachiteContrast"),
+          lichenPatchScale: getInput("lichenPatchScale"),
+          lichenBranching: getInput("lichenBranching"),
+          lichenEdgeRoughness: getInput("lichenEdgeRoughness"),
+          lichenCoverage: getInput("lichenCoverage"),
+          lichenMoistureTone: getInput("lichenMoistureTone"),
+          iceBranchDepth: getInput("iceBranchDepth"),
+          iceBranchAngleJitter: getInput("iceBranchAngleJitter"),
+          iceFrostDensity: getInput("iceFrostDensity"),
+          iceMeltSoftness: getInput("iceMeltSoftness"),
+          iceHaze: getInput("iceHaze"),
+          deltaChannelWidth: getInput("deltaChannelWidth"),
+          deltaBranchRate: getInput("deltaBranchRate"),
+          deltaSedimentMix: getInput("deltaSedimentMix"),
+          deltaFloodplainSoftness: getInput("deltaFloodplainSoftness"),
+          deltaErosion: getInput("deltaErosion"),
+          bubbleCellScale: getInput("bubbleCellScale"),
+          bubbleWallThickness: getInput("bubbleWallThickness"),
+          bubblePressureWarp: getInput("bubblePressureWarp"),
+          bubbleIridescence: getInput("bubbleIridescence"),
+          bubbleBreakup: getInput("bubbleBreakup"),
           imageFitMode: document.getElementById("imageFitMode")?.value || "contain",
           imageCropScale: getInput("imageCropScale"),
           imageRotate: getInput("imageRotate"),
           risoLayerCount: getInput("risoLayerCount", true),
           risoPalettePreset: document.getElementById("risoPalettePreset")?.value || "warm-duo",
-          risoQuantMethod: document.getElementById("risoQuantMethod")?.value || "kmeans",
           risoRenderStyle:
             document.getElementById("risoRenderStyle")?.value || "original",
           risoLayerAngleStep: getInput("risoLayerAngleStep"),
@@ -3746,6 +4312,758 @@
         ];
       }
 
+      function getNaturalModeCompletionLabel(mode) {
+        const labels = {
+          agateband: "Agate bands rendered",
+          malachiteflow: "Malachite flow rendered",
+          lichengrowth: "Lichen growth rendered",
+          icebloom: "Ice crystal bloom rendered",
+          riverdelta: "River delta rendered",
+          bubblefilm: "Bubble film rendered",
+        };
+        return labels[mode] || "Natural texture rendered";
+      }
+
+      function renderGenericNaturalPixel(mode, config, profile, runtime, nx, ny) {
+        const {
+          naturalScale,
+          warp,
+          turbulence,
+          anisotropy,
+          simplexBase,
+          simplexWarp,
+          simplexDetail,
+        } = runtime;
+        const dirX = nx * (1 + anisotropy * 2.4);
+        const dirY = ny * (1 - anisotropy * 0.45);
+        const radial = Math.hypot(dirX, dirY);
+        const flowAngle = Math.atan2(dirY, dirX);
+        const warpFieldX =
+          simplexWarp.noise2D(dirX * naturalScale * 70 + 81.7, dirY * naturalScale * 70 - 9.4) *
+          warp *
+          2.1;
+        const warpFieldY =
+          simplexWarp.noise2D(dirX * naturalScale * 70 - 17.3, dirY * naturalScale * 70 + 53.1) *
+          warp *
+          2.1;
+        const px = dirX + warpFieldX;
+        const py = dirY + warpFieldY;
+        const baseNoise = getNoiseValue(px * 180, py * 180, 4, naturalScale, simplexBase);
+        const detailNoise = getNoiseValue(
+          px * 260 + 41.2,
+          py * 260 - 13.7,
+          3,
+          naturalScale * (1.2 + turbulence),
+          simplexDetail,
+        );
+        const bandAxis = Math.sin(flowAngle * (1.5 + profile.ridgeBias * 2.2)) * radial;
+        const rings = Math.sin(
+          (bandAxis * (18 + turbulence * 30) + baseNoise * (1.8 + profile.veinAmp * 4.2)) *
+            Math.PI,
+        );
+        const seams = Math.pow(clamp01(1 - Math.abs(rings)), 10 - profile.ridgeBias * 4);
+        const cellular =
+          simplexBase.noise2D(px * naturalScale * 420 + 123.4, py * naturalScale * 420 - 92.7) *
+            0.5 +
+          0.5;
+        const bloom = clamp01(
+          0.48 +
+            baseNoise * 0.3 +
+            detailNoise * 0.22 +
+            rings * 0.18 +
+            cellular * profile.veinAmp,
+        );
+        let [r, g, b] = sampleNaturalPalette(profile.palette, bloom);
+
+        if (mode === "bubblefilm" || mode === "icebloom") {
+          const iridescence =
+            0.5 +
+            0.5 *
+              Math.sin(
+                (radial * 38 + detailNoise * 9 + warpFieldX * 3 + warpFieldY * 2.4) * Math.PI,
+              );
+          const [ir, ig, ib] = hslToRgb(
+            (profile.hueShift + iridescence * 0.28 + bloom * 0.08) % 1,
+            0.65,
+            0.68,
+          );
+          const mix = mode === "bubblefilm" ? 0.42 : 0.24;
+          r = Math.round(lerp(r, ir, mix));
+          g = Math.round(lerp(g, ig, mix));
+          b = Math.round(lerp(b, ib, mix));
+        }
+
+        const seamStrength = clamp01(seams * (0.75 + turbulence * 0.25));
+        return [
+          Math.round(lerp(r, profile.seamColor[0], seamStrength)),
+          Math.round(lerp(g, profile.seamColor[1], seamStrength)),
+          Math.round(lerp(b, profile.seamColor[2], seamStrength)),
+          255,
+        ];
+      }
+
+      function renderAgateBandPixel(config, profile, runtime, nx, ny) {
+        const { naturalScale, warp, simplexBase, simplexWarp, simplexDetail } = runtime;
+        const bandFreq = Math.max(0.2, config.agateBandFreq || 1.18);
+        const bandJitter = clamp01(config.agateBandJitter || 0.34);
+        const veinDensity = Math.max(0, config.agateVeinDensity || 0.74);
+        const translucency = clamp01(config.agateTranslucency || 0.58);
+        const edgeDarken = clamp01(config.agateEdgeDarken || 0.52);
+        const dirX = nx;
+        const dirY = ny;
+        const radial = Math.hypot(
+          dirX * (1.02 + bandJitter * 0.6),
+          dirY * (0.9 + translucency * 0.24),
+        );
+        const swirl =
+          simplexWarp.noise2D(dirX * naturalScale * 95 + 12.1, dirY * naturalScale * 95 - 8.6) *
+          (0.6 + warp * 2.9 + bandJitter * 0.4);
+        const drift =
+          simplexBase.noise2D(dirX * naturalScale * 240 - 33.4, dirY * naturalScale * 240 + 18.7) *
+          bandJitter *
+          (1.4 + bandJitter * 3.6);
+        const detail =
+          simplexDetail.noise2D(dirX * naturalScale * 410 + 91.2, dirY * naturalScale * 410 - 57.4) *
+          (0.16 + veinDensity * 0.56);
+        const fineVein =
+          simplexBase.noise2D(dirX * naturalScale * 720 - 11.8, dirY * naturalScale * 720 + 54.7) *
+          (0.08 + veinDensity * 0.42);
+        const stratified =
+          radial * (10 + bandFreq * 30) +
+          swirl * (2.1 + bandFreq * 1.8) +
+          drift * (1.8 + bandJitter * 4.2);
+        const bands = 0.5 + 0.5 * Math.sin(stratified * Math.PI);
+        const secondary =
+          0.5 +
+          0.5 *
+            Math.sin(
+              (stratified * (0.42 + translucency * 0.22) +
+                detail * (3.8 + veinDensity * 3.2) +
+                fineVein * 4.6) *
+                Math.PI,
+            );
+        const glow =
+          clamp01(
+            0.36 +
+              bands * (0.22 + translucency * 0.16) +
+              secondary * (0.1 + translucency * 0.3) +
+              detail * (0.08 + veinDensity * 0.22),
+          );
+        let [r, g, b] = sampleNaturalPalette(profile.palette, glow);
+        const seamMask = Math.pow(
+          clamp01(1 - Math.abs(bands * 2 - 1)),
+          3.8 + edgeDarken * 2.4 + veinDensity * 2.2,
+        );
+        const veinMask = Math.pow(
+          clamp01(0.44 + detail * 1.18 + fineVein * 0.72 - secondary * 0.22),
+          1.2 + veinDensity * 3.1,
+        );
+        const internalGlow = clamp01(
+          secondary * (0.18 + translucency * 0.72) + (1 - seamMask) * 0.12,
+        );
+        const [gr, gg, gb] = hslToRgb(36, 42, 62 + internalGlow * 12);
+        r = Math.round(lerp(r, gr, translucency * 0.08 + internalGlow * 0.2));
+        g = Math.round(lerp(g, gg, translucency * 0.08 + internalGlow * 0.18));
+        b = Math.round(lerp(b, gb, translucency * 0.06 + internalGlow * 0.14));
+        const seamStrength = clamp01(
+          seamMask * (0.18 + edgeDarken * 0.98) +
+            veinMask * (0.06 + veinDensity * 0.52),
+        );
+        return [
+          Math.round(lerp(r, profile.seamColor[0], seamStrength)),
+          Math.round(lerp(g, profile.seamColor[1], seamStrength)),
+          Math.round(lerp(b, profile.seamColor[2], seamStrength)),
+          255,
+        ];
+      }
+
+      function renderMalachiteFlowPixel(config, profile, runtime, nx, ny) {
+        const { naturalScale, warp, turbulence, anisotropy, simplexBase, simplexWarp, simplexDetail } = runtime;
+        const swirl = clamp01(config.malachiteSwirl || 0.58);
+        const ringTightness = Math.max(0.2, config.malachiteRingTightness || 1.16);
+        const ringVariance = clamp01(config.malachiteRingVariance || 0.36);
+        const contrast = Math.max(0.2, config.malachiteContrast || 1.08);
+        const dirX = nx * (1 + anisotropy * 2.6);
+        const dirY = ny * (1 - anisotropy * 0.3);
+        const radial = Math.hypot(dirX, dirY);
+        const curl =
+          simplexWarp.noise2D(dirX * naturalScale * 120 + 14.2, dirY * naturalScale * 120 - 62.7) *
+          (0.28 + swirl * 3.6 + warp * 1.7 + turbulence * 0.95);
+        const spiral = Math.atan2(dirY + curl * (0.18 + swirl * 0.42), dirX - curl * (0.14 + swirl * 0.34));
+        const ringBase =
+          radial * (12 + ringTightness * 32) +
+          spiral * (1.8 + swirl * 10.5) +
+          curl * (0.45 + swirl * 1.35);
+        const ringNoise =
+          simplexBase.noise2D(dirX * naturalScale * 300 - 41.3, dirY * naturalScale * 300 + 22.9) *
+            (0.34 + ringVariance * 1.85 + turbulence * 0.55) +
+          simplexDetail.noise2D(dirX * naturalScale * 540 + 80.2, dirY * naturalScale * 540 - 37.1) *
+            (0.08 + ringVariance * 0.76 + turbulence * 0.2);
+        const contourFold =
+          simplexWarp.noise2D(dirX * naturalScale * 180 - 22.6, dirY * naturalScale * 180 + 61.8) *
+          (0.12 + swirl * 0.44 + ringVariance * 0.18);
+        const rings = 0.5 + 0.5 * Math.sin((ringBase + ringNoise * (1.5 + ringVariance * 2.8) + contourFold * 2.4) * Math.PI);
+        const nested = 0.5 + 0.5 * Math.sin((ringBase * (0.34 + ringTightness * 0.28) - ringNoise * (1.8 + ringVariance * 3.8)) * Math.PI);
+        const tone = clamp01(0.18 + rings * 0.42 + nested * 0.28 + swirl * 0.04);
+        let [r, g, b] = sampleNaturalPalette(profile.palette, tone);
+        const seamMask = Math.pow(clamp01(1 - Math.abs(rings * 2 - 1)), 2.8 + contrast * 4.2);
+        const darkBands = clamp01((1 - nested) * (0.16 + contrast * 0.54));
+        const paleBands = clamp01(nested * (0.08 + contrast * 0.14));
+        r = Math.round(lerp(r, 198, paleBands * 0.22));
+        g = Math.round(lerp(g, 229, paleBands * 0.26));
+        b = Math.round(lerp(b, 190, paleBands * 0.16));
+        const seamMix = clamp01(seamMask * (0.56 + contrast * 0.24) + darkBands * 0.52);
+        r = Math.round(lerp(r, profile.seamColor[0], seamMix));
+        g = Math.round(lerp(g, profile.seamColor[1], seamMix));
+        b = Math.round(lerp(b, profile.seamColor[2], seamMix));
+        return [r, g, b, 255];
+      }
+
+      function pointSegmentDistance(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq <= 1e-6) return Math.hypot(px - x1, py - y1);
+        const t = clamp01(((px - x1) * dx + (py - y1) * dy) / lenSq);
+        const qx = x1 + dx * t;
+        const qy = y1 + dy * t;
+        return Math.hypot(px - qx, py - qy);
+      }
+
+      function buildIceBloomSegments(config, runtime) {
+        const branchDepth = Math.max(0.2, config.iceBranchDepth || 1.02);
+        const angleJitter = clamp01(config.iceBranchAngleJitter || 0.28);
+        const turbulence = Math.max(0, runtime.turbulence || 0.62);
+        const anisotropy = clamp01(runtime.anisotropy || 0.25);
+        const seed = runtime.seed || 1;
+        const preview = !!config.preview;
+        const segments = [];
+        const bloomCount = preview
+          ? Math.max(2, Math.min(3, Math.round(1 + branchDepth * 1.1)))
+          : Math.max(2, Math.round(2 + branchDepth * 1.4));
+        const rootCount = preview
+          ? Math.max(3, Math.min(5, Math.round(2 + branchDepth * 1.5)))
+          : Math.max(4, Math.round(3 + branchDepth * 2));
+        const maxDepth = preview
+          ? Math.max(2, Math.min(4, Math.round(2 + branchDepth * 1.25)))
+          : Math.max(3, Math.min(6, Math.round(3 + branchDepth * 1.8)));
+        const segmentBudget = preview ? 900 : 2600;
+
+        function grow(x, y, angle, length, width, depth, branchSeed, bloomBias) {
+          if (segments.length >= segmentBudget) return;
+          const wobble =
+            (hash2(branchSeed, depth, seed) - 0.5) *
+            (0.18 + angleJitter * 0.92 + bloomBias * 0.08);
+          const finalAngle = angle + wobble;
+          const x2 = x + Math.cos(finalAngle) * length * (1 + anisotropy * 0.22);
+          const y2 = y + Math.sin(finalAngle) * length * (1 - anisotropy * 0.12);
+          segments.push({ x1: x, y1: y, x2, y2, width });
+          if (depth <= 0 || length < 0.012) return;
+
+          const splitBase = 0.26 + angleJitter * 0.62 + turbulence * 0.18 + bloomBias * 0.04;
+          const left = splitBase + hash2(branchSeed + 3, depth + 11, seed) * 0.34;
+          const right = splitBase + hash2(branchSeed + 7, depth + 19, seed) * 0.34;
+          const childLength = length * (0.62 + hash2(branchSeed + 13, depth + 5, seed) * 0.16);
+          const childWidth = width * (0.72 + hash2(branchSeed + 17, depth + 9, seed) * 0.05);
+          grow(x2, y2, finalAngle - left, childLength, childWidth, depth - 1, branchSeed + 31, bloomBias);
+          grow(x2, y2, finalAngle + right, childLength, childWidth, depth - 1, branchSeed + 53, bloomBias);
+          const tertiaryChance = preview ? 0.74 : 0.5;
+          if (hash2(branchSeed + 71, depth + 2, seed) > tertiaryChance) {
+            grow(
+              (x + x2) * 0.5,
+              (y + y2) * 0.5,
+              finalAngle + (hash2(branchSeed + 97, depth + 7, seed) - 0.5) * (0.6 + angleJitter * 0.8),
+              childLength * 0.7,
+              childWidth * 0.76,
+              depth - 1,
+              branchSeed + 89,
+              bloomBias,
+            );
+          }
+        }
+
+        for (let bloom = 0; bloom < bloomCount; bloom++) {
+          const bloomAngle =
+            (bloom / bloomCount) * Math.PI * 2 +
+            (hash2(bloom + 13, seed, seed) - 0.5) * 0.95;
+          const bloomRadius = 0.04 + hash2(bloom + 21, seed, seed) * 0.26;
+          const bloomX = Math.cos(bloomAngle) * bloomRadius * (0.4 + anisotropy * 0.3);
+          const bloomY = Math.sin(bloomAngle) * bloomRadius * 0.62;
+          const bloomBias = hash2(bloom + 27, seed, seed);
+          const bloomRoots = Math.max(3, Math.round(rootCount * (0.72 + bloomBias * 0.55)));
+          for (let i = 0; i < bloomRoots; i++) {
+            const angle =
+              (i / bloomRoots) * Math.PI * 2 +
+              bloomAngle +
+              (hash2(i + bloom * 37, seed, seed) - 0.5) * (0.16 + angleJitter * 0.28);
+            const startRadius = 0.008 + hash2(i + 5, bloom + seed, seed) * 0.05;
+            const x = bloomX + Math.cos(angle) * startRadius;
+            const y = bloomY + Math.sin(angle) * startRadius;
+            const length =
+              (preview ? 0.04 : 0.05) +
+              branchDepth * (preview ? 0.06 : 0.085) +
+              hash2(i + 9, bloom + seed, seed) * (preview ? 0.032 : 0.05) +
+              bloomBias * 0.02;
+            grow(
+              x,
+              y,
+              angle,
+              length,
+              (preview ? 0.008 : 0.01) + branchDepth * 0.006 + bloomBias * 0.002,
+              maxDepth,
+              bloom * 311 + i * 101 + 17,
+              bloomBias,
+            );
+          }
+        }
+        return segments;
+      }
+
+      function createIceBloomMask(config, runtime) {
+        const branchDepth = Math.max(0.2, config.iceBranchDepth || 1.02);
+        const maskScale = config.preview ? 0.38 : 0.72;
+        const maskWidth = Math.max(config.preview ? 96 : 160, Math.round(config.width * maskScale));
+        const maskHeight = Math.max(config.preview ? 96 : 160, Math.round(config.height * maskScale));
+        const maskCanvas = document.createElement("canvas");
+        maskCanvas.width = maskWidth;
+        maskCanvas.height = maskHeight;
+        const maskCtx = maskCanvas.getContext("2d");
+        maskCtx.clearRect(0, 0, maskWidth, maskHeight);
+        maskCtx.lineCap = "round";
+        maskCtx.lineJoin = "round";
+        maskCtx.filter = `blur(${config.preview ? Math.max(0.4, 0.6 + branchDepth * 0.18) : Math.max(0.8, 1.1 + branchDepth * 0.32)}px)`;
+
+        for (let i = 0; i < runtime.iceSegments.length; i++) {
+          const seg = runtime.iceSegments[i];
+          const alpha = Math.max(0.08, Math.min(0.92, 0.32 + seg.width * 9));
+          maskCtx.strokeStyle = `rgba(255,255,255,${alpha})`;
+          maskCtx.lineWidth = Math.max(
+            1,
+            seg.width * Math.min(maskWidth, maskHeight) * (0.72 + branchDepth * 0.28),
+          );
+          maskCtx.beginPath();
+          maskCtx.moveTo((seg.x1 * 0.5 + 0.5) * maskWidth, (seg.y1 * 0.5 + 0.5) * maskHeight);
+          maskCtx.lineTo((seg.x2 * 0.5 + 0.5) * maskWidth, (seg.y2 * 0.5 + 0.5) * maskHeight);
+          maskCtx.stroke();
+        }
+        maskCtx.filter = "none";
+
+        const image = maskCtx.getImageData(0, 0, maskWidth, maskHeight);
+        return { width: maskWidth, height: maskHeight, data: image.data };
+      }
+
+      function sampleMask(mask, nx, ny) {
+        if (!mask) return 0;
+        const fx = Math.max(0, Math.min(mask.width - 1, (nx * 0.5 + 0.5) * (mask.width - 1)));
+        const fy = Math.max(0, Math.min(mask.height - 1, (ny * 0.5 + 0.5) * (mask.height - 1)));
+        const x0 = Math.floor(fx);
+        const y0 = Math.floor(fy);
+        const x1 = Math.min(mask.width - 1, x0 + 1);
+        const y1 = Math.min(mask.height - 1, y0 + 1);
+        const tx = fx - x0;
+        const ty = fy - y0;
+        const i00 = (y0 * mask.width + x0) * 4;
+        const i10 = (y0 * mask.width + x1) * 4;
+        const i01 = (y1 * mask.width + x0) * 4;
+        const i11 = (y1 * mask.width + x1) * 4;
+        const v00 = (mask.data[i00] || 0) / 255;
+        const v10 = (mask.data[i10] || 0) / 255;
+        const v01 = (mask.data[i01] || 0) / 255;
+        const v11 = (mask.data[i11] || 0) / 255;
+        const top = lerp(v00, v10, tx);
+        const bottom = lerp(v01, v11, tx);
+        return lerp(top, bottom, ty);
+      }
+
+      function renderIceBloomPixel(config, profile, runtime, nx, ny) {
+        const { naturalScale, warp, simplexBase, simplexWarp, simplexDetail } = runtime;
+        const branchDepth = Math.max(0.2, config.iceBranchDepth || 1.02);
+        const frostDensity = Math.max(0, config.iceFrostDensity || 0.62);
+        const meltSoftness = clamp01(config.iceMeltSoftness || 0.34);
+        const haze = clamp01(config.iceHaze || 0.42);
+        const px = nx;
+        const py = ny;
+        const branchField = sampleMask(runtime.iceMask, nx, ny);
+        const frostNoise =
+          simplexBase.noise2D(px * naturalScale * 520 + 18.5, py * naturalScale * 520 - 46.2) * 0.5 +
+          0.5;
+        const feather =
+          simplexDetail.noise2D(px * naturalScale * 780 - 82.1, py * naturalScale * 780 + 26.4) * 0.5 +
+          0.5;
+        const branchWarp =
+          simplexWarp.noise2D(px * naturalScale * 180 + 75.1, py * naturalScale * 180 - 55.3) *
+          (0.18 + warp * 1.35);
+        const branchMask = clamp01(
+          branchField * (0.94 - meltSoftness * 0.28) +
+            feather * (0.1 + branchDepth * 0.04) +
+            branchWarp * 0.08,
+        );
+        const frostMask = clamp01(
+          branchField * (0.14 + frostDensity * 0.28) +
+            frostNoise * (0.18 + frostDensity * 0.22) +
+            feather * (0.06 + frostDensity * 0.12),
+        );
+        const tone = clamp01(
+          0.18 + branchMask * 0.44 + frostMask * 0.2 + haze * 0.16,
+        );
+        let [r, g, b] = sampleNaturalPalette(profile.palette, tone);
+        const hazeMask = clamp01(haze * 0.38 + frostMask * 0.24 + branchMask * 0.18);
+        r = Math.round(lerp(r, 240, hazeMask));
+        g = Math.round(lerp(g, 247, hazeMask));
+        b = Math.round(lerp(b, 255, hazeMask));
+        const crystalEdge = clamp01(
+          branchMask * (0.18 + branchDepth * 0.2) + frostMask * 0.1,
+        );
+        return [
+          Math.round(lerp(r, profile.seamColor[0], crystalEdge)),
+          Math.round(lerp(g, profile.seamColor[1], crystalEdge)),
+          Math.round(lerp(b, profile.seamColor[2], crystalEdge * 0.86)),
+          255,
+        ];
+      }
+
+      function sampleCellularField(x, y, cellScale, seed) {
+        const px = x * cellScale;
+        const py = y * cellScale;
+        const cx = Math.floor(px);
+        const cy = Math.floor(py);
+        let nearest = Infinity;
+        let second = Infinity;
+        let nearestX = 0;
+        let nearestY = 0;
+        let nearestId = 0;
+
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            const gx = cx + ox;
+            const gy = cy + oy;
+            const jitterX = hash2(gx, gy, seed) - 0.5;
+            const jitterY = hash2(gx + 13.2, gy - 8.4, seed + 17) - 0.5;
+            const fx = gx + 0.5 + jitterX * 0.82;
+            const fy = gy + 0.5 + jitterY * 0.82;
+            const dx = px - fx;
+            const dy = py - fy;
+            const dist = Math.hypot(dx, dy);
+            if (dist < nearest) {
+              second = nearest;
+              nearest = dist;
+              nearestX = fx;
+              nearestY = fy;
+              nearestId = hash2(gx - 4.1, gy + 6.7, seed + 31);
+            } else if (dist < second) {
+              second = dist;
+            }
+          }
+        }
+
+        return {
+          nearest,
+          second,
+          edge: Math.max(0, second - nearest),
+          cellX: nearestX,
+          cellY: nearestY,
+          cellId: nearestId,
+        };
+      }
+
+      function renderLichenGrowthPixel(config, profile, runtime, nx, ny) {
+        const { naturalScale, warp, simplexBase, simplexWarp, simplexDetail } = runtime;
+        const patchScale = Math.max(0.2, config.lichenPatchScale || 0.94);
+        const branching = clamp01(config.lichenBranching || 0.46);
+        const edgeRoughness = clamp01(config.lichenEdgeRoughness || 0.58);
+        const coverage = clamp01(config.lichenCoverage || 0.52);
+        const moisture = clamp01(config.lichenMoistureTone || 0.48);
+        const dirX = nx;
+        const dirY = ny;
+        const colonyWarp =
+          simplexWarp.noise2D(dirX * naturalScale * 160 + 44.1, dirY * naturalScale * 160 - 28.6) *
+          (0.12 + warp * 1.8 + patchScale * 0.08);
+        const px = dirX + colonyWarp;
+        const py = dirY - colonyWarp * 0.4;
+        const cell = sampleCellularField(px, py, 4.8 + patchScale * 14.2, 9001);
+        const colonyNoise =
+          simplexBase.noise2D(px * naturalScale * 260 + 22.7, py * naturalScale * 260 - 14.2) * 0.5 +
+          0.5;
+        const branchNoise =
+          simplexDetail.noise2D(px * naturalScale * 540 - 81.1, py * naturalScale * 540 + 63.8) * 0.5 +
+          0.5;
+        const moistureNoise =
+          simplexBase.noise2D(px * naturalScale * 420 - 17.4, py * naturalScale * 420 + 49.8) * 0.5 +
+          0.5;
+        const colonyStrength = clamp01(
+          coverage * 1.1 +
+            colonyNoise * (0.18 + patchScale * 0.1) -
+            cell.nearest * (0.54 + patchScale * 0.26),
+        );
+        const branchMask = clamp01(
+          branchNoise * (0.12 + branching * 0.86) +
+            (0.18 - cell.edge * (0.8 + edgeRoughness * 1.2)) +
+            colonyStrength * (0.12 + branching * 0.42),
+        );
+        const edgeMask = clamp01(
+          1 -
+            smoothstep(
+              0.01,
+              0.08 + edgeRoughness * 0.24,
+              cell.edge + branchNoise * (0.02 + edgeRoughness * 0.1),
+            ),
+        );
+        const occupied = clamp01(
+          colonyStrength * (0.7 + coverage * 0.24) +
+            branchMask * (0.08 + branching * 0.34) -
+            (1 - coverage) * 0.44,
+        );
+        const dampMask = clamp01(
+          moistureNoise * (0.18 + moisture * 0.44) + occupied * moisture * 0.32,
+        );
+        const tone = clamp01(
+          0.1 +
+            occupied * 0.38 +
+            dampMask * 0.22 +
+            colonyNoise * (0.06 + moisture * 0.08),
+        );
+        let [r, g, b] = sampleNaturalPalette(profile.palette, tone);
+        const dampTint = sampleNaturalPalette(profile.palette, clamp01(0.62 + moisture * 0.28));
+        r = Math.round(lerp(r, dampTint[0], dampMask * 0.56));
+        g = Math.round(lerp(g, dampTint[1], dampMask * 0.56));
+        b = Math.round(lerp(b, dampTint[2], dampMask * 0.42));
+        const chalkMask = clamp01((1 - moisture) * occupied * 0.34 + edgeMask * 0.08);
+        r = Math.round(lerp(r, 210, chalkMask * 0.18));
+        g = Math.round(lerp(g, 214, chalkMask * 0.2));
+        b = Math.round(lerp(b, 188, chalkMask * 0.12));
+        const rim = clamp01(edgeMask * (0.12 + edgeRoughness * 0.62) + branchMask * edgeRoughness * 0.18);
+        r = Math.round(lerp(r, profile.seamColor[0], rim));
+        g = Math.round(lerp(g, profile.seamColor[1], rim));
+        b = Math.round(lerp(b, profile.seamColor[2], rim));
+        if (occupied < 0.18) {
+          const bare = Math.round(lerp(34, 92, colonyNoise));
+          return [bare, Math.round(bare * 1.08), Math.round(bare * 0.88), 255];
+        }
+        return [r, g, b, 255];
+      }
+
+      function renderBubbleFilmPixel(config, profile, runtime, nx, ny) {
+        const { naturalScale, warp, turbulence, simplexBase, simplexWarp, simplexDetail } = runtime;
+        const cellScale = Math.max(0.2, config.bubbleCellScale || 1.06);
+        const wallThickness = Math.max(0.01, config.bubbleWallThickness || 0.14);
+        const pressureWarp = clamp01(config.bubblePressureWarp || 0.42);
+        const iridescence = clamp01(config.bubbleIridescence || 0.72);
+        const breakup = clamp01(config.bubbleBreakup || 0.36);
+        const pxBase = nx;
+        const pyBase = ny;
+        const warpX =
+          simplexWarp.noise2D(pxBase * naturalScale * 210 + 92.5, pyBase * naturalScale * 210 - 35.8) *
+          pressureWarp *
+          (0.52 + warp * 1.45 + turbulence * 0.4);
+        const warpY =
+          simplexWarp.noise2D(pxBase * naturalScale * 210 - 76.2, pyBase * naturalScale * 210 + 41.4) *
+          pressureWarp *
+          (0.52 + warp * 1.45 + turbulence * 0.4);
+        const px = pxBase + warpX;
+        const py = pyBase + warpY;
+        const cell = sampleCellularField(px, py, 2.2 + cellScale * 3.6, 12031);
+        const membrane = 1 - smoothstep(wallThickness * 0.08, wallThickness * 1.25, cell.edge);
+        const centerGlow = clamp01(1 - cell.nearest * (1.38 - breakup * 0.28));
+        const pressure =
+          simplexBase.noise2D(px * naturalScale * 320 + 18.6, py * naturalScale * 320 + 71.2) * 0.5 +
+          0.5;
+        const tearNoise =
+          simplexDetail.noise2D(px * naturalScale * 620 - 44.5, py * naturalScale * 620 + 83.7) * 0.5 +
+          0.5;
+        const breakupMask = clamp01(
+          breakup * 0.88 +
+          tearNoise * (0.34 + breakup * 0.28) -
+          centerGlow * (0.18 + breakup * 0.12) -
+          membrane * 0.16,
+        );
+        const tearEdge = smoothstep(0.46, 0.84, breakupMask);
+        const filmTone = clamp01(
+          0.34 +
+          centerGlow * 0.34 +
+          pressure * 0.18 -
+          tearEdge * (0.16 + breakup * 0.1),
+        );
+        let [r, g, b] = sampleNaturalPalette(profile.palette, filmTone);
+        const filmThickness = clamp01(
+          0.12 +
+          pressure * 0.42 +
+          tearNoise * 0.22 +
+          turbulence * 0.18 -
+          membrane * (0.18 + wallThickness * 0.12) +
+          pressureWarp * 0.14,
+        );
+        const thinFilmMask = clamp01(
+          centerGlow * 0.48 +
+          (1 - membrane) * 0.22 +
+          pressure * 0.2 -
+          tearEdge * 0.1,
+        );
+        const spectralPhase =
+          (cell.cellId * 6.8 +
+            filmThickness * (18 + iridescence * 34) +
+            pressure * 9.2 +
+            tearNoise * 6.4 +
+            (px * 3.1 - py * 2.7) * (1 + pressureWarp * 1.8)) *
+          Math.PI;
+        const spectralR = 0.5 + 0.5 * Math.sin(spectralPhase);
+        const spectralG = 0.5 + 0.5 * Math.sin(spectralPhase + 2.094);
+        const spectralB = 0.5 + 0.5 * Math.sin(spectralPhase + 4.188);
+        const ir = Math.round(150 + spectralR * 105);
+        const ig = Math.round(135 + spectralG * 120);
+        const ib = Math.round(165 + spectralB * 90);
+        const sheenMix = clamp01(
+          iridescence * (0.08 + thinFilmMask * 0.72 + pressureWarp * 0.16),
+        );
+        r = Math.round(lerp(r, ir, sheenMix));
+        g = Math.round(lerp(g, ig, sheenMix));
+        b = Math.round(lerp(b, ib, sheenMix));
+        const wallShade = clamp01(
+          membrane * (0.68 + wallThickness * 0.95) +
+          tearEdge * (0.18 + breakup * 0.26),
+        );
+        r = Math.round(lerp(r, profile.seamColor[0], wallShade));
+        g = Math.round(lerp(g, profile.seamColor[1], wallShade));
+        b = Math.round(lerp(b, profile.seamColor[2], wallShade));
+        const thinning = clamp01(
+          tearEdge * (0.32 + breakup * 0.5) + (1 - centerGlow) * 0.12,
+        );
+        r = Math.round(lerp(r, 22, thinning * 0.42));
+        g = Math.round(lerp(g, 20, thinning * 0.42));
+        b = Math.round(lerp(b, 28, thinning * 0.46));
+        const tearHighlight = clamp01(tearEdge * (0.18 + breakup * 0.34) + iridescence * thinFilmMask * 0.1);
+        r = Math.round(lerp(r, 244, tearHighlight * 0.22));
+        g = Math.round(lerp(g, 248, tearHighlight * 0.24));
+        b = Math.round(lerp(b, 255, tearHighlight * 0.28));
+        return [r, g, b, 255];
+      }
+
+      function renderRiverDeltaPixel(config, profile, runtime, nx, ny) {
+        const {
+          naturalScale,
+          warp,
+          turbulence,
+          anisotropy,
+          simplexBase,
+          simplexWarp,
+          simplexDetail,
+        } = runtime;
+        const channelWidth = Math.max(0.05, config.deltaChannelWidth || 0.48);
+        const branchRate = clamp01(config.deltaBranchRate || 0.52);
+        const sedimentMix = clamp01(config.deltaSedimentMix || 0.46);
+        const floodplainSoftness = clamp01(config.deltaFloodplainSoftness || 0.56);
+        const erosion = clamp01(config.deltaErosion || 0.38);
+        const dirX = nx * (1 + anisotropy * 3.2);
+        const dirY = ny * (1 - anisotropy * 0.25);
+        const flowWarpX =
+          simplexWarp.noise2D(dirX * naturalScale * 82 + 140.1, dirY * naturalScale * 82 - 17.2) *
+          (0.42 + warp * 2.2 + erosion * 0.52 + turbulence * 0.24);
+        const flowWarpY =
+          simplexWarp.noise2D(dirX * naturalScale * 82 - 94.7, dirY * naturalScale * 82 + 33.6) *
+          (0.28 + warp * 1.9 + erosion * 0.44 + turbulence * 0.18);
+        const px = dirX + flowWarpX;
+        const py = dirY + flowWarpY;
+        const trunk = simplexBase.noise2D(px * naturalScale * 170, py * naturalScale * 78);
+        const tributary = simplexDetail.noise2D(
+          px * naturalScale * (250 + branchRate * 110) + 22.3,
+          py * naturalScale * (250 + branchRate * 110) - 18.5,
+        );
+        const meander = simplexWarp.noise2D(
+          px * naturalScale * 118 - 71.9,
+          py * naturalScale * 118 + 44.8,
+        );
+        const turbulenceField =
+          simplexBase.noise2D(
+            px * naturalScale * 290 + 18.7,
+            py * naturalScale * 290 - 32.1,
+          ) * turbulence;
+        const branching =
+          Math.abs(
+            Math.sin(
+              (px * (6 + branchRate * 24) +
+                tributary * (2.4 + branchRate * 5.2) +
+                turbulenceField * (0.8 + branchRate * 0.9)) *
+                Math.PI,
+            ),
+          );
+        const channelSignal = Math.min(
+          Math.abs(
+            trunk +
+              meander * (0.26 + erosion * 0.74) +
+              turbulenceField * (0.1 + turbulence * 0.36),
+          ),
+          Math.abs(tributary) * (0.56 + branchRate * 0.92) +
+            branching * (0.1 + branchRate * 0.34),
+        );
+        const widthThreshold = 0.08 + channelWidth * 0.42;
+        const floodSpread = 0.08 + floodplainSoftness * 0.3 + turbulence * 0.08;
+        const channelMask = 1 - smoothstep(
+          widthThreshold,
+          widthThreshold + floodSpread,
+          channelSignal,
+        );
+        const wetBankMask = 1 - smoothstep(
+          widthThreshold + floodSpread * 0.28,
+          widthThreshold + floodSpread * (1.2 + floodplainSoftness * 0.65),
+          channelSignal,
+        );
+        const bankNoise =
+          simplexBase.noise2D(px * naturalScale * 320 + 51.2, py * naturalScale * 320 - 66.4) * 0.5 +
+          0.5;
+        const sedimentField = clamp01(
+          0.16 +
+            bankNoise * (0.28 + turbulence * 0.14) +
+            wetBankMask * (0.22 + sedimentMix * 0.56) -
+            channelMask * 0.14,
+        );
+        const floodplain = clamp01(
+          0.12 +
+            sedimentField * (0.34 + sedimentMix * 0.32) +
+            wetBankMask * (0.08 + floodplainSoftness * 0.22) +
+            simplexDetail.noise2D(
+              px * naturalScale * 140 - 11.4,
+              py * naturalScale * 140 + 76.1,
+            ) *
+              (0.1 + floodplainSoftness * 0.36 + turbulence * 0.08),
+        );
+        let [r, g, b] = sampleNaturalPalette(
+          profile.palette,
+          clamp01(
+            floodplain * (0.56 + sedimentMix * 0.18) +
+              wetBankMask * 0.12 +
+              (1 - channelMask) * 0.08,
+          ),
+        );
+        const waterShade = [
+          Math.round(lerp(profile.seamColor[0], 74, 0.48)),
+          Math.round(lerp(profile.seamColor[1], 128, 0.52)),
+          Math.round(lerp(profile.seamColor[2], 152, 0.56)),
+        ];
+        const waterMix = clamp01(channelMask * (0.72 + channelWidth * 0.22));
+        r = Math.round(lerp(r, waterShade[0], waterMix));
+        g = Math.round(lerp(g, waterShade[1], waterMix));
+        b = Math.round(lerp(b, waterShade[2], waterMix));
+        const bankMask = clamp01(
+          wetBankMask * (0.42 + erosion * 0.34) * (1 - channelMask * 0.55),
+        );
+        const sandyTint = sampleNaturalPalette(
+          profile.palette,
+          clamp01(0.7 + sedimentField * 0.28 + sedimentMix * 0.12),
+        );
+        r = Math.round(lerp(r, sandyTint[0], sedimentMix * bankMask * 0.82));
+        g = Math.round(lerp(g, sandyTint[1], sedimentMix * bankMask * 0.82));
+        b = Math.round(lerp(b, sandyTint[2], sedimentMix * bankMask * 0.68));
+        const cutBank = clamp01(
+          channelMask * (0.12 + erosion * 0.72) +
+            bankMask * (0.08 + erosion * 0.28),
+        );
+        return [
+          Math.round(lerp(r, profile.seamColor[0], cutBank)),
+          Math.round(lerp(g, profile.seamColor[1], cutBank)),
+          Math.round(lerp(b, profile.seamColor[2], cutBank * 0.92)),
+          255,
+        ];
+      }
+
       function generatePhase4ModePlaceholder(mode, force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
@@ -3754,6 +5072,7 @@
           cancelAnimationFrame(animationId);
           animationId = null;
         }
+        const runId = ++renderRunId;
         const config = getRenderConfig(renderOptions);
         const profile = getNaturalModeProfile(mode);
         const seed = parseInt(document.getElementById("seed")?.value || "0", 10) || 1;
@@ -3761,108 +5080,106 @@
         const warp = clamp01(config.naturalWarp || 0.35);
         const turbulence = Math.max(0, config.naturalTurbulence || 0.62);
         const anisotropy = clamp01(config.naturalAnisotropy || 0.25);
-        const simplexBase = createSimplex(seed ^ 0x45d9f3b);
-        const simplexWarp = createSimplex(seed ^ 0x9e3779b9);
-        const simplexDetail = createSimplex(seed ^ 0x7f4a7c15);
-        offscreenCanvas.width = config.width;
-        offscreenCanvas.height = config.height;
-        const imageData = offscreenCtx.createImageData(config.width, config.height);
-        const data = imageData.data;
-
+        const simplexBase = createSeededSimplex(seed ^ 0x45d9f3b);
+        const simplexWarp = createSeededSimplex(seed ^ 0x9e3779b9);
+        const simplexDetail = createSeededSimplex(seed ^ 0x7f4a7c15);
+        const runtime = {
+          naturalScale,
+          warp,
+          turbulence,
+          anisotropy,
+          seed,
+          simplexBase,
+          simplexWarp,
+          simplexDetail,
+        };
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
         if (generateBtn) generateBtn.disabled = !config.preview;
-        setProgressPercent(30);
+        setProgressPercent(mode === "icebloom" ? 6 : 24);
 
-        for (let y = 0; y < config.height; y++) {
-          const ny = (y - config.height * 0.5) / Math.max(1, config.height);
-          for (let x = 0; x < config.width; x++) {
-            const nx = (x - config.width * 0.5) / Math.max(1, config.width);
-            const i = (y * config.width + x) * 4;
-            const dirX = nx * (1 + anisotropy * 2.4);
-            const dirY = ny * (1 - anisotropy * 0.45);
-            const radial = Math.hypot(dirX, dirY);
-            const flowAngle = Math.atan2(dirY, dirX);
-            const warpFieldX =
-              simplexWarp.noise2D(dirX * naturalScale * 70 + 81.7, dirY * naturalScale * 70 - 9.4) *
-              warp *
-              2.1;
-            const warpFieldY =
-              simplexWarp.noise2D(dirX * naturalScale * 70 - 17.3, dirY * naturalScale * 70 + 53.1) *
-              warp *
-              2.1;
-            const px = dirX + warpFieldX;
-            const py = dirY + warpFieldY;
-            const baseNoise = getNoiseValue(
-              px * 180,
-              py * 180,
-              4,
-              naturalScale,
-              simplexBase,
-            );
-            const detailNoise = getNoiseValue(
-              px * 260 + 41.2,
-              py * 260 - 13.7,
-              3,
-              naturalScale * (1.2 + turbulence),
-              simplexDetail,
-            );
-            const bandAxis = Math.sin(flowAngle * (1.5 + profile.ridgeBias * 2.2)) * radial;
-            const rings = Math.sin(
-              (bandAxis * (18 + turbulence * 30) + baseNoise * (1.8 + profile.veinAmp * 4.2)) *
-                Math.PI,
-            );
-            const seams = Math.pow(clamp01(1 - Math.abs(rings)), 10 - profile.ridgeBias * 4);
-            const cellular =
-              simplexBase.noise2D(px * naturalScale * 420 + 123.4, py * naturalScale * 420 - 92.7) *
-              0.5 +
-              0.5;
-            const bloom = clamp01(
-              0.48 +
-                baseNoise * 0.3 +
-                detailNoise * 0.22 +
-                rings * 0.18 +
-                cellular * profile.veinAmp,
-            );
-            let [r, g, b] = sampleNaturalPalette(profile.palette, bloom);
-
-            if (mode === "bubblefilm" || mode === "icebloom") {
-              const iridescence =
-                0.5 +
-                0.5 *
-                  Math.sin(
-                    (radial * 38 + detailNoise * 9 + warpFieldX * 3 + warpFieldY * 2.4) * Math.PI,
-                  );
-              const [ir, ig, ib] = hslToRgb(
-                (profile.hueShift + iridescence * 0.28 + bloom * 0.08) % 1,
-                0.65,
-                0.68,
-              );
-              const mix = mode === "bubblefilm" ? 0.42 : 0.24;
-              r = Math.round(lerp(r, ir, mix));
-              g = Math.round(lerp(g, ig, mix));
-              b = Math.round(lerp(b, ib, mix));
-            }
-
-            const seamStrength = clamp01(seams * (0.75 + turbulence * 0.25));
-            r = Math.round(lerp(r, profile.seamColor[0], seamStrength));
-            g = Math.round(lerp(g, profile.seamColor[1], seamStrength));
-            b = Math.round(lerp(b, profile.seamColor[2], seamStrength));
-
-            data[i] = r;
-            data[i + 1] = g;
-            data[i + 2] = b;
-            data[i + 3] = 255;
+        function startWork() {
+          if (runId !== renderRunId) {
+            renderTask = null;
+            animationId = null;
+            return;
           }
-        }
+          if (mode === "icebloom") {
+            runtime.iceSegments = buildIceBloomSegments(config, runtime);
+            runtime.iceMask = createIceBloomMask(config, runtime);
+            if (runId !== renderRunId) {
+              renderTask = null;
+              animationId = null;
+              return;
+            }
+            setProgressPercent(18);
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const imageData = offscreenCtx.createImageData(config.width, config.height);
+          const data = imageData.data;
+          const rowsPerFrame = getRowsPerFrame(mode, config.preview);
+          let y = 0;
 
-        offscreenCtx.putImageData(imageData, 0, 0);
-        setProgressPercent(78);
-        finalizeImageModeRender(
-          config,
-          `${mode.replace(/([a-z])([A-Z])/g, "$1 $2")} rendered`,
-        );
-        showDebugInfo(config, { natural_mode: mode, status: "rendered" });
-        setProgressPercent(100);
+          function renderChunk() {
+            if (runId !== renderRunId) {
+              renderTask = null;
+              animationId = null;
+              return;
+            }
+          const endY = Math.min(y + rowsPerFrame, config.height);
+          for (; y < endY; y++) {
+            const ny = (y - config.height * 0.5) / Math.max(1, config.height);
+            for (let x = 0; x < config.width; x++) {
+              const nx = (x - config.width * 0.5) / Math.max(1, config.width);
+              const i = (y * config.width + x) * 4;
+              const pixel =
+                mode === "agateband"
+                  ? renderAgateBandPixel(config, profile, runtime, nx, ny)
+                  : mode === "malachiteflow"
+                    ? renderMalachiteFlowPixel(config, profile, runtime, nx, ny)
+                    : mode === "lichengrowth"
+                      ? renderLichenGrowthPixel(config, profile, runtime, nx, ny)
+                      : mode === "icebloom"
+                        ? renderIceBloomPixel(config, profile, runtime, nx, ny)
+                        : mode === "riverdelta"
+                          ? renderRiverDeltaPixel(config, profile, runtime, nx, ny)
+                          : mode === "bubblefilm"
+                            ? renderBubbleFilmPixel(config, profile, runtime, nx, ny)
+                            : renderGenericNaturalPixel(mode, config, profile, runtime, nx, ny);
+              data[i] = pixel[0];
+              data[i + 1] = pixel[1];
+              data[i + 2] = pixel[2];
+              data[i + 3] = pixel[3];
+            }
+          }
+
+          const progressStart = mode === "icebloom" ? 18 : 24;
+          const progressSpan = mode === "icebloom" ? 58 : 54;
+          setProgressPercent(progressStart + (y / config.height) * progressSpan);
+
+          if (y < config.height) {
+            animationId = requestAnimationFrame(renderChunk);
+            return;
+          }
+
+          if (runId !== renderRunId) {
+            renderTask = null;
+            animationId = null;
+            return;
+          }
+
+          offscreenCtx.putImageData(imageData, 0, 0);
+          setProgressPercent(86);
+          finalizeImageModeRender(config, getNaturalModeCompletionLabel(mode));
+          showDebugInfo(config, { natural_mode: mode, status: "rendered" });
+          setProgressPercent(100);
+          }
+
+          renderTask = renderChunk;
+          animationId = requestAnimationFrame(renderChunk);
+        }
+        renderTask = startWork;
+        animationId = requestAnimationFrame(startWork);
       }
 
       function hexToRgb(hex) {
@@ -4578,25 +5895,34 @@
                 flowMode === "circular"
                   ? Math.hypot(nx, ny) * 2.2
                   : (nx * 0.72 + ny * 0.28) * layerLength * 1.4;
+              const structureDrift =
+                noise * (0.12 + ringJitter * 1.05) +
+                angleInfluence * (0.02 + highlightStrength * 0.08);
               const ringPhase =
-                (growthAxis + noise * ringJitter) * ringSpacing * 24;
+                (growthAxis + structureDrift) * (10 + ringSpacing * 26);
               const ringWave = Math.sin(ringPhase * Math.PI);
               const seamMask = smoothstep(
-                1 - seamThickness,
+                1 - seamThickness * 1.3,
                 1,
                 Math.abs(ringWave),
               );
+              const seamFeather = smoothstep(
+                0.32,
+                0.96,
+                Math.abs(Math.sin((ringPhase * (0.56 + ringJitter * 0.42) + noise * 0.9) * Math.PI)),
+              );
 
               const geometricField = clamp01(
-                (noise * 0.7 + ringWave * 0.55 + 1) / 2,
+                (noise * (0.56 + ringJitter * 0.12) + ringWave * (0.5 + ringSpacing * 0.06) + 1) / 2,
               );
               const lightingField =
-                angleInfluence * 0.42 + highlightBoost * 0.26;
+                angleInfluence * (0.24 + lightSpread * 0.22) +
+                highlightBoost * (0.2 + highlightStrength * 0.12);
               const bandingField = clamp01(
-                (Math.sin((ringPhase + noise * 1.75) * Math.PI) + 1) / 2,
+                (Math.sin((ringPhase + noise * (1.2 + ringJitter * 1.2)) * Math.PI) + 1) / 2,
               );
               let familyBanding = bandingField;
-              let familySeam = seamMask;
+              let familySeam = clamp01(seamMask * 0.72 + seamFeather * 0.28);
               let familyBrillianceMul = 1;
               let familyChromaticMul = 1;
               let substrateCoverageBias = 0;
@@ -4623,9 +5949,9 @@
               }
 
               const nacreField = clamp01(
-                geometricField * 0.62 + familyBanding * 0.28 + familySeam * 0.1,
+                geometricField * 0.52 + familyBanding * 0.34 + familySeam * 0.14,
               );
-              const value = clamp01(nacreField * 0.9 + lightingField * 0.1);
+              const value = clamp01(nacreField * (0.78 + surfacePolish * 0.08) + lightingField * (0.14 + highlightStrength * 0.06));
               let { h, s, l } = blendPaletteColors(
                 value,
                 blendSharpness,
@@ -4685,12 +6011,12 @@
               b += scratchAmount * 0.75;
 
               const coverage = clamp01(
-                (0.36 +
-                  nacreField * 0.58 +
-                  highlightBoost * 0.14 +
+                (0.28 +
+                  nacreField * 0.64 +
+                  highlightBoost * (0.1 + highlightStrength * 0.08) +
                   substrateCoverageBias) *
                   (1 - substrateMix) +
-                  substrateMix * (0.22 + familySeam * 0.22),
+                  substrateMix * (0.18 + familySeam * 0.3),
               );
               r = substrate.r * (1 - coverage) + r * coverage;
               g = substrate.g * (1 - coverage) + g * coverage;
@@ -5583,12 +6909,40 @@
         "naturalWarp",
         "naturalTurbulence",
         "naturalAnisotropy",
+        "agateBandFreq",
+        "agateBandJitter",
+        "agateVeinDensity",
+        "agateTranslucency",
+        "agateEdgeDarken",
+        "malachiteSwirl",
+        "malachiteRingTightness",
+        "malachiteRingVariance",
+        "malachiteContrast",
+        "lichenPatchScale",
+        "lichenBranching",
+        "lichenEdgeRoughness",
+        "lichenCoverage",
+        "lichenMoistureTone",
+        "iceBranchDepth",
+        "iceBranchAngleJitter",
+        "iceFrostDensity",
+        "iceMeltSoftness",
+        "iceHaze",
+        "deltaChannelWidth",
+        "deltaBranchRate",
+        "deltaSedimentMix",
+        "deltaFloodplainSoftness",
+        "deltaErosion",
+        "bubbleCellScale",
+        "bubbleWallThickness",
+        "bubblePressureWarp",
+        "bubbleIridescence",
+        "bubbleBreakup",
         "imageFitMode",
         "imageCropScale",
         "imageRotate",
         "risoLayerCount",
         "risoPalettePreset",
-        "risoQuantMethod",
         "risoRenderStyle",
         "risoLayerAngleStep",
         "risoLayerOpacity",
@@ -5709,6 +7063,64 @@
           "Adds extra irregularity to natural forms.",
         naturalAnisotropy:
           "Stretches structures in a preferred direction.",
+        agateBandFreq:
+          "Controls how many stone bands appear across the agate. Higher values create tighter band packing.",
+        agateBandJitter:
+          "Adds wobble to the agate bands so they feel less perfectly striped.",
+        agateVeinDensity:
+          "Controls how many dark seam lines and mineral veins appear between the bands.",
+        agateTranslucency:
+          "Controls how much inner glow shows through the stone bands.",
+        agateEdgeDarken:
+          "Darkens the band edges and seams to create stronger stone layering.",
+        malachiteSwirl:
+          "Controls how much the malachite rings twist and curl into flowing swirls.",
+        malachiteRingTightness:
+          "Controls how tightly the ring bands pack together in the stone.",
+        malachiteRingVariance:
+          "Adds uneven spacing so the ring pattern feels more natural and less perfect.",
+        malachiteContrast:
+          "Controls the difference between dark and bright green bands.",
+        lichenPatchScale:
+          "Controls the size of the lichen colonies. Lower values make broader patches; higher values create smaller clustered growth.",
+        lichenBranching:
+          "Controls how much the lichen edge grows outward into branching, creeping shapes.",
+        lichenEdgeRoughness:
+          "Adds ragged, broken edges so the colony feels more organic and crusty.",
+        lichenCoverage:
+          "Controls how much of the surface the lichen colonies cover.",
+        lichenMoistureTone:
+          "Shifts the lichen toward drier pale growth or darker, damper mossy growth.",
+        iceBranchDepth:
+          "Controls how far the crystal branches reach before they fade out.",
+        iceBranchAngleJitter:
+          "Adds variation to crystal branch direction so the bloom feels less rigid.",
+        iceFrostDensity:
+          "Controls how much frosty grain fills the spaces around the crystal branches.",
+        iceMeltSoftness:
+          "Softens hard crystal edges so the bloom can feel colder, foggier, or slightly thawed.",
+        iceHaze:
+          "Adds a pale icy mist over the bloom to brighten the colder parts of the texture.",
+        deltaChannelWidth:
+          "Controls how wide the main water channels appear in the river pattern.",
+        deltaBranchRate:
+          "Controls how often the river splits into smaller branches.",
+        deltaSedimentMix:
+          "Controls how much sandy or muddy color spreads out from the channels into the surrounding land.",
+        deltaFloodplainSoftness:
+          "Softens the transition between water channels, banks, and open floodplain areas.",
+        deltaErosion:
+          "Carves the channel network more aggressively for sharper river paths and cut banks.",
+        bubbleCellScale:
+          "Controls the size of the soap-film cells. Lower values create bigger bubbles; higher values create a tighter cellular sheet.",
+        bubbleWallThickness:
+          "Controls how thick the dark film walls are between neighboring bubbles.",
+        bubblePressureWarp:
+          "Bends and stretches the bubble cells so the film looks pressurized instead of perfectly even.",
+        bubbleIridescence:
+          "Controls the strength of the rainbow sheen moving across the film walls and thinner areas.",
+        bubbleBreakup:
+          "Adds torn, thinning, or collapsing areas where the film starts to break apart.",
         imageFitMode:
           "Defines how an uploaded image fits inside the render frame.",
         imageCropScale:
@@ -5717,8 +7129,6 @@
           "Rotates the uploaded image before processing.",
         risoLayerCount:
           "Target number of color layers used for risograph separation.",
-        risoQuantMethod:
-          "Method used to separate image colors into printable layer groups.",
         risoRenderStyle:
           "Original V1 restores the first Riso Image separation behavior. Legacy gives playful one-pass dots, and Layered adds per-layer overrides.",
         risoLayerAngleStep:
@@ -6027,11 +7437,30 @@
         ).filter((row) => !row.hidden);
         list.innerHTML = "";
         const titleKey = (sectionTitle || "").toLowerCase();
+        const activeMode = document.getElementById("modeSelector")?.value || "";
         if (titleKey.includes("riso layers")) {
           const intro = document.createElement("p");
           intro.className = "help-v";
           intro.textContent =
             "Risograph-style separation splits your image into tone-based ink passes. Each layer is a stencil for a tone range: Tone Min/Max chooses what brightness it prints, Angle rotates its screen pattern, and Opacity controls ink strength. Overlap blends neighboring layers for smoother transitions. Layer View lets you inspect all layers, a single layer, or a custom visible set. The current UI is capped to 6 layers for performance and readability, but the concept itself can scale beyond that.";
+          list.appendChild(intro);
+        } else if (titleKey.includes("natural")) {
+          const intro = document.createElement("p");
+          intro.className = "help-v";
+          intro.textContent =
+            activeMode === "agateband"
+              ? "Agate Bands builds layered stone bands and mineral seams. These controls shape the band flow, glow through the stone, and the dark edges that separate each layer."
+              : activeMode === "malachiteflow"
+                ? "Malachite Flow builds swirling green ring structures like polished stone. These controls shape the curl of the rings, how tightly they pack together, and how dramatic the dark-to-bright transitions feel."
+                : activeMode === "lichengrowth"
+                  ? "Lichen Growth builds creeping surface colonies with ragged edges. These controls shape the size of each patch, how much the edges branch outward, and whether the growth feels dry and chalky or darker and damp."
+                : activeMode === "icebloom"
+                  ? "Ice Crystal Bloom builds branching frost patterns with pale icy haze. These controls shape how far the crystal branches travel, how much frost fills the gaps, and how sharp or softened the bloom appears."
+                : activeMode === "riverdelta"
+                  ? "River Delta builds branching water channels, banks, and sediment spread. These controls shape how the water splits, how wide the channels feel, and how soft the surrounding floodplain becomes."
+                  : activeMode === "bubblefilm"
+                    ? "Bubble Film builds a thin soap-film sheet made of neighboring cells and dark membrane walls. These controls shape cell size, wall thickness, rainbow sheen, and how much the film starts to tear or collapse."
+                    : "Natural modes use the same shared scaffold, then shape it into different organic patterns. These controls change the visible structure, color balance, and fine surface detail.";
           list.appendChild(intro);
         }
 
@@ -6513,6 +7942,7 @@
           el.value = String(value);
           markControlPending(el);
         });
+        updateVisibleSections(document.getElementById("modeSelector")?.value || "motherofpearl");
         updatePendingStatus();
       }
 
@@ -6570,6 +8000,7 @@
           !!document.getElementById("smartRandomToggle")?.checked;
         const randomSeed = Math.floor(Math.random() * 2147483647);
         const set = (id, val, decimals = 2) => {
+          if (!isControlRelevantForMode(mode, id)) return;
           if (isControlLocked(id)) return;
           const el = document.getElementById(id);
           if (!el) return;
@@ -6578,6 +8009,7 @@
           markControlPending(el);
         };
         const setCheck = (id, checked) => {
+          if (!isControlRelevantForMode(mode, id)) return;
           if (isControlLocked(id)) return;
           const el = document.getElementById(id);
           if (!el) return;
@@ -6682,6 +8114,58 @@
           set("topoRidge", randomBetween(0.2, 0.9), 2);
           set("topoWarp", randomBetween(0.15, 0.75), 2);
           set("topoErosion", randomBetween(0.1, 0.85), 2);
+        } else if (mode === "agateband") {
+          set("naturalScale", randomBetween(0.003, 0.012), 3);
+          set("naturalWarp", randomBetween(0.12, 0.72), 2);
+          set("agateBandFreq", randomBetween(0.65, 1.95), 2);
+          set("agateBandJitter", randomBetween(0.08, 0.7), 2);
+          set("agateVeinDensity", randomBetween(0.3, 1.2), 2);
+          set("agateTranslucency", randomBetween(0.2, 0.88), 2);
+          set("agateEdgeDarken", randomBetween(0.18, 0.82), 2);
+        } else if (mode === "malachiteflow") {
+          set("naturalScale", randomBetween(0.002, 0.01), 3);
+          set("naturalWarp", randomBetween(0.14, 0.78), 2);
+          set("naturalTurbulence", randomBetween(0.18, 0.88), 2);
+          set("naturalAnisotropy", randomBetween(0.08, 0.44), 2);
+          set("malachiteSwirl", randomBetween(0.18, 0.9), 2);
+          set("malachiteRingTightness", randomBetween(0.62, 1.78), 2);
+          set("malachiteRingVariance", randomBetween(0.1, 0.82), 2);
+          set("malachiteContrast", randomBetween(0.68, 1.62), 2);
+        } else if (mode === "lichengrowth") {
+          set("naturalScale", randomBetween(0.003, 0.013), 3);
+          set("naturalWarp", randomBetween(0.04, 0.48), 2);
+          set("lichenPatchScale", randomBetween(0.48, 1.72), 2);
+          set("lichenBranching", randomBetween(0.08, 0.82), 2);
+          set("lichenEdgeRoughness", randomBetween(0.12, 0.92), 2);
+          set("lichenCoverage", randomBetween(0.18, 0.86), 2);
+          set("lichenMoistureTone", randomBetween(0.08, 0.86), 2);
+        } else if (mode === "icebloom") {
+          set("naturalScale", randomBetween(0.003, 0.014), 3);
+          set("naturalWarp", randomBetween(0.04, 0.52), 2);
+          set("iceBranchDepth", randomBetween(0.58, 1.82), 2);
+          set("iceBranchAngleJitter", randomBetween(0.04, 0.72), 2);
+          set("iceFrostDensity", randomBetween(0.22, 1.22), 2);
+          set("iceMeltSoftness", randomBetween(0.04, 0.72), 2);
+          set("iceHaze", randomBetween(0.12, 0.82), 2);
+        } else if (mode === "riverdelta") {
+          set("naturalScale", randomBetween(0.002, 0.009), 3);
+          set("naturalWarp", randomBetween(0.1, 0.62), 2);
+          set("naturalTurbulence", randomBetween(0.18, 1.05), 2);
+          set("naturalAnisotropy", randomBetween(0.16, 0.88), 2);
+          set("deltaChannelWidth", randomBetween(0.18, 0.95), 2);
+          set("deltaBranchRate", randomBetween(0.18, 0.86), 2);
+          set("deltaSedimentMix", randomBetween(0.12, 0.9), 2);
+          set("deltaFloodplainSoftness", randomBetween(0.16, 0.9), 2);
+          set("deltaErosion", randomBetween(0.08, 0.82), 2);
+        } else if (mode === "bubblefilm") {
+          set("naturalScale", randomBetween(0.002, 0.011), 3);
+          set("naturalWarp", randomBetween(0.08, 0.62), 2);
+          set("naturalTurbulence", randomBetween(0.04, 0.68), 2);
+          set("bubbleCellScale", randomBetween(0.54, 1.86), 2);
+          set("bubbleWallThickness", randomBetween(0.04, 0.28), 2);
+          set("bubblePressureWarp", randomBetween(0.08, 0.82), 2);
+          set("bubbleIridescence", randomBetween(0.22, 0.95), 2);
+          set("bubbleBreakup", randomBetween(0.06, 0.82), 2);
         } else if (mode === "risograph") {
           set("risoDotSize", randomBetween(3, 20), 0);
           set("risoThreshold", randomBetween(90, 190), 0);
@@ -7370,7 +8854,15 @@
           document.body.setAttribute("data-mode", mode);
           updateVisibleSections(mode);
           updateRisoLayerOverrideRows();
+          schedulePreviewRender();
           scheduleFinalRender();
+        });
+
+      document
+        .getElementById("textureFamily")
+        ?.addEventListener("change", () => {
+          const mode = document.getElementById("modeSelector")?.value || "motherofpearl";
+          updateVisibleSections(mode);
         });
 
       const risoLayerCountEl = document.getElementById("risoLayerCount");
