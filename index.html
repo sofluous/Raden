@@ -88,7 +88,7 @@
 
       .panel-tabs {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: var(--ds-space-2);
       }
 
@@ -120,34 +120,22 @@
         padding: 0 var(--ds-space-2);
       }
 
-      .panel-settings-btn[aria-expanded="true"] {
+      .panel-settings-btn.is-active {
         border-color: var(--ds-tab-active-border, var(--ds-accent));
+        background: var(--ds-tab-active-bg, color-mix(in oklab, var(--ds-accent) 18%, var(--ds-btn-bg)));
         color: var(--ds-tab-active-fg, var(--ds-text));
-        background: var(--ds-tab-active-bg, color-mix(in oklab, var(--ds-accent) 15%, var(--ds-btn-bg)));
-      }
-
-      .settings-menu {
-        position: absolute;
-        top: calc(100% + var(--ds-space-2));
-        right: 0;
-        width: min(280px, calc(100% - var(--ds-space-2)));
-        display: grid;
-        gap: var(--ds-space-2);
-        padding: var(--ds-space-2);
-        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
-        border-radius: var(--ds-radius-2);
-        background: color-mix(in oklab, var(--ds-bg-elevated) 96%, transparent);
-        box-shadow: var(--ds-card-shadow);
-        z-index: calc(var(--ds-z-toast) - 1);
-      }
-
-      .settings-menu[hidden] {
-        display: none;
       }
 
       .settings-row {
         display: grid;
-        gap: 6px;
+        grid-template-columns: minmax(
+            130px,
+            var(--ds-field-label-w, var(--raden-row-label-width))
+          ) minmax(0, 1fr) minmax(var(--ds-field-action-w, var(--raden-row-action-w)), auto);
+        align-items: center;
+        gap: var(--ds-field-row-gap, var(--ds-space-2));
+        min-width: 0;
+        min-height: var(--ds-control-h-sm);
       }
 
       .settings-row label {
@@ -157,7 +145,8 @@
         color: var(--ds-text-muted);
       }
 
-      #settingsMenu select {
+      #tabSettings select,
+      #tabExport select {
         width: 100%;
         min-height: var(--ds-control-h);
         border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
@@ -168,8 +157,26 @@
         padding: var(--ds-space-2) var(--ds-space-3);
       }
 
-      #settingsMenu .ds-btn {
+      #tabSettings .control-input,
+      #tabExport .control-input {
+        min-width: 0;
         width: 100%;
+      }
+
+      #tabSettings .settings-row input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--ds-accent);
+      }
+
+      #tabSettings .settings-row .control-icons,
+      #tabExport .control-row .control-icons {
+        min-width: var(--ds-field-action-w, var(--raden-row-action-w));
+      }
+
+      #tabSettings .panel-tab,
+      #tabExport .panel-tab {
+        gap: var(--ds-space-2);
       }
 
       .panel-tab {
@@ -671,12 +678,6 @@
         border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
       }
 
-      .generate-actions {
-        display: flex;
-        gap: var(--ds-space-2);
-        flex-wrap: wrap;
-      }
-
       #control-actions {
         display: flex;
         align-items: center;
@@ -687,13 +688,12 @@
         border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
       }
 
-      #control-actions #status {
-        margin-right: auto;
-        max-width: min(62%, 320px);
+      #control-actions [hidden] {
+        display: none !important;
       }
 
       #status {
-        max-width: 68%;
+        max-width: 100%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -702,6 +702,16 @@
         padding: 4px 10px;
         font-size: var(--ds-fs-1);
         color: var(--ds-text-muted);
+      }
+
+      #tabGallery {
+        display: grid;
+        gap: var(--ds-space-3);
+        align-content: start;
+      }
+
+      #tabGallery[hidden] {
+        display: none;
       }
 
       #status[data-state="queued"],
@@ -879,7 +889,6 @@
             >
               Gallery
             </button>
-
             <button
               id="tabBtnGenerate"
               class="panel-tab-btn is-active"
@@ -887,6 +896,14 @@
               data-tab="generate"
             >
               Texture
+            </button>
+            <button
+              id="tabBtnPost"
+              class="panel-tab-btn"
+              type="button"
+              data-tab="post"
+            >
+              Post
             </button>
             <button
               id="tabBtnExport"
@@ -898,39 +915,15 @@
             </button>
           </div>
           <button
-            id="settingsBtn"
+            id="tabBtnSettings"
             class="panel-settings-btn icon-btn icon-only ds-icon-action"
             type="button"
-            aria-expanded="false"
-            aria-controls="settingsMenu"
+            data-tab="settings"
             title="Settings"
+            aria-label="Settings"
           >
             <i class="iconoir-settings"></i>
           </button>
-          <div id="settingsMenu" class="settings-menu" hidden>
-            <div class="settings-row">
-              <label for="themeSelect">Theme</label>
-              <select
-                id="themeSelect"
-                data-ds-theme-select
-              ></select>
-            </div>
-            <div class="settings-row">
-              <label for="performanceProfile">Performance Profile</label>
-              <select id="performanceProfile">
-                <option value="balanced">Balanced</option>
-                <option value="fast">Fast Preview</option>
-                <option value="high">High Quality</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <label for="debugPanelToggle">Debug Panel</label>
-              <input id="debugPanelToggle" type="checkbox" />
-            </div>
-            <button id="runQaChecksBtn" class="ds-btn" type="button">
-              Run QA Checks
-            </button>
-          </div>
         </div>
       </div>
       <div id="control-scroll" class="ds-scroll">
@@ -1002,7 +995,7 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Render Size Preset:</div>
+              <div class="control-label">Preset:</div>
               <div class="control-input">
                 <select id="resolutionPreset">
                   <option value="">Auto (Window Size)</option>
@@ -1017,7 +1010,7 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Render Size (px, max 4096):</div>
+              <div class="control-label">Dimension:</div>
               <div class="control-input">
                 <div class="res-inputs">
                   <input
@@ -1041,7 +1034,7 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Canvas View Zoom:</div>
+              <div class="control-label">Canvas Zoom:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2613,111 +2606,160 @@
           </div>
         </div>
 
+        <div id="tabPost" class="panel-tab" hidden></div>
+
         <div id="tabExport" class="panel-tab" hidden>
-          <div class="section">
-            <h3>Export Settings</h3>
-            <div class="control-row">
-              <div class="control-label">File Type:</div>
-              <div class="control-input">
-                <select id="exportFileType">
-                  <option value="png">PNG</option>
-                  <option value="jpeg">JPEG</option>
-                  <option value="webp">WebP</option>
-                </select>
-              </div>
-              <div class="control-icons"></div>
+          <div class="control-row">
+            <div class="control-label">File Type:</div>
+            <div class="control-input">
+              <select id="exportFileType">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="webp">WebP</option>
+              </select>
             </div>
-            <div class="control-row">
-              <div class="control-label">Quality:</div>
-              <div class="control-input">
-                <input
-                  type="range"
-                  id="exportQuality"
-                  min="0.4"
-                  max="1"
-                  step="0.01"
-                  value="0.92"
-                />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row">
-              <div class="control-label">Crop Mode:</div>
-              <div class="control-input">
-                <select id="exportCropMode">
-                  <option value="full">Full Canvas</option>
-                  <option value="custom">Custom (Drag Handles)</option>
-                  <option value="square">Square</option>
-                  <option value="portrait">Portrait (4:5)</option>
-                  <option value="landscape">Landscape (16:9)</option>
-                </select>
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row">
-              <div class="control-label">Resize Export:</div>
-              <div class="control-input">
-                <input type="checkbox" id="exportResizeEnabled" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row">
-              <div class="control-label">Resize To (px):</div>
-              <div class="control-input">
-                <div class="res-inputs">
-                  <input type="number" id="exportWidth" min="1" value="1920" />
-                  <span>x</span>
-                  <input type="number" id="exportHeight" min="1" value="1080" />
-                </div>
-              </div>
-              <div class="control-icons"></div>
-            </div>
+            <div class="control-icons"></div>
           </div>
-          <div class="section">
-            <h3>Export Action</h3>
-            <div class="export-row">
-              <button
-                id="exportFromPanelBtn"
-                class="ds-btn ds-btn-primary"
-                type="button"
-              >
-                Export File
-              </button>
+          <div class="control-row">
+            <div class="control-label">Quality:</div>
+            <div class="control-input">
+              <input
+                type="range"
+                id="exportQuality"
+                min="0.4"
+                max="1"
+                step="0.01"
+                value="0.92"
+              />
             </div>
+            <div class="control-icons"></div>
+          </div>
+          <div class="control-row">
+            <div class="control-label">Crop Mode:</div>
+            <div class="control-input">
+              <select id="exportCropMode">
+                <option value="full">Full Canvas</option>
+                <option value="custom">Custom (Drag Handles)</option>
+                <option value="square">Square</option>
+                <option value="portrait">Portrait (4:5)</option>
+                <option value="landscape">Landscape (16:9)</option>
+              </select>
+            </div>
+            <div class="control-icons"></div>
+          </div>
+          <div class="control-row">
+            <div class="control-label">Resize Export:</div>
+            <div class="control-input">
+              <input type="checkbox" id="exportResizeEnabled" />
+            </div>
+            <div class="control-icons"></div>
+          </div>
+          <div class="control-row">
+            <div class="control-label">Resize To (px):</div>
+            <div class="control-input">
+              <div class="res-inputs">
+                <input type="number" id="exportWidth" min="1" value="1920" />
+                <span>x</span>
+                <input type="number" id="exportHeight" min="1" value="1080" />
+              </div>
+            </div>
+            <div class="control-icons"></div>
           </div>
         </div>
 
         <div id="tabGallery" class="panel-tab" hidden>
-          <div class="section">
-            <h3>Gallery</h3>
-            <div class="export-row">
-              <button id="clearGalleryBtn" class="ds-btn" type="button">
-                Clear Gallery
-              </button>
+          <div id="galleryGrid" class="gallery-grid"></div>
+        </div>
+
+        <div id="tabSettings" class="panel-tab" hidden>
+          <div class="settings-row">
+            <label for="themeSelect">Theme</label>
+            <div class="control-input">
+              <select
+                id="themeSelect"
+                data-ds-theme-select
+              ></select>
             </div>
-            <div id="galleryGrid" class="gallery-grid"></div>
+            <div class="control-icons"></div>
+          </div>
+          <div class="settings-row">
+            <label for="performanceProfile">Performance Profile</label>
+            <div class="control-input">
+              <select id="performanceProfile">
+                <option value="balanced">Balanced</option>
+                <option value="fast">Fast Preview</option>
+                <option value="high">High Quality</option>
+              </select>
+            </div>
+            <div class="control-icons"></div>
+          </div>
+          <div class="settings-row">
+            <label for="debugPanelToggle">Debug Panel</label>
+            <div class="control-input">
+              <input id="debugPanelToggle" type="checkbox" />
+            </div>
+            <div class="control-icons"></div>
           </div>
         </div>
       </div>
-      <div id="control-actions">
+      <div id="control-footer">
         <div id="status" data-state="idle">Idle</div>
+      </div>
+      <div id="control-actions">
         <button
-          id="randomizeBtn"
+          id="textureRandomizeBtn"
           class="ds-btn icon-btn"
           type="button"
-          title="Randomize settings"
+          title="Randomize texture settings"
         >
           <i class="iconoir-dice-three"></i>
           <span>Randomize</span>
         </button>
         <button
-          id="saveSnapshotBtn"
+          id="postRandomizeBtn"
+          class="ds-btn icon-btn"
+          type="button"
+          title="Randomize post-processing settings"
+          hidden
+        >
+          <i class="iconoir-dice-three"></i>
+          <span>Randomize Post</span>
+        </button>
+        <button
+          id="saveResultBtn"
           class="ds-btn ds-btn-primary icon-btn"
           type="button"
-          title="Snapshot"
+          title="Save snapshot"
         >
           <i class="iconoir-media-image-plus"></i>
-          <span>Snapshot</span>
+          <span>Save</span>
+        </button>
+        <button
+          id="exportActionBtn"
+          class="ds-btn ds-btn-primary icon-btn"
+          type="button"
+          hidden
+        >
+          <i class="iconoir-download"></i>
+          <span>Export File</span>
+        </button>
+        <button
+          id="clearGalleryActionBtn"
+          class="ds-btn icon-btn"
+          type="button"
+          hidden
+        >
+          <i class="iconoir-trash"></i>
+          <span>Clear Gallery</span>
+        </button>
+        <button
+          id="runQaActionBtn"
+          class="ds-btn icon-btn"
+          type="button"
+          hidden
+        >
+          <i class="iconoir-check-circle"></i>
+          <span>Run QA Checks</span>
         </button>
       </div>
     </div>
@@ -3287,11 +3329,6 @@
           "naturalScale",
           "naturalWarp",
           "naturalTurbulence",
-          "bubbleCellScale",
-          "bubblePressureWarp",
-          "bubbleIridescence",
-          "bubbleWallThickness",
-          "bubbleBreakup",
         ]),
         risoimage: new Set([
           "imageFitMode",
@@ -3357,6 +3394,57 @@
           "risoThreshold",
         ]),
       };
+      const MODE_CONTROL_ATTRIBUTE_OVERRIDES = {
+        bubblefilm: {
+          naturalScale: { min: "0.0015", max: "0.012", step: "0.0005" },
+          naturalWarp: { min: "0", max: "0.75", step: "0.01" },
+          naturalTurbulence: { min: "0", max: "0.9", step: "0.01" },
+          bubbleCellScale: { min: "0.15", max: "3.4", step: "0.01" },
+          bubbleWallThickness: { min: "0.01", max: "0.85", step: "0.01" },
+          bubblePressureWarp: { min: "0", max: "1", step: "0.01" },
+          bubbleIridescence: { min: "0", max: "1", step: "0.01" },
+          bubbleBreakup: { min: "0", max: "1", step: "0.01" },
+        },
+      };
+
+      function applyModeControlAttributeOverrides(mode) {
+        const modeOverrides = MODE_CONTROL_ATTRIBUTE_OVERRIDES[mode] || {};
+        const overriddenIds = new Set(Object.keys(modeOverrides));
+        const allIds = new Set(
+          Object.values(MODE_CONTROL_ATTRIBUTE_OVERRIDES).flatMap((controls) =>
+            Object.keys(controls),
+          ),
+        );
+        allIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (!el.dataset.defaultMin) {
+            el.dataset.defaultMin = el.min ?? "";
+            el.dataset.defaultMax = el.max ?? "";
+            el.dataset.defaultStep = el.step ?? "";
+          }
+          const overrides = modeOverrides[id];
+          if (overrides) {
+            if (overrides.min != null) el.min = overrides.min;
+            if (overrides.max != null) el.max = overrides.max;
+            if (overrides.step != null) el.step = overrides.step;
+            const numericValue = parseFloat(el.value);
+            const min = parseFloat(el.min);
+            const max = parseFloat(el.max);
+            if (Number.isFinite(numericValue) && Number.isFinite(min) && numericValue < min) {
+              el.value = String(min);
+            } else if (Number.isFinite(numericValue) && Number.isFinite(max) && numericValue > max) {
+              el.value = String(max);
+            }
+            return;
+          }
+          if (!overriddenIds.has(id)) {
+            el.min = el.dataset.defaultMin;
+            el.max = el.dataset.defaultMax;
+            el.step = el.dataset.defaultStep;
+          }
+        });
+      }
       const MODE_SCOPED_CONTROL_IDS = new Set(
         Object.values(MODE_ACTIVE_CONTROL_IDS).flatMap((set) => Array.from(set)),
       );
@@ -3672,8 +3760,20 @@
                 const explicitModes = row.dataset.mode
                   ? row.dataset.mode.split(",").map((s) => s.trim())
                   : null;
+                const rowControlIds = getRowControlIds(row).filter((id) =>
+                  MODE_SCOPED_CONTROL_IDS.has(id),
+                );
                 if (explicitModes) {
-                  row.hidden = !explicitModes.includes(mode);
+                  const modeMatch = explicitModes.includes(mode);
+                  if (!modeMatch) {
+                    row.hidden = true;
+                    return;
+                  }
+                  if (!rowControlIds.length) {
+                    row.hidden = false;
+                    return;
+                  }
+                  row.hidden = rowControlIds.every((id) => !activeControls.has(id));
                   return;
                 }
                 const controlId = row.dataset.controlId;
@@ -3681,9 +3781,6 @@
                   row.hidden = !activeControls.has(controlId);
                   return;
                 }
-                const rowControlIds = getRowControlIds(row).filter((id) =>
-                  MODE_SCOPED_CONTROL_IDS.has(id),
-                );
                 if (!rowControlIds.length) return;
                 row.hidden = rowControlIds.every((id) => !activeControls.has(id));
               });
@@ -3730,6 +3827,7 @@
           const shouldShow = (modes.includes("all") || modes.includes(mode)) && familyMatch;
           row.hidden = !shouldShow;
         });
+        applyModeControlAttributeOverrides(mode);
         updateNaturalSharedControlVisibility(mode);
         applyStrictModeControlVisibility(mode);
         enforceNaturalModeControlVisibility(mode);
@@ -4928,7 +5026,9 @@
         r = Math.round(lerp(r, 22, thinning * 0.42));
         g = Math.round(lerp(g, 20, thinning * 0.42));
         b = Math.round(lerp(b, 28, thinning * 0.46));
-        const tearHighlight = clamp01(tearEdge * (0.18 + breakup * 0.34) + iridescence * thinFilmMask * 0.1);
+        const tearHighlight = clamp01(
+          tearEdge * (0.18 + breakup * 0.34) + iridescence * thinFilmMask * 0.1,
+        );
         r = Math.round(lerp(r, 244, tearHighlight * 0.22));
         g = Math.round(lerp(g, 248, tearHighlight * 0.24));
         b = Math.round(lerp(b, 255, tearHighlight * 0.28));
@@ -7652,12 +7752,12 @@
         const initialMode = modeSelector?.value || "motherofpearl";
         const allGenerateControls = Array.from(
           document.querySelectorAll(
-            "#tabGenerate input[id], #tabGenerate select[id]",
+            "#tabGenerate input[id], #tabGenerate select[id], #tabPost input[id], #tabPost select[id]",
           ),
         );
         const allGenerateInputs = Array.from(
           document.querySelectorAll(
-            "#tabGenerate .control-row input, #tabGenerate .control-row select",
+            "#tabGenerate .control-row input, #tabGenerate .control-row select, #tabPost .control-row input, #tabPost .control-row select",
           ),
         );
         const missingHelpCustom = [];
@@ -7689,7 +7789,7 @@
           modeSelector.value = mode;
           updateVisibleSections(mode);
           const visibleModeRows = Array.from(
-            document.querySelectorAll("#tabGenerate .control-row"),
+            document.querySelectorAll("#tabGenerate .control-row, #tabPost .control-row"),
           ).filter((row) => !row.hidden);
           if (visibleModeRows.length < 3) {
             issues.push(`Mode ${mode} has too few visible controls`);
@@ -7947,8 +8047,10 @@
       function setActiveTab(tabName) {
         const tabMap = {
           generate: document.getElementById("tabGenerate"),
+          post: document.getElementById("tabPost"),
           export: document.getElementById("tabExport"),
           gallery: document.getElementById("tabGallery"),
+          settings: document.getElementById("tabSettings"),
         };
         Object.entries(tabMap).forEach(([key, el]) => {
           if (!el) return;
@@ -7957,7 +8059,43 @@
         document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
           btn.classList.toggle("is-active", btn.dataset.tab === tabName);
         });
+        const settingsTabBtn = document.getElementById("tabBtnSettings");
+        if (settingsTabBtn) {
+          settingsTabBtn.classList.toggle("is-active", tabName === "settings");
+        }
+        updateActionBar(tabName);
         updateExportCropOverlay();
+      }
+
+      function updateActionBar(tabName) {
+        const actionButtons = {
+          textureRandomizeBtn: tabName === "generate",
+          postRandomizeBtn: tabName === "post",
+          saveResultBtn: tabName === "generate" || tabName === "post",
+          exportActionBtn: tabName === "export",
+          clearGalleryActionBtn: tabName === "gallery",
+          runQaActionBtn: tabName === "settings",
+        };
+        Object.entries(actionButtons).forEach(([id, visible]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.hidden = !visible;
+          el.style.marginLeft = "";
+        });
+        const clearGalleryBtn = document.getElementById("clearGalleryActionBtn");
+        if (clearGalleryBtn && tabName === "gallery") {
+          clearGalleryBtn.style.marginLeft = "auto";
+        }
+      }
+
+      function mountDeferredPanelSections() {
+        const postTab = document.getElementById("tabPost");
+        if (postTab) {
+          ["postProcessingSection", "experimentalSection"].forEach((id) => {
+            const section = document.getElementById(id);
+            if (section) postTab.appendChild(section);
+          });
+        }
       }
 
       function getControlState() {
@@ -7992,7 +8130,7 @@
         return min + Math.random() * (max - min);
       }
 
-      function randomizeSettings() {
+      function randomizeTextureSettings() {
         const mode = document.getElementById("modeSelector").value;
         const smartRandom =
           !!document.getElementById("smartRandomToggle")?.checked;
@@ -8022,19 +8160,6 @@
         set("blend", randomBetween(0.7, 2.6), 2);
         set("intensity", randomBetween(55, 210), 0);
         set("layerLength", randomBetween(0.15, 1.9), 2);
-        set("boostR", randomBetween(0.9, 1.25), 2);
-        set("boostG", randomBetween(0.9, 1.25), 2);
-        set("boostB", randomBetween(0.9, 1.25), 2);
-        set("gaussianBlur", randomBetween(0.2, 3.2), 2);
-        setCheck("grainToggle", Math.random() > 0.2);
-        set("fxChromatic", randomBetween(0, 1.5), 1);
-        set("fxGlitch", randomBetween(0, 0.2), 2);
-        set("fxScanline", randomBetween(0, 0.25), 2);
-        const invertEl = document.getElementById("fxInvert");
-        if (invertEl && !isControlLocked("fxInvert")) {
-          invertEl.checked = Math.random() < 0.08;
-          markControlPending(invertEl);
-        }
 
         if (mode === "motherofpearl") {
           const palettes = ["classic", "abalone", "silver", "pinkgreen"];
@@ -8159,11 +8284,6 @@
           set("naturalScale", randomBetween(0.002, 0.011), 3);
           set("naturalWarp", randomBetween(0.08, 0.62), 2);
           set("naturalTurbulence", randomBetween(0.04, 0.68), 2);
-          set("bubbleCellScale", randomBetween(0.54, 1.86), 2);
-          set("bubbleWallThickness", randomBetween(0.04, 0.28), 2);
-          set("bubblePressureWarp", randomBetween(0.08, 0.82), 2);
-          set("bubbleIridescence", randomBetween(0.22, 0.95), 2);
-          set("bubbleBreakup", randomBetween(0.06, 0.82), 2);
         } else if (mode === "risograph") {
           set("risoDotSize", randomBetween(3, 20), 0);
           set("risoThreshold", randomBetween(90, 190), 0);
@@ -8626,7 +8746,43 @@
         setStatus("complete", "Snapshot saved");
       }
 
+      function randomizePostSettings() {
+        const set = (id, val, decimals = 2) => {
+          if (isControlLocked(id)) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          const v = typeof val === "number" ? val.toFixed(decimals) : val;
+          el.value = String(v);
+          markControlPending(el);
+        };
+        const setCheck = (id, checked) => {
+          if (isControlLocked(id)) return;
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.checked = !!checked;
+          markControlPending(el);
+        };
+
+        set("boostR", randomBetween(0.9, 1.25), 2);
+        set("boostG", randomBetween(0.9, 1.25), 2);
+        set("boostB", randomBetween(0.9, 1.25), 2);
+        set("gaussianBlur", randomBetween(0.2, 3.2), 2);
+        setCheck("grainToggle", Math.random() > 0.2);
+        set("fxChromatic", randomBetween(0, 1.5), 1);
+        set("fxGlitch", randomBetween(0, 0.2), 2);
+        set("fxScanline", randomBetween(0, 0.25), 2);
+        const invertEl = document.getElementById("fxInvert");
+        if (invertEl && !isControlLocked("fxInvert")) {
+          invertEl.checked = Math.random() < 0.08;
+          markControlPending(invertEl);
+        }
+        updatePendingStatus();
+        schedulePreviewRender();
+        scheduleFinalRender();
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
+        mountDeferredPanelSections();
         const mode = document.getElementById("modeSelector").value;
         document.body.setAttribute("data-mode", mode);
         updateVisibleSections(mode);
@@ -8634,28 +8790,7 @@
         setStatus("idle", "Idle");
         setActiveTab("generate");
 
-        const settingsBtn = document.getElementById("settingsBtn");
-        const settingsMenu = document.getElementById("settingsMenu");
         const debugPanelToggle = document.getElementById("debugPanelToggle");
-        const setSettingsOpen = (open) => {
-          if (!settingsBtn || !settingsMenu) return;
-          settingsMenu.hidden = !open;
-          settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
-        };
-
-        if (settingsBtn && settingsMenu) {
-          settingsBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            setSettingsOpen(settingsMenu.hidden);
-          });
-          settingsMenu.addEventListener("click", (e) => e.stopPropagation());
-          document.addEventListener("click", () => setSettingsOpen(false));
-          document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-              setSettingsOpen(false);
-            }
-          });
-        }
         if (debugPanelToggle) {
           debugPanelToggle.checked = false;
           debugPanelToggle.addEventListener("change", (e) => {
@@ -8680,10 +8815,9 @@
         const topoPresetEl = document.getElementById("topoPreset");
         if (topoPresetEl && topoPresetEl.value !== "custom") {
           applyTopoPreset(topoPresetEl.value);
-          clearPendingIndicators();
         }
 
-
+        clearPendingIndicators();
         document
           .querySelectorAll("#controls input, #controls select")
           .forEach((el) => {
@@ -8710,8 +8844,16 @@
         });
       });
 
-      document.getElementById("randomizeBtn").addEventListener("click", () => {
-        randomizeSettings();
+      document.getElementById("tabBtnSettings")?.addEventListener("click", () => {
+        setActiveTab("settings");
+      });
+
+      document.getElementById("textureRandomizeBtn").addEventListener("click", () => {
+        randomizeTextureSettings();
+      });
+
+      document.getElementById("postRandomizeBtn").addEventListener("click", () => {
+        randomizePostSettings();
       });
 
       document
@@ -8719,12 +8861,6 @@
         .addEventListener("change", (e) => {
           savePerformanceProfile(e.target.value);
           scheduleFinalRender();
-        });
-
-      document
-        .getElementById("runQaChecksBtn")
-        .addEventListener("click", () => {
-          runQaChecks();
         });
 
       document
@@ -8736,17 +8872,13 @@
           scheduleFinalRender();
         });
 
-      document
-        .getElementById("exportFromPanelBtn")
-        .addEventListener("click", () => {
-          exportWithOptions();
-        });
+      document.getElementById("exportActionBtn").addEventListener("click", () => {
+        exportWithOptions();
+      });
 
-      document
-        .getElementById("saveSnapshotBtn")
-        .addEventListener("click", () => {
-          saveSnapshot();
-        });
+      document.getElementById("saveResultBtn").addEventListener("click", () => {
+        saveSnapshot();
+      });
 
       document
         .getElementById("captureCompareBtn")
@@ -8776,14 +8908,16 @@
           generateSeedVariants();
         });
 
-      document
-        .getElementById("clearGalleryBtn")
-        .addEventListener("click", () => {
-          galleryItems = [];
-          selectedGalleryItemId = null;
-          saveGallery();
-          renderGallery();
-        });
+      document.getElementById("clearGalleryActionBtn").addEventListener("click", () => {
+        galleryItems = [];
+        selectedGalleryItemId = null;
+        saveGallery();
+        renderGallery();
+      });
+
+      document.getElementById("runQaActionBtn").addEventListener("click", () => {
+        runQaChecks();
+      });
 
       document
         .getElementById("exportResizeEnabled")
@@ -8926,7 +9060,7 @@
         .forEach((el) => {
           if (el.dataset.live !== "true") {
             el.addEventListener("input", () => {
-              if (!el.closest("#tabGenerate")) return;
+              if (!el.closest("#tabGenerate, #tabPost")) return;
               if (isUiOnlyControl(el)) return;
               markControlPending(el);
               schedulePreviewRender(el);
@@ -8934,7 +9068,7 @@
             });
 
             el.addEventListener("change", () => {
-              if (!el.closest("#tabGenerate")) return;
+              if (!el.closest("#tabGenerate, #tabPost")) return;
               if (isUiOnlyControl(el)) return;
               scheduleFinalRender();
             });
@@ -8943,9 +9077,3 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
