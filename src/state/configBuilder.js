@@ -159,8 +159,6 @@
       risoLayerCount: getInput("risoLayerCount", true),
       risoPalettePreset:
         document.getElementById("risoPalettePreset")?.value || "warm-duo",
-      risoQuantMethod:
-        document.getElementById("risoQuantMethod")?.value || "kmeans",
       risoRenderStyle:
         document.getElementById("risoRenderStyle")?.value || "original",
       risoLayerAngleStep: getInput("risoLayerAngleStep"),

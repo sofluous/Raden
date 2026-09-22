@@ -18,7 +18,7 @@
         --raden-section-gap: var(--ds-space-3);
         --raden-row-gap: var(--ds-space-2);
         --raden-row-label-width: var(--ds-field-label-w, 11.5rem);
-        --raden-row-action-w: var(--ds-field-action-w, calc(var(--ds-control-h-sm) + 8px));
+        --raden-row-action-w: max(var(--ds-field-action-w, 0px), 8.75rem);
       }
 
       html,
@@ -131,7 +131,7 @@
         grid-template-columns: minmax(
             130px,
             var(--ds-field-label-w, var(--raden-row-label-width))
-          ) minmax(0, 1fr) minmax(var(--ds-field-action-w, var(--raden-row-action-w)), auto);
+          ) minmax(0, 1fr) var(--raden-row-action-w);
         align-items: center;
         gap: var(--ds-field-row-gap, var(--ds-space-2));
         min-width: 0;
@@ -171,7 +171,8 @@
 
       #tabSettings .settings-row .control-icons,
       #tabExport .control-row .control-icons {
-        min-width: var(--ds-field-action-w, var(--raden-row-action-w));
+        min-width: 0;
+        width: 100%;
       }
 
       #tabSettings .panel-tab,
@@ -239,7 +240,7 @@
         grid-template-columns: minmax(
             130px,
             var(--ds-field-label-w, var(--raden-row-label-width))
-          ) minmax(0, 1fr) minmax(var(--ds-field-action-w, var(--raden-row-action-w)), auto);
+          ) minmax(0, 1fr) var(--raden-row-action-w);
         align-items: center;
         gap: var(--ds-field-row-gap, var(--ds-space-2));
         min-width: 0;
@@ -260,7 +261,13 @@
         align-items: center;
         gap: var(--ds-space-2);
         min-height: var(--ds-section-head-h, var(--ds-control-h-sm));
+        border-radius: var(--ds-radius-2);
         cursor: pointer;
+      }
+
+      .section-heading:focus-visible {
+        outline: 2px solid var(--ds-focus);
+        outline-offset: 2px;
       }
 
       .section-heading-actions {
@@ -351,12 +358,20 @@
         width: 100%;
       }
 
+      .control-input.has-range-readout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 4.75rem;
+        align-items: center;
+        gap: var(--ds-space-2);
+      }
+
       .control-icons {
         display: flex;
         gap: 6px;
         justify-content: flex-end;
-        min-width: var(--ds-field-action-w, var(--raden-row-action-w));
-        width: auto;
+        align-items: center;
+        min-width: 0;
+        width: 100%;
       }
 
       .icon-btn {
@@ -369,6 +384,7 @@
         margin: 0;
         gap: 6px;
         box-sizing: border-box;
+        max-width: 100%;
       }
 
       .icon-btn.icon-only {
@@ -380,8 +396,21 @@
       }
 
       .icon-btn i {
+        flex: 0 0 auto;
         font-size: 18px;
         line-height: 1;
+      }
+
+      .control-icons .ds-btn {
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .control-icons .ds-btn span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .control-lock-btn {
@@ -452,6 +481,24 @@
         accent-color: var(--ds-accent);
       }
 
+      .range-readout {
+        min-width: 0;
+        min-height: var(--ds-control-h-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 0.5rem;
+        border: var(--ds-border-w) var(--ds-border-style)
+          color-mix(in oklab, var(--ds-input-border) 72%, transparent);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-input-readonly-bg, color-mix(in oklab, var(--ds-bg-raised) 80%, transparent));
+        color: var(--ds-input-readonly-text, var(--ds-text-muted));
+        font: 600 var(--ds-fs-1) / 1 var(--ds-font-mono);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       .control-input input[type="checkbox"] {
         width: 18px;
         height: 18px;
@@ -479,11 +526,10 @@
         }
 
       .riso-layer-row {
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-columns: minmax(2.25rem, var(--raden-row-label-width)) minmax(0, 1fr) var(--raden-row-action-w);
       }
 
       .riso-layer-row .control-label {
-        min-width: 2.25rem;
         white-space: nowrap;
       }
 
@@ -567,9 +613,15 @@
           color-mix(in oklab, var(--ds-accent-strong) 48%, black) 8%
         );
         padding: 6px;
+        cursor: pointer;
         transition:
           border-color var(--ds-dur-fast) var(--ds-ease-standard),
-          box-shadow var(--ds-dur-fast) var(--ds-ease-standard);
+          box-shadow var(--ds-dur-fast) var(--ds-ease-standard),
+          transform var(--ds-dur-fast) var(--ds-ease-standard);
+      }
+
+      .gallery-tile:hover {
+        transform: translateY(-1px);
       }
 
       .gallery-tile:focus-visible {
@@ -588,8 +640,9 @@
           var(--ds-accent) 58%,
           var(--ds-border-strong)
         );
-        box-shadow: 0 0 0 1px
-          color-mix(in oklab, var(--ds-accent) 45%, transparent);
+        box-shadow:
+          0 0 0 1px color-mix(in oklab, var(--ds-accent) 45%, transparent),
+          0 8px 22px color-mix(in oklab, black 22%, transparent);
       }
 
       .gallery-tile img {
@@ -648,6 +701,20 @@
         width: 100%;
         min-width: 0;
         padding: 0.35rem 0.45rem;
+        gap: 4px;
+      }
+
+      .gallery-actions .btn i {
+        flex: 0 0 auto;
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      .gallery-actions .btn span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .gallery-tile:hover .gallery-actions,
@@ -940,7 +1007,7 @@
                   <option value="agateband">Agate Bands</option>
                   <option value="malachiteflow">Malachite Flow</option>
                   <option value="lichengrowth">Lichen Growth</option>
-                  <option value="icebloom">Ice Crystal Bloom</option>
+                  <option value="icebloom">Ice Crystal Bloom (Deferred)</option>
                   <option value="riverdelta">River Delta</option>
                   <option value="bubblefilm">Bubble Film</option>
                   <option value="risoimage">Riso Image</option>
@@ -2018,20 +2085,6 @@
               </div>
               <div class="control-icons"></div>
             </div>
-            <div class="control-row" data-mode="bubblefilm">
-              <div class="control-label">Cell Scale:</div>
-              <div class="control-input">
-                <input type="range" id="bubbleCellScale" min="0.2" max="2.4" step="0.01" value="1.06" data-live="false" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row" data-mode="bubblefilm">
-              <div class="control-label">Pressure Warp:</div>
-              <div class="control-input">
-                <input type="range" id="bubblePressureWarp" min="0" max="1" step="0.01" value="0.42" data-live="false" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
           </div>
 
           <div
@@ -2079,13 +2132,6 @@
               <div class="control-label">Moisture Tone:</div>
               <div class="control-input">
                 <input type="range" id="lichenMoistureTone" min="0" max="1" step="0.01" value="0.48" data-live="false" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row" data-mode="bubblefilm">
-              <div class="control-label">Iridescence:</div>
-              <div class="control-input">
-                <input type="range" id="bubbleIridescence" min="0" max="1" step="0.01" value="0.72" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
@@ -2150,20 +2196,6 @@
               <div class="control-label">Edge Roughness:</div>
               <div class="control-input">
                 <input type="range" id="lichenEdgeRoughness" min="0" max="1" step="0.01" value="0.58" data-live="false" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row" data-mode="bubblefilm">
-              <div class="control-label">Wall Thickness:</div>
-              <div class="control-input">
-                <input type="range" id="bubbleWallThickness" min="0.02" max="0.5" step="0.01" value="0.14" data-live="false" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <div class="control-row" data-mode="bubblefilm">
-              <div class="control-label">Breakup:</div>
-              <div class="control-input">
-                <input type="range" id="bubbleBreakup" min="0" max="1" step="0.01" value="0.36" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
@@ -3107,6 +3139,7 @@
         if (zoomInput) zoomInput.value = "1";
         if (panXInput) panXInput.value = "0";
         if (panYInput) panYInput.value = "0";
+        syncRangeReadouts();
         applyCanvasViewTransform();
       }
 
@@ -3135,6 +3168,7 @@
             const next = Math.max(0.25, Math.min(2, current * factor));
             if (Math.abs(next - current) < 0.0001) return;
             zoomInput.value = next.toFixed(2);
+            updateRangeReadout(zoomInput);
             applyCanvasViewTransform();
             updateExportCropOverlay();
             updateCanvasViewportCursor();
@@ -3165,6 +3199,7 @@
           const dy = e.clientY - viewportPanState.startClientY;
           panXInput.value = String(Math.round(viewportPanState.startPanX + dx));
           panYInput.value = String(Math.round(viewportPanState.startPanY + dy));
+          syncRangeReadouts();
           applyCanvasViewTransform();
           updateExportCropOverlay();
         });
@@ -3399,11 +3434,6 @@
           naturalScale: { min: "0.0015", max: "0.012", step: "0.0005" },
           naturalWarp: { min: "0", max: "0.75", step: "0.01" },
           naturalTurbulence: { min: "0", max: "0.9", step: "0.01" },
-          bubbleCellScale: { min: "0.15", max: "3.4", step: "0.01" },
-          bubbleWallThickness: { min: "0.01", max: "0.85", step: "0.01" },
-          bubblePressureWarp: { min: "0", max: "1", step: "0.01" },
-          bubbleIridescence: { min: "0", max: "1", step: "0.01" },
-          bubbleBreakup: { min: "0", max: "1", step: "0.01" },
         },
       };
 
@@ -3436,12 +3466,14 @@
             } else if (Number.isFinite(numericValue) && Number.isFinite(max) && numericValue > max) {
               el.value = String(max);
             }
+            updateRangeReadout(el);
             return;
           }
           if (!overriddenIds.has(id)) {
             el.min = el.dataset.defaultMin;
             el.max = el.dataset.defaultMax;
             el.step = el.dataset.defaultStep;
+            updateRangeReadout(el);
           }
         });
       }
@@ -3910,7 +3942,53 @@
         updatePendingStatus();
       }
 
+      function formatRangeReadout(range) {
+        const raw = Number(range.value);
+        if (!Number.isFinite(raw)) return range.value || "";
+        const stepRaw = range.getAttribute("step");
+        if (!stepRaw || stepRaw === "any") return String(raw);
+        const step = Number(stepRaw);
+        if (!Number.isFinite(step) || step <= 0) return String(raw);
+        const decimals = Math.min(
+          4,
+          Math.max(0, (String(stepRaw).split(".")[1] || "").length),
+        );
+        return raw.toFixed(decimals);
+      }
+
+      function updateRangeReadout(range) {
+        if (!range || range.type !== "range") return;
+        const readout = document.getElementById(`${range.id}Readout`);
+        if (!readout) return;
+        readout.value = formatRangeReadout(range);
+        readout.textContent = readout.value;
+      }
+
+      function syncRangeReadouts(scope = document) {
+        scope.querySelectorAll?.('input[type="range"][id]').forEach(updateRangeReadout);
+      }
+
+      function enhanceRangeReadouts() {
+        document.querySelectorAll('#controls input[type="range"][id]').forEach((range) => {
+          const inputWrap = range.closest(".control-input");
+          if (!inputWrap || inputWrap.querySelector(`#${range.id}Readout`)) {
+            updateRangeReadout(range);
+            return;
+          }
+          inputWrap.classList.add("has-range-readout");
+          const readout = document.createElement("output");
+          readout.id = `${range.id}Readout`;
+          readout.className = "range-readout";
+          readout.setAttribute("for", range.id);
+          readout.setAttribute("aria-label", `${range.id} value`);
+          inputWrap.appendChild(readout);
+          range.addEventListener("input", () => updateRangeReadout(range));
+          updateRangeReadout(range);
+        });
+      }
+
       function markControlPending(el) {
+        updateRangeReadout(el);
         el.classList.add("pending-change");
         const controlRow = el.closest(".control-row");
         if (!controlRow) return;
@@ -4233,11 +4311,6 @@
           deltaSedimentMix: getInput("deltaSedimentMix"),
           deltaFloodplainSoftness: getInput("deltaFloodplainSoftness"),
           deltaErosion: getInput("deltaErosion"),
-          bubbleCellScale: getInput("bubbleCellScale"),
-          bubbleWallThickness: getInput("bubbleWallThickness"),
-          bubblePressureWarp: getInput("bubblePressureWarp"),
-          bubbleIridescence: getInput("bubbleIridescence"),
-          bubbleBreakup: getInput("bubbleBreakup"),
           imageFitMode: document.getElementById("imageFitMode")?.value || "contain",
           imageCropScale: getInput("imageCropScale"),
           imageRotate: getInput("imageRotate"),
@@ -4940,11 +5013,11 @@
 
       function renderBubbleFilmPixel(config, profile, runtime, nx, ny) {
         const { naturalScale, warp, turbulence, simplexBase, simplexWarp, simplexDetail } = runtime;
-        const cellScale = Math.max(0.2, config.bubbleCellScale || 1.06);
-        const wallThickness = Math.max(0.01, config.bubbleWallThickness || 0.14);
-        const pressureWarp = clamp01(config.bubblePressureWarp || 0.42);
-        const iridescence = clamp01(config.bubbleIridescence || 0.72);
-        const breakup = clamp01(config.bubbleBreakup || 0.36);
+        const cellScale = 1.06;
+        const wallThickness = 0.14;
+        const pressureWarp = 0.42;
+        const iridescence = 0.72;
+        const breakup = 0.36;
         const pxBase = nx;
         const pyBase = ny;
         const warpX =
@@ -7031,11 +7104,6 @@
         "deltaSedimentMix",
         "deltaFloodplainSoftness",
         "deltaErosion",
-        "bubbleCellScale",
-        "bubbleWallThickness",
-        "bubblePressureWarp",
-        "bubbleIridescence",
-        "bubbleBreakup",
         "imageFitMode",
         "imageCropScale",
         "imageRotate",
@@ -7209,16 +7277,6 @@
           "Softens the transition between water channels, banks, and open floodplain areas.",
         deltaErosion:
           "Carves the channel network more aggressively for sharper river paths and cut banks.",
-        bubbleCellScale:
-          "Controls the size of the soap-film cells. Lower values create bigger bubbles; higher values create a tighter cellular sheet.",
-        bubbleWallThickness:
-          "Controls how thick the dark film walls are between neighboring bubbles.",
-        bubblePressureWarp:
-          "Bends and stretches the bubble cells so the film looks pressurized instead of perfectly even.",
-        bubbleIridescence:
-          "Controls the strength of the rainbow sheen moving across the film walls and thinner areas.",
-        bubbleBreakup:
-          "Adds torn, thinning, or collapsing areas where the film starts to break apart.",
         imageFitMode:
           "Defines how an uploaded image fits inside the render frame.",
         imageCropScale:
@@ -7630,6 +7688,10 @@
 
       function setSectionCollapsed(section, collapseBtn, collapsed) {
         section.classList.toggle("is-collapsed", !!collapsed);
+        const heading = section.querySelector(".section-heading");
+        if (heading) {
+          heading.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        }
         collapseBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
         collapseBtn.title = collapsed ? "Expand section" : "Collapse section";
       }
@@ -7648,10 +7710,14 @@
           if (!headingWrap) {
             headingWrap = document.createElement("div");
             headingWrap.className = "section-heading";
+            headingWrap.tabIndex = 0;
+            headingWrap.setAttribute("role", "button");
             const parent = h3.parentElement;
             parent.insertBefore(headingWrap, h3);
             headingWrap.appendChild(h3);
           }
+          headingWrap.tabIndex = 0;
+          headingWrap.setAttribute("role", "button");
 
           let actionsWrap = headingWrap.querySelector(".section-heading-actions");
           if (!actionsWrap) {
@@ -7709,6 +7775,15 @@
           }
 
           if (!headingWrap.dataset.collapseBound) {
+            const toggleHeading = () => {
+              const collapsed = !section.classList.contains("is-collapsed");
+              collapsedSections[sectionId] = collapsed;
+              if (!collapsed) {
+                delete collapsedSections[sectionId];
+              }
+              saveCollapsedSections(collapsedSections);
+              setSectionCollapsed(section, collapseBtn, collapsed);
+            };
             headingWrap.addEventListener("click", (e) => {
               if (
                 e.target.closest(
@@ -7717,13 +7792,19 @@
               ) {
                 return;
               }
-              const collapsed = !section.classList.contains("is-collapsed");
-              collapsedSections[sectionId] = collapsed;
-              if (!collapsed) {
-                delete collapsedSections[sectionId];
+              toggleHeading();
+            });
+            headingWrap.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              if (
+                e.target.closest(
+                  ".section-heading-actions, .section-collapse-btn, .section-help-btn",
+                )
+              ) {
+                return;
               }
-              saveCollapsedSections(collapsedSections);
-              setSectionCollapsed(section, collapseBtn, collapsed);
+              e.preventDefault();
+              toggleHeading();
             });
             headingWrap.dataset.collapseBound = "1";
           }
@@ -8120,10 +8201,12 @@
           } else {
             el.value = String(value);
           }
+          updateRangeReadout(el);
         });
         const mode = document.getElementById("modeSelector").value;
         document.body.setAttribute("data-mode", mode);
         updateVisibleSections(mode);
+        syncRangeReadouts();
       }
 
       function randomBetween(min, max) {
@@ -8665,6 +8748,12 @@
           if (selectedGalleryItemId === item.id) tile.classList.add("is-selected");
           tile.dataset.id = item.id;
           tile.tabIndex = 0;
+          tile.setAttribute("role", "button");
+          tile.setAttribute(
+            "aria-pressed",
+            selectedGalleryItemId === item.id ? "true" : "false",
+          );
+          tile.setAttribute("aria-label", `Select snapshot ${item.label}`);
           const img = document.createElement("img");
           img.src = item.thumbnail;
           img.alt = item.label;
@@ -8685,7 +8774,9 @@
           actions.className = "gallery-actions";
           const delBtn = document.createElement("button");
           delBtn.className = "ds-btn ds-btn-sm btn";
-          delBtn.textContent = "Delete";
+          delBtn.title = "Delete snapshot";
+          delBtn.setAttribute("aria-label", `Delete snapshot ${item.label}`);
+          delBtn.innerHTML = '<i class="iconoir-trash"></i><span>Delete</span>';
           delBtn.onclick = () => {
             galleryItems = galleryItems.filter((g) => g.id !== item.id);
             if (selectedGalleryItemId === item.id) selectedGalleryItemId = null;
@@ -8695,7 +8786,9 @@
 
           const recallBtn = document.createElement("button");
           recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary btn";
-          recallBtn.textContent = "Recall";
+          recallBtn.title = "Recall snapshot";
+          recallBtn.setAttribute("aria-label", `Recall snapshot ${item.label}`);
+          recallBtn.innerHTML = '<i class="iconoir-refresh"></i><span>Recall</span>';
           recallBtn.onclick = () => {
             applyControlState(item.settings);
             setActiveTab("generate");
@@ -8809,6 +8902,7 @@
           savePerformanceProfile(key);
         }
         toggleDebugPanel(false);
+        enhanceRangeReadouts();
         enhanceControlUtilities();
         enhanceSectionHelp();
 
@@ -8816,6 +8910,7 @@
         if (topoPresetEl && topoPresetEl.value !== "custom") {
           applyTopoPreset(topoPresetEl.value);
         }
+        syncRangeReadouts();
 
         clearPendingIndicators();
         document
