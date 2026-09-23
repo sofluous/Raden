@@ -2834,10 +2834,22 @@
     <script src="./design-system/js/theme-registry.js"></script>
     <script src="./design-system/js/theme-selector.js"></script>
     <script src="./src/shared/math_color_palette.js"></script>
+    <script src="./src/state/schema.js"></script>
     <script src="./src/state/configBuilder.js"></script>
     <script src="./src/state/persistence.js"></script>
     <script src="./src/core/status.js"></script>
     <script src="./src/core/scheduler.js"></script>
+    <script src="./src/modes/registry.js"></script>
+    <script src="./src/ui/visibility.js"></script>
+    <script src="./src/ui/controls.js"></script>
+    <script src="./src/ui/locks.js"></script>
+    <script src="./src/ui/help.js"></script>
+    <script src="./src/ui/tabs.js"></script>
+    <script src="./src/ui/gallery.js"></script>
+    <script src="./src/ui/export.js"></script>
+    <script src="./src/render/sourceImage.js"></script>
+    <script src="./src/render/pipeline.js"></script>
+    <script src="./src/render/postFx.js"></script>
     <script>
       let debugVisible = false;
       let statusController = null;
@@ -3218,10 +3230,10 @@
       }
 
       let simplex;
-      let renderTask = null;
       let originalImageData = null;
-      let animationId = null;
-      let renderRunId = 0;
+      const renderPipeline = window.RadenRenderPipeline?.createRenderPipeline
+        ? window.RadenRenderPipeline.createRenderPipeline()
+        : null;
       let previewDebounceId = null;
       let finalDebounceId = null;
       const HEAVY_CONTROL_IDS = [
@@ -3246,189 +3258,9 @@
         "canvasPanX",
         "canvasPanY",
       ];
-      const MODE_ACTIVE_CONTROL_IDS = {
-        motherofpearl: new Set([
-          "scale",
-          "layers",
-          "flowMode",
-          "layerLength",
-          "ringSpacing",
-          "ringJitter",
-          "seamThickness",
-          "seamContrast",
-          "highlightStrength",
-          "lightAngle",
-          "lightCurvature",
-          "lightSpread",
-          "scratchDensity",
-          "scratchAngle",
-          "surfacePolish",
-          "intensity",
-          "range",
-          "substrateTone",
-          "substrateMix",
-          "nacrePalette",
-          "nacreBrilliance",
-          "nacreChromatic",
-          "textureFamily",
-          "opalCellScale",
-          "opalVeinDensity",
-          "opalFire",
-          "opalMatrix",
-          "labradoriteScale",
-          "labradoriteDirection",
-          "labradoriteBanding",
-          "labradoriteFlash",
-          "labradoriteDarkness",
-        ]),
-        opalvein: new Set([
-          "opalCellScale",
-          "opalVeinDensity",
-          "opalFire",
-          "opalMatrix",
-        ]),
-        labradorite: new Set([
-          "labradoriteScale",
-          "labradoriteDirection",
-          "labradoriteBanding",
-          "labradoriteFlash",
-          "labradoriteDarkness",
-        ]),
-        marbleink: new Set([
-          "marbleFlowScale",
-          "marbleVeinFreq",
-          "marbleContrast",
-          "marbleInkDrift",
-          "marbleLightness",
-        ]),
-        topography: new Set([
-          "scale",
-          "layers",
-          "topoPreset",
-          "topoNoiseType",
-          "topoBandCount",
-          "topoRenderMode",
-          "topoRidge",
-          "topoWarp",
-          "topoErosion",
-        ]),
-        agateband: new Set([
-          "naturalScale",
-          "naturalWarp",
-          "agateBandFreq",
-          "agateBandJitter",
-          "agateVeinDensity",
-          "agateTranslucency",
-          "agateEdgeDarken",
-        ]),
-        malachiteflow: new Set([
-          "naturalScale",
-          "naturalWarp",
-          "naturalTurbulence",
-          "naturalAnisotropy",
-          "malachiteSwirl",
-          "malachiteRingTightness",
-          "malachiteRingVariance",
-          "malachiteContrast",
-        ]),
-        lichengrowth: new Set([
-          "naturalScale",
-          "naturalWarp",
-          "lichenPatchScale",
-          "lichenBranching",
-          "lichenCoverage",
-          "lichenMoistureTone",
-          "lichenEdgeRoughness",
-        ]),
-        icebloom: new Set([
-          "naturalScale",
-          "naturalWarp",
-          "iceBranchDepth",
-          "iceBranchAngleJitter",
-          "iceFrostDensity",
-          "iceMeltSoftness",
-          "iceHaze",
-        ]),
-        riverdelta: new Set([
-          "naturalScale",
-          "naturalWarp",
-          "naturalTurbulence",
-          "naturalAnisotropy",
-          "deltaChannelWidth",
-          "deltaBranchRate",
-          "deltaSedimentMix",
-          "deltaFloodplainSoftness",
-          "deltaErosion",
-        ]),
-        bubblefilm: new Set([
-          "naturalScale",
-          "naturalWarp",
-          "naturalTurbulence",
-        ]),
-        risoimage: new Set([
-          "imageFitMode",
-          "imageCropScale",
-          "imageRotate",
-          "risoRenderStyle",
-          "risoPalettePreset",
-          "risoLayerCount",
-          "risoLayerAngleStep",
-          "risoLayerOpacity",
-          "risoLayerOverlap",
-          "risoColorSplit",
-          "risoLayerViewMode",
-          "risoActiveLayer",
-          "risoVisibleL1",
-          "risoVisibleL2",
-          "risoVisibleL3",
-          "risoVisibleL4",
-          "risoVisibleL5",
-          "risoVisibleL6",
-          "risoL1Angle",
-          "risoL1Opacity",
-          "risoL1ToneMin",
-          "risoL1ToneMax",
-          "risoL2Angle",
-          "risoL2Opacity",
-          "risoL2ToneMin",
-          "risoL2ToneMax",
-          "risoL3Angle",
-          "risoL3Opacity",
-          "risoL3ToneMin",
-          "risoL3ToneMax",
-          "risoL4Angle",
-          "risoL4Opacity",
-          "risoL4ToneMin",
-          "risoL4ToneMax",
-          "risoL5Angle",
-          "risoL5Opacity",
-          "risoL5ToneMin",
-          "risoL5ToneMax",
-          "risoL6Angle",
-          "risoL6Opacity",
-          "risoL6ToneMin",
-          "risoL6ToneMax",
-          "ditherDotSize",
-          "ditherDotSpread",
-          "ditherUniformity",
-          "ditherDotShape",
-        ]),
-        pixelretro: new Set([
-          "imageFitMode",
-          "imageCropScale",
-          "imageRotate",
-          "palettePreset",
-          "paletteSize",
-          "colorDepthBits",
-          "pixelBlockSize",
-          "ditherBayerSize",
-          "scanlineStrength",
-        ]),
-        risograph: new Set([
-          "risoDotSize",
-          "risoThreshold",
-        ]),
-      };
+      const MODE_ACTIVE_CONTROL_IDS = window.RadenModes?.getActiveControlIdMap
+        ? window.RadenModes.getActiveControlIdMap()
+        : {};
       const MODE_CONTROL_ATTRIBUTE_OVERRIDES = {
         bubblefilm: {
           naturalScale: { min: "0.0015", max: "0.012", step: "0.0005" },
@@ -3499,6 +3331,32 @@
         : null;
       if (statusController?.isDebugVisible) {
         debugVisible = statusController.isDebugVisible();
+      }
+
+      function cancelRenderFrame() {
+        renderPipeline?.cancelFrame?.();
+      }
+
+      function nextRenderRunId() {
+        return renderPipeline?.nextRunId?.() || 0;
+      }
+
+      function isRenderRunCurrent(runId) {
+        return renderPipeline?.isCurrentRun?.(runId) ?? true;
+      }
+
+      function clearRenderTask() {
+        renderPipeline?.clearTask?.();
+      }
+
+      function setRenderTask(task) {
+        renderPipeline?.setTask?.(task);
+      }
+
+      function requestRenderFrame(task) {
+        return renderPipeline?.requestFrame
+          ? renderPipeline.requestFrame(task)
+          : requestAnimationFrame(task);
       }
 
       function isHeavyControl(el) {
@@ -3741,131 +3599,33 @@
         return NACRE_PALETTES[name] || NACRE_PALETTES.classic;
       }
 
-      function updateNaturalSharedControlVisibility(mode) {
-        const allowedControls = NATURAL_SHARED_CONTROL_VISIBILITY[mode] || null;
-        document
-          .querySelectorAll("#naturalGeometrySection .control-row[data-control-id]")
-          .forEach((row) => {
-            const controlId = row.dataset.controlId;
-            if (!allowedControls || !controlId) return;
-            row.hidden = !allowedControls.has(controlId);
-          });
-      }
+      let visibilityController = null;
 
-      function getRowControlIds(row) {
-        return Array.from(
-          row.querySelectorAll("input[id], select[id], textarea[id]"),
-        )
-          .map((el) => el.id)
-          .filter(Boolean);
-      }
-
-      function applyStrictModeControlVisibility(mode) {
-        const activeControls = MODE_ACTIVE_CONTROL_IDS[mode];
-        if (!activeControls) return;
-        document.querySelectorAll("#controls .control-row").forEach((row) => {
-          if (row.hidden) return;
-          const parentSection = row.closest(".section");
-          const isScopedRow =
-            !!row.dataset.mode ||
-            !!row.dataset.family ||
-            !!row.dataset.controlId ||
-            !!parentSection?.dataset.mode ||
-            !!parentSection?.dataset.family;
-          if (!isScopedRow) return;
-          const rowControlIds = getRowControlIds(row).filter(
-            (id) => !UI_ONLY_CONTROL_IDS.includes(id) && MODE_SCOPED_CONTROL_IDS.has(id),
-          );
-          if (!rowControlIds.length) return;
-          row.hidden = rowControlIds.every((id) => !activeControls.has(id));
-        });
-      }
-
-      function enforceNaturalModeControlVisibility(mode) {
-        const activeControls = MODE_ACTIVE_CONTROL_IDS[mode];
-        if (!activeControls) return;
-        ["naturalGeometrySection", "naturalColorSection", "naturalDetailSection"].forEach(
-          (sectionId) => {
-            document
-              .querySelectorAll(`#${sectionId} .control-row`)
-              .forEach((row) => {
-                const explicitModes = row.dataset.mode
-                  ? row.dataset.mode.split(",").map((s) => s.trim())
-                  : null;
-                const rowControlIds = getRowControlIds(row).filter((id) =>
-                  MODE_SCOPED_CONTROL_IDS.has(id),
-                );
-                if (explicitModes) {
-                  const modeMatch = explicitModes.includes(mode);
-                  if (!modeMatch) {
-                    row.hidden = true;
-                    return;
-                  }
-                  if (!rowControlIds.length) {
-                    row.hidden = false;
-                    return;
-                  }
-                  row.hidden = rowControlIds.every((id) => !activeControls.has(id));
-                  return;
-                }
-                const controlId = row.dataset.controlId;
-                if (controlId) {
-                  row.hidden = !activeControls.has(controlId);
-                  return;
-                }
-                if (!rowControlIds.length) return;
-                row.hidden = rowControlIds.every((id) => !activeControls.has(id));
-              });
-          },
-        );
+      function getVisibilityController() {
+        if (visibilityController) return visibilityController;
+        visibilityController = window.RadenUiVisibility?.createVisibilityController
+          ? window.RadenUiVisibility.createVisibilityController({
+              activeControlMap: MODE_ACTIVE_CONTROL_IDS,
+              modeScopedControlIds: MODE_SCOPED_CONTROL_IDS,
+              uiOnlyControlIds: UI_ONLY_CONTROL_IDS,
+              naturalSharedControlVisibility: NATURAL_SHARED_CONTROL_VISIBILITY,
+              applyModeControlAttributeOverrides,
+              updateRisoEngineVisibility,
+            })
+          : null;
+        return visibilityController;
       }
 
       function isControlRelevantForMode(mode, controlId) {
-        const activeControls = MODE_ACTIVE_CONTROL_IDS[mode];
-        if (!activeControls) return true;
-        if (!MODE_SCOPED_CONTROL_IDS.has(controlId)) return true;
-        return activeControls.has(controlId);
+        return getVisibilityController()?.isControlRelevantForMode(mode, controlId) ?? true;
       }
 
       function updateVisibleSections(mode) {
-        const textureFamily =
-          document.getElementById("textureFamily")?.value || "classic";
-        const allSections = document.querySelectorAll("#controls .section");
-        allSections.forEach((section) => {
-          const modes = section.dataset.mode
-            ? section.dataset.mode.split(",").map((s) => s.trim())
-            : ["all"];
-          const familyMatch =
-            !section.dataset.family ||
-            mode !== "motherofpearl" ||
-            section.dataset.family === textureFamily;
-          const shouldShow = (modes.includes("all") || modes.includes(mode)) && familyMatch;
-          section.hidden = !shouldShow;
-        });
-
-        const allRows = document.querySelectorAll("#controls .control-row");
-        allRows.forEach((row) => {
-          const parentSection = row.closest(".section");
-          const effectiveModeSource = row.dataset.mode || parentSection?.dataset.mode || "all";
-          const modes = effectiveModeSource
-            .split(",")
-            .map((s) => s.trim());
-          const effectiveFamily =
-            row.dataset.family || parentSection?.dataset.family || "";
-          const familyMatch =
-            !effectiveFamily ||
-            mode !== "motherofpearl" ||
-            effectiveFamily === textureFamily;
-          const shouldShow = (modes.includes("all") || modes.includes(mode)) && familyMatch;
-          row.hidden = !shouldShow;
-        });
-        applyModeControlAttributeOverrides(mode);
-        updateNaturalSharedControlVisibility(mode);
-        applyStrictModeControlVisibility(mode);
-        enforceNaturalModeControlVisibility(mode);
-        updateRisoEngineVisibility();
+        const controller = getVisibilityController();
+        if (controller?.updateVisibleSections) {
+          controller.updateVisibleSections(mode);
+        }
       }
-
       function updateRisoEngineVisibility() {
         const mode = document.getElementById("modeSelector")?.value;
         const style =
@@ -3879,6 +3639,16 @@
           el.hidden = !showLayered;
         });
         updateRisoLayerViewUi();
+      }
+
+      function syncModeSelectorLabels() {
+        if (!window.RadenModes?.getMode) return;
+        document.querySelectorAll("#modeSelector option").forEach((option) => {
+          const mode = window.RadenModes.getMode(option.value);
+          if (!mode) return;
+          option.textContent =
+            mode.status === "deferred" ? `${mode.label} (Deferred)` : mode.label;
+        });
       }
 
       function applyTopoPreset(name, options = {}) {
@@ -3943,60 +3713,25 @@
       }
 
       function formatRangeReadout(range) {
-        const raw = Number(range.value);
-        if (!Number.isFinite(raw)) return range.value || "";
-        const stepRaw = range.getAttribute("step");
-        if (!stepRaw || stepRaw === "any") return String(raw);
-        const step = Number(stepRaw);
-        if (!Number.isFinite(step) || step <= 0) return String(raw);
-        const decimals = Math.min(
-          4,
-          Math.max(0, (String(stepRaw).split(".")[1] || "").length),
-        );
-        return raw.toFixed(decimals);
+        return window.RadenUiControls?.formatRangeReadout
+          ? window.RadenUiControls.formatRangeReadout(range)
+          : range?.value || "";
       }
 
       function updateRangeReadout(range) {
-        if (!range || range.type !== "range") return;
-        const readout = document.getElementById(`${range.id}Readout`);
-        if (!readout) return;
-        readout.value = formatRangeReadout(range);
-        readout.textContent = readout.value;
+        window.RadenUiControls?.updateRangeReadout?.(range);
       }
 
       function syncRangeReadouts(scope = document) {
-        scope.querySelectorAll?.('input[type="range"][id]').forEach(updateRangeReadout);
+        window.RadenUiControls?.syncRangeReadouts?.(scope);
       }
 
       function enhanceRangeReadouts() {
-        document.querySelectorAll('#controls input[type="range"][id]').forEach((range) => {
-          const inputWrap = range.closest(".control-input");
-          if (!inputWrap || inputWrap.querySelector(`#${range.id}Readout`)) {
-            updateRangeReadout(range);
-            return;
-          }
-          inputWrap.classList.add("has-range-readout");
-          const readout = document.createElement("output");
-          readout.id = `${range.id}Readout`;
-          readout.className = "range-readout";
-          readout.setAttribute("for", range.id);
-          readout.setAttribute("aria-label", `${range.id} value`);
-          inputWrap.appendChild(readout);
-          range.addEventListener("input", () => updateRangeReadout(range));
-          updateRangeReadout(range);
-        });
+        window.RadenUiControls?.enhanceRangeReadouts?.();
       }
 
       function markControlPending(el) {
-        updateRangeReadout(el);
-        el.classList.add("pending-change");
-        const controlRow = el.closest(".control-row");
-        if (!controlRow) return;
-
-        const label = controlRow.querySelector(".control-label");
-        if (label) {
-          label.classList.add("pending-dot");
-        }
+        window.RadenUiControls?.markControlPending?.(el);
       }
 
       document
@@ -4046,17 +3781,7 @@
       }
 
       function applyGrainOverlay(ctx, width, height) {
-        const grainImage = ctx.getImageData(0, 0, width, height);
-        const d = grainImage.data;
-
-        for (let i = 0; i < d.length; i += 4) {
-          const grain = Math.floor((Math.random() - 0.5) * 20); // range -10 to +10
-          d[i] = Math.min(255, Math.max(0, d[i] + grain)); // R
-          d[i + 1] = Math.min(255, Math.max(0, d[i + 1] + grain)); // G
-          d[i + 2] = Math.min(255, Math.max(0, d[i + 2] + grain)); // B
-        }
-
-        ctx.putImageData(grainImage, 0, 0);
+        window.RadenPostFx.applyGrainOverlay(ctx, width, height);
       }
 
       function applyGaussianBlurOverlay(
@@ -4064,12 +3789,12 @@
         blurAmount,
         alpha = 0.75,
       ) {
-        if (!blurAmount || blurAmount <= 0) return;
-        ctx.globalAlpha = alpha;
-        ctx.filter = `blur(${blurAmount}px)`;
-        ctx.drawImage(sourceCanvas, 0, 0);
-        ctx.globalAlpha = 1;
-        ctx.filter = "none";
+        window.RadenPostFx.applyGaussianBlurOverlay(
+          ctx,
+          sourceCanvas,
+          blurAmount,
+          alpha,
+        );
       }
 
       function getSubstrateRgb(tone) {
@@ -4080,73 +3805,7 @@
       }
 
       function applyExperimentalEffects(config) {
-        const fxInvert = config.fxInvert;
-        const fxChromatic = config.fxChromatic || 0;
-        const fxGlitch = config.fxGlitch || 0;
-        const fxScanline = config.fxScanline || 0;
-        const width = canvas.width;
-        const height = canvas.height;
-
-        if (fxChromatic > 0.05) {
-          const src = ctx.getImageData(0, 0, width, height);
-          const out = ctx.createImageData(width, height);
-          const srcData = src.data;
-          const outData = out.data;
-          const shift = Math.max(1, Math.round(fxChromatic));
-          for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-              const i = (y * width + x) * 4;
-              const xr = Math.min(width - 1, x + shift);
-              const xb = Math.max(0, x - shift);
-              const ir = (y * width + xr) * 4;
-              const ib = (y * width + xb) * 4;
-              outData[i] = srcData[ir];
-              outData[i + 1] = srcData[i + 1];
-              outData[i + 2] = srcData[ib + 2];
-              outData[i + 3] = 255;
-            }
-          }
-          ctx.putImageData(out, 0, 0);
-        }
-
-        if (fxGlitch > 0.01) {
-          const maxSlices = Math.max(1, Math.floor(6 + fxGlitch * 28));
-          const maxShift = Math.max(
-            1,
-            Math.floor(width * (0.002 + fxGlitch * 0.03)),
-          );
-          for (let s = 0; s < maxSlices; s++) {
-            const bandH = Math.max(
-              1,
-              Math.floor(2 + Math.random() * (8 + fxGlitch * 24)),
-            );
-            const y = Math.floor(Math.random() * Math.max(1, height - bandH));
-            const shift = Math.floor((Math.random() * 2 - 1) * maxShift);
-            if (shift === 0) continue;
-            ctx.drawImage(canvas, 0, y, width, bandH, shift, y, width, bandH);
-          }
-        }
-
-        if (fxScanline > 0.01) {
-          ctx.save();
-          ctx.globalAlpha = Math.min(0.7, fxScanline * 0.45);
-          ctx.fillStyle = "#000";
-          for (let y = 0; y < height; y += 2) {
-            ctx.fillRect(0, y, width, 1);
-          }
-          ctx.restore();
-        }
-
-        if (fxInvert) {
-          const img = ctx.getImageData(0, 0, width, height);
-          const d = img.data;
-          for (let i = 0; i < d.length; i += 4) {
-            d[i] = 255 - d[i];
-            d[i + 1] = 255 - d[i + 1];
-            d[i + 2] = 255 - d[i + 2];
-          }
-          ctx.putImageData(img, 0, 0);
-        }
+        window.RadenPostFx.applyExperimentalEffects(ctx, canvas, config);
       }
       function getRenderConfig(renderOptions = {}) {
         if (window.RadenState?.buildRenderConfig) {
@@ -5239,11 +4898,8 @@
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-        const runId = ++renderRunId;
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
         const config = getRenderConfig(renderOptions);
         const profile = getNaturalModeProfile(mode);
         const seed = parseInt(document.getElementById("seed")?.value || "0", 10) || 1;
@@ -5269,17 +4925,15 @@
         setProgressPercent(mode === "icebloom" ? 6 : 24);
 
         function startWork() {
-          if (runId !== renderRunId) {
-            renderTask = null;
-            animationId = null;
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
             return;
           }
           if (mode === "icebloom") {
             runtime.iceSegments = buildIceBloomSegments(config, runtime);
             runtime.iceMask = createIceBloomMask(config, runtime);
-            if (runId !== renderRunId) {
-              renderTask = null;
-              animationId = null;
+            if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
               return;
             }
             setProgressPercent(18);
@@ -5292,9 +4946,8 @@
           let y = 0;
 
           function renderChunk() {
-            if (runId !== renderRunId) {
-              renderTask = null;
-              animationId = null;
+            if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
               return;
             }
           const endY = Math.min(y + rowsPerFrame, config.height);
@@ -5329,13 +4982,12 @@
           setProgressPercent(progressStart + (y / config.height) * progressSpan);
 
           if (y < config.height) {
-            animationId = requestAnimationFrame(renderChunk);
+            requestRenderFrame(renderChunk);
             return;
           }
 
-          if (runId !== renderRunId) {
-            renderTask = null;
-            animationId = null;
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
             return;
           }
 
@@ -5346,11 +4998,11 @@
           setProgressPercent(100);
           }
 
-          renderTask = renderChunk;
-          animationId = requestAnimationFrame(renderChunk);
+          setRenderTask(renderChunk);
+          requestRenderFrame(renderChunk);
         }
-        renderTask = startWork;
-        animationId = requestAnimationFrame(startWork);
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
       }
 
       function hexToRgb(hex) {
@@ -5455,74 +5107,23 @@
         return (v + 0.5) / (n * n) - 0.5;
       }
 
+      function configureSourceImageHelpers() {
+        window.RadenSourceImage.configure({
+          fallbackCanvas: canvas,
+          scheduleFinalRender,
+          setStatus,
+          updateVisibleSections,
+        });
+      }
+
       function buildImageSourceCanvas(config) {
-        const srcCanvas = document.createElement("canvas");
-        srcCanvas.width = config.width;
-        srcCanvas.height = config.height;
-        const sctx = srcCanvas.getContext("2d");
-        sctx.fillStyle = "#f2efe8";
-        sctx.fillRect(0, 0, srcCanvas.width, srcCanvas.height);
-
-        const sourceImage =
-          uploadedImage ||
-          (canvas.width > 0 && canvas.height > 0 ? canvas : null);
-        if (!sourceImage) {
-          return srcCanvas;
-        }
-
-        const fit = config.imageFitMode || "contain";
-        const zoom = Math.max(0.1, config.imageCropScale || 1);
-        const rotate = ((config.imageRotate || 0) * Math.PI) / 180;
-        const sw = sourceImage.width;
-        const sh = sourceImage.height;
-        let dw = srcCanvas.width;
-        let dh = srcCanvas.height;
-
-        if (fit === "contain") {
-          const scale = Math.min(srcCanvas.width / sw, srcCanvas.height / sh);
-          dw = sw * scale;
-          dh = sh * scale;
-        } else if (fit === "cover") {
-          const scale = Math.max(srcCanvas.width / sw, srcCanvas.height / sh);
-          dw = sw * scale;
-          dh = sh * scale;
-        } else if (fit === "center") {
-          dw = sw;
-          dh = sh;
-        } else if (fit === "stretch") {
-          dw = srcCanvas.width;
-          dh = srcCanvas.height;
-        }
-
-        dw *= zoom;
-        dh *= zoom;
-
-        sctx.save();
-        sctx.translate(srcCanvas.width / 2, srcCanvas.height / 2);
-        sctx.rotate(rotate);
-        sctx.drawImage(sourceImage, -dw / 2, -dh / 2, dw, dh);
-        sctx.restore();
-        return srcCanvas;
+        configureSourceImageHelpers();
+        return window.RadenSourceImage.buildImageSourceCanvas(config);
       }
 
       function loadImageFromFile(file) {
-        return new Promise((resolve, reject) => {
-          if (!file) {
-            reject(new Error("No file provided"));
-            return;
-          }
-          const url = URL.createObjectURL(file);
-          const img = new Image();
-          img.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(img);
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject(new Error("Unable to decode image"));
-          };
-          img.src = url;
-        });
+        configureSourceImageHelpers();
+        return window.RadenSourceImage.loadImageFromFile(file);
       }
 
       function finalizeImageModeRender(config, completeLabel) {
@@ -5555,8 +5156,7 @@
         } else {
           setStatus("idle", "Preview ready");
         }
-        renderTask = null;
-        animationId = null;
+            clearRenderTask();
       }
 
       function getDitherShapeMask(shape, fx, fy) {
@@ -5912,10 +5512,7 @@
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
+        cancelRenderFrame();
         const config = getRenderConfig(renderOptions);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
         if (generateBtn) generateBtn.disabled = !config.preview;
@@ -5953,13 +5550,9 @@
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
+        cancelRenderFrame();
 
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-
-        const runId = ++renderRunId;
+        const runId = nextRenderRunId();
         const config = getRenderConfig(renderOptions);
         const palette = getNacrePalette(config.nacrePalette);
 
@@ -6033,9 +5626,8 @@
         setProgressPercent(0);
 
         function renderChunk() {
-          if (runId !== renderRunId) {
-            renderTask = null;
-            animationId = null;
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
             return;
           }
           const endY = Math.min(y + rowsPerFrame, config.height);
@@ -6198,11 +5790,10 @@
           }
           setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
-            animationId = requestAnimationFrame(renderChunk);
+            requestRenderFrame(renderChunk);
           } else {
-            if (runId !== renderRunId) {
-              renderTask = null;
-              animationId = null;
+            if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
               return;
             }
             offscreenCtx.putImageData(imageData, 0, 0);
@@ -6251,9 +5842,7 @@
             } else {
               setStatus("idle", "Preview ready");
             }
-
-            renderTask = null;
-            animationId = null;
+            clearRenderTask();
             // Save current values as "applied"
             if (!config.preview) {
               document
@@ -6267,21 +5856,17 @@
             }
           }
         }
-        renderTask = renderChunk;
-        animationId = requestAnimationFrame(renderChunk);
+        setRenderTask(renderChunk);
+        requestRenderFrame(renderChunk);
       }
 
       function generateOpalVein(force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
+        cancelRenderFrame();
 
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-
-        const runId = ++renderRunId;
+        const runId = nextRenderRunId();
         const config = getRenderConfig(renderOptions);
         offscreenCanvas.width = config.width;
         offscreenCanvas.height = config.height;
@@ -6308,8 +5893,8 @@
         setProgressPercent(0);
 
         function renderChunk() {
-          if (runId !== renderRunId) {
-            renderTask = null;
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
             return;
           }
           const endY = Math.min(y + rowsPerFrame, config.height);
@@ -6370,7 +5955,7 @@
 
           setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
-            animationId = requestAnimationFrame(renderChunk);
+            requestRenderFrame(renderChunk);
             return;
           }
 
@@ -6411,25 +5996,20 @@
           } else {
             setStatus("idle", "Preview ready");
           }
-          renderTask = null;
-          animationId = null;
+            clearRenderTask();
         }
 
-        renderTask = renderChunk;
-        animationId = requestAnimationFrame(renderChunk);
+        setRenderTask(renderChunk);
+        requestRenderFrame(renderChunk);
       }
 
       function generateLabradoriteFlash(force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
+        cancelRenderFrame();
 
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-
-        const runId = ++renderRunId;
+        const runId = nextRenderRunId();
         const config = getRenderConfig(renderOptions);
         offscreenCanvas.width = config.width;
         offscreenCanvas.height = config.height;
@@ -6459,9 +6039,8 @@
         setProgressPercent(0);
 
         function renderChunk() {
-          if (runId !== renderRunId) {
-            renderTask = null;
-            animationId = null;
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
             return;
           }
           const endY = Math.min(y + rowsPerFrame, config.height);
@@ -6534,7 +6113,7 @@
 
           setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
-            animationId = requestAnimationFrame(renderChunk);
+            requestRenderFrame(renderChunk);
             return;
           }
 
@@ -6575,25 +6154,20 @@
           } else {
             setStatus("idle", "Preview ready");
           }
-          renderTask = null;
-          animationId = null;
+            clearRenderTask();
         }
 
-        renderTask = renderChunk;
-        animationId = requestAnimationFrame(renderChunk);
+        setRenderTask(renderChunk);
+        requestRenderFrame(renderChunk);
       }
 
       function generateMarbleInk(force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
+        cancelRenderFrame();
 
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-
-        const runId = ++renderRunId;
+        const runId = nextRenderRunId();
         const config = getRenderConfig(renderOptions);
         offscreenCanvas.width = config.width;
         offscreenCanvas.height = config.height;
@@ -6621,9 +6195,8 @@
         setProgressPercent(0);
 
         function renderChunk() {
-          if (runId !== renderRunId) {
-            renderTask = null;
-            animationId = null;
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
             return;
           }
           const endY = Math.min(y + rowsPerFrame, config.height);
@@ -6690,7 +6263,7 @@
 
           setProgressPercent((y / config.height) * 100);
           if (y < config.height) {
-            animationId = requestAnimationFrame(renderChunk);
+            requestRenderFrame(renderChunk);
             return;
           }
 
@@ -6731,12 +6304,11 @@
           } else {
             setStatus("idle", "Preview ready");
           }
-          renderTask = null;
-          animationId = null;
+            clearRenderTask();
         }
 
-        renderTask = renderChunk;
-        animationId = requestAnimationFrame(renderChunk);
+        setRenderTask(renderChunk);
+        requestRenderFrame(renderChunk);
       }
 
       function generateRisograph(force = false, renderOptions = {}) {
@@ -6940,61 +6512,21 @@
       }
 
       function updatePendingStatus() {
-        const pendingCount =
-          document.querySelectorAll(".pending-change").length;
-
-        if (status.dataset.state === "idle") {
-          if (pendingCount > 0) {
-            setStatus(
-              "idle",
-              `Idle: ${pendingCount} change${pendingCount > 1 ? "s" : ""} not applied`,
-            );
-          } else {
-            setStatus("idle", "Idle");
-          }
-        }
+        window.RadenUiControls?.updatePendingStatus?.({ statusEl: status, setStatus });
       }
 
       function clearPendingIndicators() {
-        document
-          .querySelectorAll("#controls input, #controls select")
-          .forEach((el) => {
-            el.classList.remove("pending-change");
-            if (el.dataset.live !== "true") {
-              el.dataset.applied =
-                el.type === "checkbox" ? String(el.checked) : el.value;
-            }
-
-            const controlRow = el.closest(".control-row");
-            if (controlRow) {
-              const label = controlRow.querySelector(".control-label");
-              if (label) label.classList.remove("pending-dot");
-            }
-          });
-
-        updatePendingStatus();
+        window.RadenUiControls?.clearPendingIndicators?.({ statusEl: status, setStatus });
       }
 
       function adjustColorBoosts() {
         if (!originalImageData) return;
-
         const { boostR, boostG, boostB } = getLiveRenderOverrides();
-
-        const width = originalImageData.width;
-        const height = originalImageData.height;
-
-        const originalData = originalImageData.data;
-        const newImageData = ctx.createImageData(width, height);
-        const newData = newImageData.data;
-
-        for (let i = 0; i < originalData.length; i += 4) {
-          newData[i] = Math.min(255, originalData[i] * boostR); // R
-          newData[i + 1] = Math.min(255, originalData[i + 1] * boostG); // G
-          newData[i + 2] = Math.min(255, originalData[i + 2] * boostB); // B
-          newData[i + 3] = originalData[i + 3]; // A
-        }
-
-        ctx.putImageData(newImageData, 0, 0);
+        window.RadenPostFx.applyColorBoosts(ctx, originalImageData, {
+          boostR,
+          boostG,
+          boostB,
+        });
         captureDisplayBase();
         applyCompareView();
       }
@@ -7029,324 +6561,17 @@
           rowsPerFrameFinalMul: 0.85,
         },
       };
-      const RANDOMIZABLE_CONTROL_IDS = [
-        "seed",
-        "scale",
-        "layers",
-        "range",
-        "blend",
-        "intensity",
-        "layerLength",
-        "ringSpacing",
-        "ringJitter",
-        "seamThickness",
-        "seamContrast",
-        "lightAngle",
-        "lightCurvature",
-        "lightSpread",
-        "highlightStrength",
-        "scratchDensity",
-        "scratchAngle",
-        "surfacePolish",
-        "boostR",
-        "boostG",
-        "boostB",
-        "gaussianBlur",
-        "grainToggle",
-        "fxInvert",
-        "fxChromatic",
-        "fxGlitch",
-        "fxScanline",
-        "flowMode",
-        "nacreBrilliance",
-        "nacreChromatic",
-        "nacrePalette",
-        "textureFamily",
-        "opalCellScale",
-        "opalVeinDensity",
-        "opalFire",
-        "opalMatrix",
-        "labradoriteScale",
-        "labradoriteDirection",
-        "labradoriteBanding",
-        "labradoriteFlash",
-        "labradoriteDarkness",
-        "marbleFlowScale",
-        "marbleVeinFreq",
-        "marbleContrast",
-        "marbleInkDrift",
-        "marbleLightness",
-        "naturalScale",
-        "naturalWarp",
-        "naturalTurbulence",
-        "naturalAnisotropy",
-        "agateBandFreq",
-        "agateBandJitter",
-        "agateVeinDensity",
-        "agateTranslucency",
-        "agateEdgeDarken",
-        "malachiteSwirl",
-        "malachiteRingTightness",
-        "malachiteRingVariance",
-        "malachiteContrast",
-        "lichenPatchScale",
-        "lichenBranching",
-        "lichenEdgeRoughness",
-        "lichenCoverage",
-        "lichenMoistureTone",
-        "iceBranchDepth",
-        "iceBranchAngleJitter",
-        "iceFrostDensity",
-        "iceMeltSoftness",
-        "iceHaze",
-        "deltaChannelWidth",
-        "deltaBranchRate",
-        "deltaSedimentMix",
-        "deltaFloodplainSoftness",
-        "deltaErosion",
-        "imageFitMode",
-        "imageCropScale",
-        "imageRotate",
-        "risoLayerCount",
-        "risoPalettePreset",
-        "risoRenderStyle",
-        "risoLayerAngleStep",
-        "risoLayerOpacity",
-        "risoLayerOverlap",
-        "risoColorSplit",
-        "risoL1Angle",
-        "risoL1Opacity",
-        "risoL1ToneMin",
-        "risoL1ToneMax",
-        "risoL2Angle",
-        "risoL2Opacity",
-        "risoL2ToneMin",
-        "risoL2ToneMax",
-        "risoL3Angle",
-        "risoL3Opacity",
-        "risoL3ToneMin",
-        "risoL3ToneMax",
-        "risoL4Angle",
-        "risoL4Opacity",
-        "risoL4ToneMin",
-        "risoL4ToneMax",
-        "risoL5Angle",
-        "risoL5Opacity",
-        "risoL5ToneMin",
-        "risoL5ToneMax",
-        "risoL6Angle",
-        "risoL6Opacity",
-        "risoL6ToneMin",
-        "risoL6ToneMax",
-        "ditherMethod",
-        "ditherDotShape",
-        "ditherDotSize",
-        "ditherDotSpread",
-        "ditherUniformity",
-        "palettePreset",
-        "paletteSize",
-        "colorDepthBits",
-        "pixelBlockSize",
-        "ditherBayerSize",
-        "scanlineStrength",
-        "substrateTone",
-        "substrateMix",
-        "topoPreset",
-        "topoNoiseType",
-        "topoBandCount",
-        "topoRenderMode",
-        "topoRidge",
-        "topoWarp",
-        "topoErosion",
-        "risoDotSize",
-        "risoThreshold",
-      ];
-      const CONTROL_INFO = {
-        resolutionPreset:
-          "Sets the render canvas size. Auto uses your window size. Custom lets you enter pixel dimensions.",
-        renderWidth:
-          "Render width in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
-        renderHeight:
-          "Render height in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
-        canvasViewZoom:
-          "Display-only zoom for previewing detail. Does not change generation or export resolution.",
-        canvasPanX:
-          "Display-only horizontal pan for the canvas view.",
-        canvasPanY:
-          "Display-only vertical pan for the canvas view.",
-        exportCropMode:
-          "Choose the export crop frame. Custom enables draggable/resizable crop handles over the canvas view.",
-        exportResizeEnabled:
-          "When enabled, export is resized to the custom width/height below. When disabled, export keeps the crop size.",
-        exportWidth:
-          "Target export width in pixels when Resize Export is enabled.",
-        exportHeight:
-          "Target export height in pixels when Resize Export is enabled.",
-        scale:
-          "Base pattern scale. Lower values create larger formations; higher values create tighter detail.",
-        layers:
-          "Detail layers (noise octaves). Higher values add texture complexity but cost more render time.",
-        ringSpacing:
-          "Distance/frequency of nacre growth bands. Higher values make denser stripe patterns.",
-        substrateTone:
-          "Substrate color under nacre. Use light for pearl-like shells, dark for abalone-like shells.",
-        substrateMix:
-          "How much substrate shows through nacre. Higher mix reveals more base material.",
-        textureFamily:
-          "Switches nacre structure style. Classic is balanced, Opal adds cellular veins, Labradorite emphasizes directional flashes.",
-        lightCurvature:
-          "Bends lighting bands across the shell surface curvature.",
-        lightSpread: "Controls how broad or tight light bands appear.",
-        opalCellScale:
-          "Controls Opal cell size. Lower values create larger cell structures.",
-        opalVeinDensity:
-          "Controls how dense and sharp the vein boundaries are.",
-        opalFire: "Controls iridescent fire intensity inside opal cells.",
-        opalMatrix:
-          "Controls darkness of the host matrix around opal color pockets.",
-        labradoriteScale:
-          "Controls feature size of the labradorite flash pattern.",
-        labradoriteDirection:
-          "Rotates directional flash streaks across the surface.",
-        labradoriteBanding: "Controls sharpness and spacing of flash bands.",
-        labradoriteFlash:
-          "Controls intensity of blue-green labradorescence flashes.",
-        labradoriteDarkness: "Controls darkness of the host stone matrix.",
-        marbleFlowScale: "Controls scale of flowing marble structures.",
-        marbleVeinFreq: "Controls frequency of vein lines through the stone.",
-        marbleContrast: "Controls contrast between veins and host stone.",
-        marbleInkDrift: "Controls how much ink-like warping distorts veins.",
-        marbleLightness: "Controls base stone lightness.",
-        topoWarp:
-          "Domain warping amount for terrain. Higher values bend and flow contour structures.",
-        topoErosion:
-          "Post-noise smoothing/erosion. Higher values soften terrain and reduce sharp transitions.",
-        naturalScale:
-          "Controls the overall feature size for natural-pattern scaffolds.",
-        naturalWarp:
-          "Controls how strongly natural structures bend and distort.",
-        naturalTurbulence:
-          "Adds extra irregularity to natural forms.",
-        naturalAnisotropy:
-          "Stretches structures in a preferred direction.",
-        agateBandFreq:
-          "Controls how many stone bands appear across the agate. Higher values create tighter band packing.",
-        agateBandJitter:
-          "Adds wobble to the agate bands so they feel less perfectly striped.",
-        agateVeinDensity:
-          "Controls how many dark seam lines and mineral veins appear between the bands.",
-        agateTranslucency:
-          "Controls how much inner glow shows through the stone bands.",
-        agateEdgeDarken:
-          "Darkens the band edges and seams to create stronger stone layering.",
-        malachiteSwirl:
-          "Controls how much the malachite rings twist and curl into flowing swirls.",
-        malachiteRingTightness:
-          "Controls how tightly the ring bands pack together in the stone.",
-        malachiteRingVariance:
-          "Adds uneven spacing so the ring pattern feels more natural and less perfect.",
-        malachiteContrast:
-          "Controls the difference between dark and bright green bands.",
-        lichenPatchScale:
-          "Controls the size of the lichen colonies. Lower values make broader patches; higher values create smaller clustered growth.",
-        lichenBranching:
-          "Controls how much the lichen edge grows outward into branching, creeping shapes.",
-        lichenEdgeRoughness:
-          "Adds ragged, broken edges so the colony feels more organic and crusty.",
-        lichenCoverage:
-          "Controls how much of the surface the lichen colonies cover.",
-        lichenMoistureTone:
-          "Shifts the lichen toward drier pale growth or darker, damper mossy growth.",
-        iceBranchDepth:
-          "Controls how far the crystal branches reach before they fade out.",
-        iceBranchAngleJitter:
-          "Adds variation to crystal branch direction so the bloom feels less rigid.",
-        iceFrostDensity:
-          "Controls how much frosty grain fills the spaces around the crystal branches.",
-        iceMeltSoftness:
-          "Softens hard crystal edges so the bloom can feel colder, foggier, or slightly thawed.",
-        iceHaze:
-          "Adds a pale icy mist over the bloom to brighten the colder parts of the texture.",
-        deltaChannelWidth:
-          "Controls how wide the main water channels appear in the river pattern.",
-        deltaBranchRate:
-          "Controls how often the river splits into smaller branches.",
-        deltaSedimentMix:
-          "Controls how much sandy or muddy color spreads out from the channels into the surrounding land.",
-        deltaFloodplainSoftness:
-          "Softens the transition between water channels, banks, and open floodplain areas.",
-        deltaErosion:
-          "Carves the channel network more aggressively for sharper river paths and cut banks.",
-        imageFitMode:
-          "Defines how an uploaded image fits inside the render frame.",
-        imageCropScale:
-          "Zoom level for the uploaded image framing.",
-        imageRotate:
-          "Rotates the uploaded image before processing.",
-        risoLayerCount:
-          "Target number of color layers used for risograph separation.",
-        risoRenderStyle:
-          "Original V1 restores the first Riso Image separation behavior. Legacy gives playful one-pass dots, and Layered adds per-layer overrides.",
-        risoLayerAngleStep:
-          "Angle difference between each ink layer to reduce moire and improve print separation.",
-        risoLayerOpacity:
-          "Base opacity applied per simulated ink layer.",
-        risoLayerOverlap:
-          "How much neighboring tone bands overlap between layers.",
-        risoColorSplit:
-          "How strongly pixel color family influences which layer receives ink.",
-        risoLayerViewMode:
-          "Choose how layer visibility is inspected: all layers, one solo layer, or a custom visible set.",
-        risoActiveLayer:
-          "When Layer View is set to Solo, this chooses which layer index is shown.",
-        risoVisibleL1:
-          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
-        risoVisibleL2:
-          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
-        risoVisibleL3:
-          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
-        risoVisibleL4:
-          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
-        risoVisibleL5:
-          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
-        risoVisibleL6:
-          "Layer visibility toggles used when Layer View is set to Custom Visible Set.",
-        ditherMethod:
-          "Dithering algorithm used to convert tones into printable patterns.",
-        ditherDotShape:
-          "Shape used for halftone/dither marks.",
-        ditherDotSize:
-          "Base size of dither dots.",
-        ditherDotSpread:
-          "Controls spacing and spread of dither dots.",
-        ditherUniformity:
-          "Controls regular vs organic dither distribution.",
-        palettePreset:
-          "Selects a constrained target palette for retro/image stylization.",
-        paletteSize:
-          "Maximum number of colors allowed in the reduced palette.",
-        colorDepthBits:
-          "Bit-depth cap used for retro palette reduction.",
-        pixelBlockSize:
-          "Size of pixel blocks in retro output.",
-        ditherBayerSize:
-          "Matrix size for ordered/Bayer dithering patterns.",
-        scanlineStrength:
-          "Strength of horizontal scanline effect in retro output.",
-      };
-      let lockedControlIds = new Set();
-      let galleryItems = [];
-      let selectedGalleryItemId = null;
+      const RANDOMIZABLE_CONTROL_IDS = window.RadenSchema?.listRandomizableControlIds
+        ? window.RadenSchema.listRandomizableControlIds()
+        : [];
+      const CONTROL_INFO = window.RadenSchema?.getControlHelpMap
+        ? window.RadenSchema.getControlHelpMap()
+        : {};
       let compareImage = null;
-      let exportCropRect = null;
-      let exportCropModeActive = "full";
-      let cropDragState = null;
       let viewportPanState = null;
       const displayBaseCanvas = document.createElement("canvas");
       const displayBaseCtx = displayBaseCanvas.getContext("2d");
       let seedVariants = [];
-      let uploadedImage = null;
-      let uploadedImageName = "";
 
       const RETRO_PALETTES = {
         gb: ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"],
@@ -7416,99 +6641,42 @@
         return Math.max(6, Math.floor(base * perf.rowsPerFrameFinalMul));
       }
 
+      function configureLockHelpers() {
+        window.RadenUiLocks?.configure?.({
+          storageKey: LOCK_STORAGE_KEY,
+          persistence: window.RadenPersistence,
+        });
+      }
+
       function isControlLocked(id) {
-        return lockedControlIds.has(id);
+        return window.RadenUiLocks?.isControlLocked?.(id) || false;
       }
 
       function saveLocks() {
-        const persistence = window.RadenPersistence;
-        if (persistence && typeof persistence.saveLocks === "function") {
-          persistence.saveLocks({
-            storageKey: LOCK_STORAGE_KEY,
-            lockedControlIds,
-          });
-          return;
-        }
-        try {
-          localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(Array.from(lockedControlIds)));
-        } catch (err) {
-          console.warn("Unable to persist locks", err);
-        }
+        window.RadenUiLocks?.saveLocks?.();
       }
 
       function loadLocks() {
-        const persistence = window.RadenPersistence;
-        if (persistence && typeof persistence.loadLocks === "function") {
-          lockedControlIds = new Set(
-            persistence.loadLocks({
-              storageKey: LOCK_STORAGE_KEY,
-            }),
-          );
-          return;
-        }
-        try {
-          const raw = localStorage.getItem(LOCK_STORAGE_KEY);
-          const parsed = raw ? JSON.parse(raw) : [];
-          lockedControlIds = new Set(Array.isArray(parsed) ? parsed : []);
-        } catch {
-          lockedControlIds = new Set();
-        }
+        configureLockHelpers();
+        window.RadenUiLocks?.loadLocks?.();
       }
 
       function setControlLock(id, locked) {
-        if (locked) {
-          lockedControlIds.add(id);
-        } else {
-          lockedControlIds.delete(id);
-        }
-        saveLocks();
-        const btn = document.querySelector(
-          `.control-lock-btn[data-lock-for="${id}"]`,
-        );
-        if (btn) {
-          updateControlLockButton(btn, locked, false);
-        }
+        window.RadenUiLocks?.setControlLock?.(id, locked);
       }
 
       function updateControlLockButton(btn, locked, preview = false) {
-        if (!btn) return;
-        btn.classList.toggle("is-locked", !!locked);
-        btn.classList.toggle("is-preview", !!preview);
-        btn.classList.toggle("is-faint", !locked && !preview);
-        btn.setAttribute("aria-pressed", locked ? "true" : "false");
-        btn.title = locked
-          ? "Unlock randomize for this control"
-          : "Lock this control from randomize";
-        const icon = locked && preview ? "iconoir-lock-slash" : "iconoir-lock";
-        btn.innerHTML = `<i class="${icon}"></i>`;
+        window.RadenUiLocks?.updateControlLockButton?.(btn, locked, preview);
       }
 
       function buildFallbackHelpText(labelText) {
-        const plain = (labelText || "this setting")
-          .replace(/[:]/g, "")
-          .toLowerCase();
-        return `This changes ${plain}. Move it slowly and watch how the image responds.`;
+        return window.RadenUiHelp.buildFallbackHelpText(labelText);
       }
 
       function getControlHelpText(controlId, labelText) {
-        const layerMatch = controlId.match(
-          /^risoL([1-6])(Angle|Opacity|ToneMin|ToneMax)$/,
-        );
-        if (layerMatch) {
-          const layer = layerMatch[1];
-          const field = layerMatch[2];
-          if (field === "Angle") {
-            return `Layer ${layer} screen angle. Changing this rotates that layer's dot grid and can reduce moire artifacts.`;
-          }
-          if (field === "Opacity") {
-            return `Layer ${layer} ink strength. Lower values print lighter; higher values print denser color.`;
-          }
-          if (field === "ToneMin") {
-            return `Layer ${layer} lower tone bound. Source tones below this value are excluded from this layer.`;
-          }
-          return `Layer ${layer} upper tone bound. Source tones above this value are excluded from this layer.`;
-        }
-        return CONTROL_INFO[controlId] || buildFallbackHelpText(labelText);
+        return window.RadenUiHelp.getControlHelpText(controlId, labelText, {
+          controlInfo: CONTROL_INFO,
+        });
       }
 
       function updateRisoLayerOverrideRows() {
@@ -7584,250 +6752,64 @@
       }
 
       function openSectionHelpModal(sectionEl, sectionTitle) {
-        const dialog = document.getElementById("controlHelpDialog");
-        const list = document.getElementById("sectionHelpList");
-        if (!dialog || !list || !sectionEl) return;
-
-        const rows = Array.from(
-          sectionEl.querySelectorAll(".control-row"),
-        ).filter((row) => !row.hidden);
-        list.innerHTML = "";
-        const titleKey = (sectionTitle || "").toLowerCase();
-        const activeMode = document.getElementById("modeSelector")?.value || "";
-        if (titleKey.includes("riso layers")) {
-          const intro = document.createElement("p");
-          intro.className = "help-v";
-          intro.textContent =
-            "Risograph-style separation splits your image into tone-based ink passes. Each layer is a stencil for a tone range: Tone Min/Max chooses what brightness it prints, Angle rotates its screen pattern, and Opacity controls ink strength. Overlap blends neighboring layers for smoother transitions. Layer View lets you inspect all layers, a single layer, or a custom visible set. The current UI is capped to 6 layers for performance and readability, but the concept itself can scale beyond that.";
-          list.appendChild(intro);
-        } else if (titleKey.includes("natural")) {
-          const intro = document.createElement("p");
-          intro.className = "help-v";
-          intro.textContent =
-            activeMode === "agateband"
-              ? "Agate Bands builds layered stone bands and mineral seams. These controls shape the band flow, glow through the stone, and the dark edges that separate each layer."
-              : activeMode === "malachiteflow"
-                ? "Malachite Flow builds swirling green ring structures like polished stone. These controls shape the curl of the rings, how tightly they pack together, and how dramatic the dark-to-bright transitions feel."
-                : activeMode === "lichengrowth"
-                  ? "Lichen Growth builds creeping surface colonies with ragged edges. These controls shape the size of each patch, how much the edges branch outward, and whether the growth feels dry and chalky or darker and damp."
-                : activeMode === "icebloom"
-                  ? "Ice Crystal Bloom builds branching frost patterns with pale icy haze. These controls shape how far the crystal branches travel, how much frost fills the gaps, and how sharp or softened the bloom appears."
-                : activeMode === "riverdelta"
-                  ? "River Delta builds branching water channels, banks, and sediment spread. These controls shape how the water splits, how wide the channels feel, and how soft the surrounding floodplain becomes."
-                  : activeMode === "bubblefilm"
-                    ? "Bubble Film builds a thin soap-film sheet made of neighboring cells and dark membrane walls. These controls shape cell size, wall thickness, rainbow sheen, and how much the film starts to tear or collapse."
-                    : "Natural modes use the same shared scaffold, then shape it into different organic patterns. These controls change the visible structure, color balance, and fine surface detail.";
-          list.appendChild(intro);
-        }
-
-        rows.forEach((row) => {
-          const labelEl = row.querySelector(".control-label");
-          const inputEl = row.querySelector("input[id], select[id]");
-          if (!labelEl || !inputEl || !inputEl.id) return;
-          const labelText = (labelEl.textContent || inputEl.id)
-            .trim()
-            .replace(/[:]/g, "");
-          const help = getControlHelpText(inputEl.id, labelText);
-          const item = document.createElement("div");
-          const heading = document.createElement("p");
-          heading.className = "help-k";
-          heading.textContent = `${labelText} (${inputEl.id})`;
-          const body = document.createElement("p");
-          body.className = "help-v";
-          body.textContent = help;
-          item.appendChild(heading);
-          item.appendChild(body);
-          list.appendChild(item);
+        window.RadenUiHelp.openSectionHelpModal(sectionEl, sectionTitle, {
+          getControlHelpText,
         });
-
-        if (!list.childElementCount) {
-          const empty = document.createElement("p");
-          empty.className = "help-v";
-          empty.textContent =
-            "No visible properties are available in this section for the current mode.";
-          list.appendChild(empty);
-        }
-
-        document.getElementById("controlHelpTitle").textContent =
-          `${sectionTitle} Help`;
-        document.getElementById("controlHelpSubtitle").textContent =
-          "Descriptions for the properties in this section.";
-        dialog.showModal();
       }
 
       const SECTION_COLLAPSE_STORAGE_KEY = "raden.sectionCollapse.v1";
 
       function loadCollapsedSections() {
-        try {
-          const raw = localStorage.getItem(SECTION_COLLAPSE_STORAGE_KEY);
-          const parsed = raw ? JSON.parse(raw) : {};
-          return parsed && typeof parsed === "object" ? parsed : {};
-        } catch {
-          return {};
-        }
+        return window.RadenUiHelp.loadCollapsedSections(
+          SECTION_COLLAPSE_STORAGE_KEY,
+        );
       }
 
       function saveCollapsedSections(map) {
-        try {
-          localStorage.setItem(SECTION_COLLAPSE_STORAGE_KEY, JSON.stringify(map));
-        } catch {
-          // ignore persistence failures in restricted environments
-        }
+        window.RadenUiHelp.saveCollapsedSections(
+          map,
+          SECTION_COLLAPSE_STORAGE_KEY,
+        );
       }
 
       function getSectionCollapseId(section, title) {
-        if (section.dataset.sectionId) return section.dataset.sectionId;
-        const slug = (title || "section")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .slice(0, 64);
-        section.dataset.sectionId = slug || "section";
-        return section.dataset.sectionId;
+        return window.RadenUiHelp.getSectionCollapseId(section, title);
       }
 
       function setSectionCollapsed(section, collapseBtn, collapsed) {
-        section.classList.toggle("is-collapsed", !!collapsed);
-        const heading = section.querySelector(".section-heading");
-        if (heading) {
-          heading.setAttribute("aria-expanded", collapsed ? "false" : "true");
-        }
-        collapseBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-        collapseBtn.title = collapsed ? "Expand section" : "Collapse section";
+        window.RadenUiHelp.setSectionCollapsed(
+          section,
+          collapseBtn,
+          collapsed,
+        );
       }
 
       function enhanceSectionHelp() {
-        const collapsedSections = loadCollapsedSections();
-        document.querySelectorAll("#controls .section").forEach((section) => {
-          const h3 = section.querySelector("h3");
-          if (!h3) return;
-
-          let headingWrap =
-            h3.parentElement && h3.parentElement.classList.contains("section-heading")
-              ? h3.parentElement
-              : null;
-
-          if (!headingWrap) {
-            headingWrap = document.createElement("div");
-            headingWrap.className = "section-heading";
-            headingWrap.tabIndex = 0;
-            headingWrap.setAttribute("role", "button");
-            const parent = h3.parentElement;
-            parent.insertBefore(headingWrap, h3);
-            headingWrap.appendChild(h3);
-          }
-          headingWrap.tabIndex = 0;
-          headingWrap.setAttribute("role", "button");
-
-          let actionsWrap = headingWrap.querySelector(".section-heading-actions");
-          if (!actionsWrap) {
-            actionsWrap = document.createElement("div");
-            actionsWrap.className = "section-heading-actions";
-            headingWrap.appendChild(actionsWrap);
-          }
-
-          let helpBtn = h3.querySelector(".section-help-btn");
-          if (!helpBtn) {
-            helpBtn = document.createElement("button");
-            helpBtn.type = "button";
-            helpBtn.className = "section-icon-btn section-help-btn ds-icon-action";
-            helpBtn.innerHTML = '<i class="iconoir-info-circle"></i>';
-            h3.appendChild(helpBtn);
-          }
-          helpBtn.title = `Open help for ${h3.textContent}`;
-          helpBtn.setAttribute("aria-label", `Open help for ${h3.textContent}`);
-          if (!helpBtn.dataset.bound) {
-            helpBtn.addEventListener("click", () => {
-              openSectionHelpModal(section, h3.textContent || "Section");
-            });
-            helpBtn.dataset.bound = "1";
-          }
-
-          let collapseBtn = actionsWrap.querySelector(".section-collapse-btn");
-          if (!collapseBtn) {
-            collapseBtn = document.createElement("button");
-            collapseBtn.type = "button";
-            collapseBtn.className =
-              "section-icon-btn section-collapse-btn ds-icon-action";
-            collapseBtn.innerHTML =
-              '<i class="iconoir-nav-arrow-down section-chevron"></i>';
-            actionsWrap.appendChild(collapseBtn);
-          }
-          collapseBtn.setAttribute(
-            "aria-label",
-            `Toggle collapse for ${h3.textContent}`,
-          );
-
-          const sectionId = getSectionCollapseId(section, h3.textContent || "Section");
-          setSectionCollapsed(section, collapseBtn, !!collapsedSections[sectionId]);
-
-          if (!collapseBtn.dataset.bound) {
-            collapseBtn.addEventListener("click", () => {
-              const collapsed = !section.classList.contains("is-collapsed");
-              collapsedSections[sectionId] = collapsed;
-              if (!collapsed) {
-                delete collapsedSections[sectionId];
-              }
-              saveCollapsedSections(collapsedSections);
-              setSectionCollapsed(section, collapseBtn, collapsed);
-            });
-            collapseBtn.dataset.bound = "1";
-          }
-
-          if (!headingWrap.dataset.collapseBound) {
-            const toggleHeading = () => {
-              const collapsed = !section.classList.contains("is-collapsed");
-              collapsedSections[sectionId] = collapsed;
-              if (!collapsed) {
-                delete collapsedSections[sectionId];
-              }
-              saveCollapsedSections(collapsedSections);
-              setSectionCollapsed(section, collapseBtn, collapsed);
-            };
-            headingWrap.addEventListener("click", (e) => {
-              if (
-                e.target.closest(
-                  ".section-heading-actions, .section-collapse-btn, .section-help-btn",
-                )
-              ) {
-                return;
-              }
-              toggleHeading();
-            });
-            headingWrap.addEventListener("keydown", (e) => {
-              if (e.key !== "Enter" && e.key !== " ") return;
-              if (
-                e.target.closest(
-                  ".section-heading-actions, .section-collapse-btn, .section-help-btn",
-                )
-              ) {
-                return;
-              }
-              e.preventDefault();
-              toggleHeading();
-            });
-            headingWrap.dataset.collapseBound = "1";
-          }
+        window.RadenUiHelp.enhanceSectionHelp({
+          storageKey: SECTION_COLLAPSE_STORAGE_KEY,
+          getControlHelpText,
         });
       }
 
       function runQaChecks() {
-        const modes = [
-          "motherofpearl",
-          "opalvein",
-          "labradorite",
-          "marbleink",
-          "agateband",
-          "malachiteflow",
-          "lichengrowth",
-          "icebloom",
-          "riverdelta",
-          "bubblefilm",
-          "risoimage",
-          "pixelretro",
-          "topography",
-          "risograph",
-        ];
+        const modes = window.RadenModes?.listModes
+          ? window.RadenModes.listModes().map((mode) => mode.id)
+          : [
+              "motherofpearl",
+              "opalvein",
+              "labradorite",
+              "marbleink",
+              "agateband",
+              "malachiteflow",
+              "lichengrowth",
+              "icebloom",
+              "riverdelta",
+              "bubblefilm",
+              "risoimage",
+              "pixelretro",
+              "topography",
+              "risograph",
+            ];
         const modeSelector = document.getElementById("modeSelector");
         const issues = [];
         const initialMode = modeSelector?.value || "motherofpearl";
@@ -7842,6 +6824,24 @@
           ),
         );
         const missingHelpCustom = [];
+        const domIds = new Set(
+          Array.from(document.querySelectorAll("[id]")).map((el) => el.id),
+        );
+        if (window.RadenModes?.validateRegistry) {
+          window.RadenModes.validateRegistry({ domIds }).forEach((issue) => {
+            issues.push(`Registry: ${issue}`);
+          });
+        }
+        if (window.RadenSchema?.validateSchema) {
+          const activeControlIds = new Set(
+            Object.values(MODE_ACTIVE_CONTROL_IDS).flatMap((set) =>
+              Array.from(set),
+            ),
+          );
+          window.RadenSchema.validateSchema({ domIds, activeControlIds }).forEach((issue) => {
+            issues.push(`Schema: ${issue}`);
+          });
+        }
 
         allGenerateInputs.forEach((el) => {
           if (!el.id && !isUiOnlyControl(el)) {
@@ -7905,57 +6905,9 @@
       }
 
       function enhanceControlUtilities() {
-        document.querySelectorAll(".control-row").forEach((row) => {
-          const label = row.querySelector(".control-label");
-          const icons = row.querySelector(".control-icons");
-          const control = row.querySelector("input[id], select[id]");
-          if (!label || !control || !control.id) return;
-          label.dataset.controlId = control.id;
-
-          if (
-            RANDOMIZABLE_CONTROL_IDS.includes(control.id) &&
-            icons &&
-            !icons.querySelector(`[data-lock-for="${control.id}"]`)
-          ) {
-            const lockBtn = document.createElement("button");
-            lockBtn.type = "button";
-            lockBtn.className =
-              "icon-btn icon-only control-lock-btn ds-icon-action";
-            lockBtn.dataset.lockFor = control.id;
-            lockBtn.setAttribute("aria-pressed", "false");
-            lockBtn.innerHTML = '<i class="iconoir-lock"></i>';
-            lockBtn.addEventListener("mouseenter", () => {
-              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
-            });
-            lockBtn.addEventListener("mouseleave", () => {
-              updateControlLockButton(lockBtn, isControlLocked(control.id), false);
-            });
-            lockBtn.addEventListener("focus", () => {
-              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
-            });
-            lockBtn.addEventListener("blur", () => {
-              updateControlLockButton(lockBtn, isControlLocked(control.id), false);
-            });
-            lockBtn.addEventListener("pointerdown", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setControlLock(control.id, !isControlLocked(control.id));
-              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
-            });
-            lockBtn.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            });
-            lockBtn.addEventListener("keydown", (e) => {
-              if (e.key !== "Enter" && e.key !== " ") return;
-              e.preventDefault();
-              e.stopPropagation();
-              setControlLock(control.id, !isControlLocked(control.id));
-              updateControlLockButton(lockBtn, isControlLocked(control.id), true);
-            });
-            icons.appendChild(lockBtn);
-            setControlLock(control.id, isControlLocked(control.id));
-          }
+        configureLockHelpers();
+        window.RadenUiLocks?.enhanceLockControls?.({
+          randomizableControlIds: RANDOMIZABLE_CONTROL_IDS,
         });
       }
 
@@ -8126,87 +7078,35 @@
       }
 
       function setActiveTab(tabName) {
-        const tabMap = {
-          generate: document.getElementById("tabGenerate"),
-          post: document.getElementById("tabPost"),
-          export: document.getElementById("tabExport"),
-          gallery: document.getElementById("tabGallery"),
-          settings: document.getElementById("tabSettings"),
-        };
-        Object.entries(tabMap).forEach(([key, el]) => {
-          if (!el) return;
-          el.hidden = key !== tabName;
+        window.RadenUiTabs.setActiveTab(tabName, {
+          afterTabChange: () => updateExportCropOverlay(),
         });
-        document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
-          btn.classList.toggle("is-active", btn.dataset.tab === tabName);
-        });
-        const settingsTabBtn = document.getElementById("tabBtnSettings");
-        if (settingsTabBtn) {
-          settingsTabBtn.classList.toggle("is-active", tabName === "settings");
-        }
-        updateActionBar(tabName);
-        updateExportCropOverlay();
       }
 
       function updateActionBar(tabName) {
-        const actionButtons = {
-          textureRandomizeBtn: tabName === "generate",
-          postRandomizeBtn: tabName === "post",
-          saveResultBtn: tabName === "generate" || tabName === "post",
-          exportActionBtn: tabName === "export",
-          clearGalleryActionBtn: tabName === "gallery",
-          runQaActionBtn: tabName === "settings",
-        };
-        Object.entries(actionButtons).forEach(([id, visible]) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.hidden = !visible;
-          el.style.marginLeft = "";
-        });
-        const clearGalleryBtn = document.getElementById("clearGalleryActionBtn");
-        if (clearGalleryBtn && tabName === "gallery") {
-          clearGalleryBtn.style.marginLeft = "auto";
-        }
+        window.RadenUiTabs.updateActionBar(tabName);
       }
 
       function mountDeferredPanelSections() {
-        const postTab = document.getElementById("tabPost");
-        if (postTab) {
-          ["postProcessingSection", "experimentalSection"].forEach((id) => {
-            const section = document.getElementById(id);
-            if (section) postTab.appendChild(section);
-          });
-        }
+        window.RadenUiTabs.mountDeferredPanelSections();
       }
 
       function getControlState() {
-        const state = {};
-        document
-          .querySelectorAll("#controls input, #controls select")
-          .forEach((el) => {
-            if (!el.id) return;
-            if (el.type === "file") return;
-            state[el.id] = el.type === "checkbox" ? el.checked : el.value;
-          });
-        return state;
+        return window.RadenUiControls?.getControlState
+          ? window.RadenUiControls.getControlState()
+          : {};
       }
 
       function applyControlState(state) {
-        Object.entries(state || {}).forEach(([id, value]) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          if (el.type === "file") return;
-          if (el.type === "checkbox") {
-            el.checked = !!value;
-          } else {
-            el.value = String(value);
-          }
-          updateRangeReadout(el);
-        });
-        const mode = document.getElementById("modeSelector").value;
-        document.body.setAttribute("data-mode", mode);
-        updateVisibleSections(mode);
-        syncRangeReadouts();
+        if (window.RadenUiControls?.applyControlState) {
+          window.RadenUiControls.applyControlState(state, {
+            afterApply: () => {
+              const mode = document.getElementById("modeSelector").value;
+              document.body.setAttribute("data-mode", mode);
+              updateVisibleSections(mode);
+            },
+          });
+        }
       }
 
       function randomBetween(min, max) {
@@ -8431,412 +7331,102 @@
         return canvas;
       }
 
+      function configureExportHelpers() {
+        window.RadenUiExport.configure({
+          canvas,
+          getExportSourceCanvas,
+          getViewWindowState,
+        });
+      }
+
       function getCropAspect(mode) {
-        if (mode === "square") return 1;
-        if (mode === "portrait") return 4 / 5;
-        if (mode === "landscape") return 16 / 9;
-        return null;
+        configureExportHelpers();
+        return window.RadenUiExport.getCropAspect(mode);
       }
 
       function clampCropRect(rect, srcW, srcH, aspect = null) {
-        const minSize = 24;
-        let sw = Math.max(minSize, Math.min(srcW, rect.sw));
-        let sh = Math.max(minSize, Math.min(srcH, rect.sh));
-        if (aspect) {
-          if (sw / sh > aspect) {
-            sw = Math.max(minSize, Math.min(srcW, Math.round(sh * aspect)));
-          } else {
-            sh = Math.max(minSize, Math.min(srcH, Math.round(sw / aspect)));
-          }
-        }
-        let sx = Math.max(0, Math.min(srcW - sw, rect.sx));
-        let sy = Math.max(0, Math.min(srcH - sh, rect.sy));
-        return { sx, sy, sw, sh };
+        configureExportHelpers();
+        return window.RadenUiExport.clampCropRect(rect, srcW, srcH, aspect);
       }
 
       function createDefaultCropRect(mode, srcW, srcH) {
-        if (mode === "full") return { sx: 0, sy: 0, sw: srcW, sh: srcH };
-        const aspect = getCropAspect(mode);
-        if (aspect) {
-          let sw = srcW;
-          let sh = Math.round(sw / aspect);
-          if (sh > srcH) {
-            sh = srcH;
-            sw = Math.round(sh * aspect);
-          }
-          return {
-            sx: Math.floor((srcW - sw) / 2),
-            sy: Math.floor((srcH - sh) / 2),
-            sw,
-            sh,
-          };
-        }
-        const sw = Math.max(24, Math.floor(srcW * 0.8));
-        const sh = Math.max(24, Math.floor(srcH * 0.8));
-        return {
-          sx: Math.floor((srcW - sw) / 2),
-          sy: Math.floor((srcH - sh) / 2),
-          sw,
-          sh,
-        };
+        configureExportHelpers();
+        return window.RadenUiExport.createDefaultCropRect(mode, srcW, srcH);
       }
 
       function getExportCropRect() {
-        const cropMode = document.getElementById("exportCropMode").value;
-        const source = getExportSourceCanvas();
-        const srcW = Math.max(1, source.width || 1);
-        const srcH = Math.max(1, source.height || 1);
-        if (cropMode === "full") {
-          exportCropRect = null;
-          exportCropModeActive = cropMode;
-          return { sx: 0, sy: 0, sw: srcW, sh: srcH };
-        }
-        if (
-          !exportCropRect ||
-          exportCropModeActive !== cropMode ||
-          exportCropRect.sw > srcW ||
-          exportCropRect.sh > srcH
-        ) {
-          exportCropRect = createDefaultCropRect(cropMode, srcW, srcH);
-          exportCropModeActive = cropMode;
-        }
-        exportCropRect = clampCropRect(
-          exportCropRect,
-          srcW,
-          srcH,
-          getCropAspect(cropMode),
-        );
-        return exportCropRect;
+        configureExportHelpers();
+        return window.RadenUiExport.getExportCropRect();
       }
 
       function getExportTargetSize(cropRect) {
-        const resizeEnabled =
-          !!document.getElementById("exportResizeEnabled")?.checked;
-        if (resizeEnabled) {
-          const w =
-            parseInt(document.getElementById("exportWidth").value, 10) ||
-            cropRect.sw;
-          const h =
-            parseInt(document.getElementById("exportHeight").value, 10) ||
-            cropRect.sh;
-          return { width: Math.max(1, w), height: Math.max(1, h) };
-        }
-        return { width: Math.max(1, cropRect.sw), height: Math.max(1, cropRect.sh) };
+        configureExportHelpers();
+        return window.RadenUiExport.getExportTargetSize(cropRect);
       }
 
       function syncExportSizeUi() {
-        const resizeEnabled =
-          !!document.getElementById("exportResizeEnabled")?.checked;
-        const exportWidth = document.getElementById("exportWidth");
-        const exportHeight = document.getElementById("exportHeight");
-        if (!exportWidth || !exportHeight) return;
-        const cropRect = getExportCropRect();
-        exportWidth.disabled = !resizeEnabled;
-        exportHeight.disabled = !resizeEnabled;
-        if (!resizeEnabled) {
-          exportWidth.value = String(cropRect.sw);
-          exportHeight.value = String(cropRect.sh);
-        }
-        updateExportCropOverlay();
+        configureExportHelpers();
+        window.RadenUiExport.syncExportSizeUi();
       }
 
       function updateExportCropOverlay() {
-        const overlay = document.getElementById("exportCropOverlay");
-        const frame = document.getElementById("exportCropFrame");
-        const exportTab = document.getElementById("tabExport");
-        if (!overlay || !frame) return;
-        const cropMode = document.getElementById("exportCropMode")?.value || "full";
-        const shouldShow = exportTab && !exportTab.hidden && cropMode !== "full";
-        overlay.hidden = !shouldShow;
-        if (!shouldShow) return;
-        const cropRect = getExportCropRect();
-        const source = getExportSourceCanvas();
-        const srcW = Math.max(1, source.width || 1);
-        const srcH = Math.max(1, source.height || 1);
-        const rect = canvas.getBoundingClientRect();
-        const state = getViewWindowState(rect.width, rect.height);
-        const left = state.dx + (cropRect.sx / srcW) * state.drawW;
-        const top = state.dy + (cropRect.sy / srcH) * state.drawH;
-        const width = (cropRect.sw / srcW) * state.drawW;
-        const height = (cropRect.sh / srcH) * state.drawH;
-        frame.style.left = `${Math.round(left)}px`;
-        frame.style.top = `${Math.round(top)}px`;
-        frame.style.width = `${Math.max(8, Math.round(width))}px`;
-        frame.style.height = `${Math.max(8, Math.round(height))}px`;
+        configureExportHelpers();
+        window.RadenUiExport.updateExportCropOverlay();
       }
 
       function initCropOverlayInteractions() {
-        const overlay = document.getElementById("exportCropOverlay");
-        const frame = document.getElementById("exportCropFrame");
-        if (!overlay || !frame) return;
-
-        const beginDrag = (e, handle) => {
-          if (overlay.hidden) return;
-          const cropMode = document.getElementById("exportCropMode")?.value || "full";
-          if (cropMode === "full") return;
-          const rect = getExportCropRect();
-          cropDragState = {
-            handle,
-            startClientX: e.clientX,
-            startClientY: e.clientY,
-            startRect: { ...rect },
-          };
-          e.preventDefault();
-          e.stopPropagation();
-        };
-
-        frame.addEventListener("pointerdown", (e) => {
-          if (e.target?.dataset?.handle) return;
-          beginDrag(e, "move");
-        });
-        frame.querySelectorAll(".crop-handle").forEach((el) => {
-          el.addEventListener("pointerdown", (e) => {
-            beginDrag(e, e.currentTarget.dataset.handle || "br");
-          });
-        });
-
-        window.addEventListener("pointermove", (e) => {
-          if (!cropDragState) return;
-          const source = getExportSourceCanvas();
-          const srcW = Math.max(1, source.width || 1);
-          const srcH = Math.max(1, source.height || 1);
-          const cropMode = document.getElementById("exportCropMode")?.value || "full";
-          const aspect = getCropAspect(cropMode);
-          const rect = canvas.getBoundingClientRect();
-          const state = getViewWindowState(rect.width, rect.height);
-          const sourcePerPixelX = srcW / Math.max(1, state.drawW);
-          const sourcePerPixelY = srcH / Math.max(1, state.drawH);
-          const dx = (e.clientX - cropDragState.startClientX) * sourcePerPixelX;
-          const dy = (e.clientY - cropDragState.startClientY) * sourcePerPixelY;
-          const start = cropDragState.startRect;
-          let next = { ...start };
-
-          if (cropDragState.handle === "move") {
-            next.sx = start.sx + dx;
-            next.sy = start.sy + dy;
-          } else if (cropDragState.handle === "tl") {
-            next.sx = start.sx + dx;
-            next.sy = start.sy + dy;
-            next.sw = start.sw - dx;
-            next.sh = start.sh - dy;
-          } else if (cropDragState.handle === "tr") {
-            next.sy = start.sy + dy;
-            next.sw = start.sw + dx;
-            next.sh = start.sh - dy;
-          } else if (cropDragState.handle === "bl") {
-            next.sx = start.sx + dx;
-            next.sw = start.sw - dx;
-            next.sh = start.sh + dy;
-          } else {
-            next.sw = start.sw + dx;
-            next.sh = start.sh + dy;
-          }
-
-          if (aspect && cropDragState.handle !== "move") {
-            let sw = Math.max(24, next.sw);
-            let sh = Math.max(24, next.sh);
-            if (sw / sh > aspect) {
-              sh = sw / aspect;
-            } else {
-              sw = sh * aspect;
-            }
-            if (cropDragState.handle === "tl") {
-              next.sx = start.sx + (start.sw - sw);
-              next.sy = start.sy + (start.sh - sh);
-            } else if (cropDragState.handle === "tr") {
-              next.sx = start.sx;
-              next.sy = start.sy + (start.sh - sh);
-            } else if (cropDragState.handle === "bl") {
-              next.sx = start.sx + (start.sw - sw);
-              next.sy = start.sy;
-            } else {
-              next.sx = start.sx;
-              next.sy = start.sy;
-            }
-            next.sw = sw;
-            next.sh = sh;
-          }
-
-          exportCropRect = clampCropRect(next, srcW, srcH, aspect);
-          updateExportCropOverlay();
-          syncExportSizeUi();
-        });
-
-        window.addEventListener("pointerup", () => {
-          if (!cropDragState) return;
-          cropDragState = null;
-        });
+        configureExportHelpers();
+        window.RadenUiExport.initCropOverlayInteractions();
       }
 
       function buildExportCanvas() {
-        const source = getExportSourceCanvas();
-        const cropRect = getExportCropRect();
-        const { width: outW, height: outH } = getExportTargetSize(cropRect);
-
-        const out = document.createElement("canvas");
-        out.width = outW;
-        out.height = outH;
-        const outCtx = out.getContext("2d");
-        outCtx.drawImage(
-          source,
-          cropRect.sx,
-          cropRect.sy,
-          cropRect.sw,
-          cropRect.sh,
-          0,
-          0,
-          outW,
-          outH,
-        );
-        return out;
+        configureExportHelpers();
+        return window.RadenUiExport.buildExportCanvas();
       }
 
       function exportWithOptions() {
-        const mode = document.getElementById("modeSelector").value;
-        const fileType = document.getElementById("exportFileType").value;
-        const quality =
-          parseFloat(document.getElementById("exportQuality").value) || 0.92;
-        const exportCanvas = buildExportCanvas();
-        const mime =
-          fileType === "jpeg"
-            ? "image/jpeg"
-            : fileType === "webp"
-              ? "image/webp"
-              : "image/png";
-        const ext = fileType === "jpeg" ? "jpg" : fileType;
-        const dataUrl =
-          mime === "image/png"
-            ? exportCanvas.toDataURL(mime)
-            : exportCanvas.toDataURL(mime, quality);
-        const link = document.createElement("a");
-        link.download = `${mode}_output.${ext}`;
-        link.href = dataUrl;
-        link.click();
+        configureExportHelpers();
+        window.RadenUiExport.exportWithOptions();
       }
 
-      function saveGallery() {
-        const persistence = window.RadenPersistence;
-        if (persistence && typeof persistence.saveGallery === "function") {
-          persistence.saveGallery({
-            storageKey: GALLERY_STORAGE_KEY,
-            items: galleryItems,
-          });
-          return;
-        }
-        localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryItems));
-      }
-
-      function loadGallery() {
-        const persistence = window.RadenPersistence;
-        if (persistence && typeof persistence.loadGallery === "function") {
-          galleryItems = persistence.loadGallery({
-            storageKey: GALLERY_STORAGE_KEY,
-          });
-          return;
-        }
-        const raw = localStorage.getItem(GALLERY_STORAGE_KEY);
-        galleryItems = raw ? JSON.parse(raw) : [];
-      }
-
-      function renderGallery() {
-        const grid = document.getElementById("galleryGrid");
-        if (!grid) return;
-        grid.innerHTML = "";
-        galleryItems.forEach((item) => {
-          const tile = document.createElement("div");
-          tile.className = "gallery-tile";
-          if (selectedGalleryItemId === item.id) tile.classList.add("is-selected");
-          tile.dataset.id = item.id;
-          tile.tabIndex = 0;
-          tile.setAttribute("role", "button");
-          tile.setAttribute(
-            "aria-pressed",
-            selectedGalleryItemId === item.id ? "true" : "false",
-          );
-          tile.setAttribute("aria-label", `Select snapshot ${item.label}`);
-          const img = document.createElement("img");
-          img.src = item.thumbnail;
-          img.alt = item.label;
-
-          const meta = document.createElement("div");
-          meta.className = "snapshot-meta";
-          const name = document.createElement("div");
-          name.className = "snapshot-name";
-          name.textContent = item.label;
-          const sub = document.createElement("div");
-          sub.className = "snapshot-sub";
-          const seedVal = item.settings?.seed;
-          sub.textContent = `seed ${seedVal === undefined || seedVal === null || seedVal === "" ? "-" : String(seedVal)}`;
-          meta.appendChild(name);
-          meta.appendChild(sub);
-
-          const actions = document.createElement("div");
-          actions.className = "gallery-actions";
-          const delBtn = document.createElement("button");
-          delBtn.className = "ds-btn ds-btn-sm btn";
-          delBtn.title = "Delete snapshot";
-          delBtn.setAttribute("aria-label", `Delete snapshot ${item.label}`);
-          delBtn.innerHTML = '<i class="iconoir-trash"></i><span>Delete</span>';
-          delBtn.onclick = () => {
-            galleryItems = galleryItems.filter((g) => g.id !== item.id);
-            if (selectedGalleryItemId === item.id) selectedGalleryItemId = null;
-            saveGallery();
-            renderGallery();
-          };
-
-          const recallBtn = document.createElement("button");
-          recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary btn";
-          recallBtn.title = "Recall snapshot";
-          recallBtn.setAttribute("aria-label", `Recall snapshot ${item.label}`);
-          recallBtn.innerHTML = '<i class="iconoir-refresh"></i><span>Recall</span>';
-          recallBtn.onclick = () => {
-            applyControlState(item.settings);
-            setActiveTab("generate");
-            scheduleFinalRender();
-          };
-
-          actions.appendChild(delBtn);
-          actions.appendChild(recallBtn);
-          tile.appendChild(img);
-          tile.appendChild(meta);
-          tile.appendChild(actions);
-          tile.addEventListener("click", (e) => {
-            if (e.target.closest("button")) return;
-            selectedGalleryItemId =
-              selectedGalleryItemId === item.id ? null : item.id;
-            renderGallery();
-          });
-          tile.addEventListener("keydown", (e) => {
-            if (e.key !== "Enter" && e.key !== " ") return;
-            e.preventDefault();
-            selectedGalleryItemId =
-              selectedGalleryItemId === item.id ? null : item.id;
-            renderGallery();
-          });
-          grid.appendChild(tile);
+      function configureGalleryHelpers() {
+        window.RadenUiGallery.configure({
+          storageKey: GALLERY_STORAGE_KEY,
+          persistence: window.RadenPersistence,
+          callbacks: {
+            applyControlState,
+            buildSnapshotCanvas: buildExportCanvas,
+            getControlState,
+            scheduleFinalRender,
+            setActiveTab,
+            setStatus,
+          },
         });
       }
 
+      function saveGallery() {
+        configureGalleryHelpers();
+        window.RadenUiGallery.saveGallery();
+      }
+
+      function loadGallery() {
+        configureGalleryHelpers();
+        window.RadenUiGallery.loadGallery();
+      }
+
+      function renderGallery() {
+        configureGalleryHelpers();
+        window.RadenUiGallery.renderGallery();
+      }
+
       function saveSnapshot() {
-        const thumbCanvas = buildExportCanvas();
-        const tiny = document.createElement("canvas");
-        tiny.width = 220;
-        tiny.height = 220;
-        const tctx = tiny.getContext("2d");
-        tctx.drawImage(thumbCanvas, 0, 0, tiny.width, tiny.height);
-        const mode = document.getElementById("modeSelector").value;
-        const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-        const item = {
-          id,
-          label: `${mode} ${new Date().toLocaleString()}`,
-          thumbnail: tiny.toDataURL("image/jpeg", 0.7),
-          settings: getControlState(),
-        };
-        galleryItems.unshift(item);
-        galleryItems = galleryItems.slice(0, 60);
-        saveGallery();
-        renderGallery();
-        setStatus("complete", "Snapshot saved");
+        configureGalleryHelpers();
+        window.RadenUiGallery.saveSnapshot();
+      }
+
+      function clearGallery() {
+        configureGalleryHelpers();
+        window.RadenUiGallery.clearGallery();
       }
 
       function randomizePostSettings() {
@@ -8876,6 +7466,7 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         mountDeferredPanelSections();
+        syncModeSelectorLabels();
         const mode = document.getElementById("modeSelector").value;
         document.body.setAttribute("data-mode", mode);
         updateVisibleSections(mode);
@@ -8933,15 +7524,7 @@
         updateCanvasViewportCursor();
       });
 
-      document.querySelectorAll(".panel-tab-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          setActiveTab(btn.dataset.tab);
-        });
-      });
-
-      document.getElementById("tabBtnSettings")?.addEventListener("click", () => {
-        setActiveTab("settings");
-      });
+      window.RadenUiTabs.bindPanelTabs({ setActiveTab });
 
       document.getElementById("textureRandomizeBtn").addEventListener("click", () => {
         randomizeTextureSettings();
@@ -9004,10 +7587,7 @@
         });
 
       document.getElementById("clearGalleryActionBtn").addEventListener("click", () => {
-        galleryItems = [];
-        selectedGalleryItemId = null;
-        saveGallery();
-        renderGallery();
+        clearGallery();
       });
 
       document.getElementById("runQaActionBtn").addEventListener("click", () => {
@@ -9021,8 +7601,10 @@
         });
 
       document.getElementById("exportCropMode").addEventListener("change", () => {
-        exportCropRect = null;
-        exportCropModeActive = document.getElementById("exportCropMode").value;
+        configureExportHelpers();
+        window.RadenUiExport.resetCropState(
+          document.getElementById("exportCropMode").value,
+        );
         syncExportSizeUi();
       });
 
@@ -9110,35 +7692,8 @@
         });
       }
 
-      const imageUploadInput = document.getElementById("imageUpload");
-      if (imageUploadInput) {
-        imageUploadInput.addEventListener("change", async (e) => {
-          const file = e.target.files && e.target.files[0];
-          if (!file) {
-            uploadedImage = null;
-            uploadedImageName = "";
-            setStatus("idle", "Image source cleared");
-            scheduleFinalRender();
-            return;
-          }
-          try {
-            const img = await loadImageFromFile(file);
-            uploadedImage = img;
-            uploadedImageName = file.name || "uploaded image";
-            setStatus("complete", `Image loaded: ${uploadedImageName}`);
-            const modeEl = document.getElementById("modeSelector");
-            if (modeEl && !["risoimage", "pixelretro"].includes(modeEl.value)) {
-              modeEl.value = "risoimage";
-              document.body.setAttribute("data-mode", "risoimage");
-              updateVisibleSections("risoimage");
-            }
-            scheduleFinalRender();
-          } catch (err) {
-            console.error(err);
-            setStatus("error", "Unable to load image");
-          }
-        });
-      }
+      configureSourceImageHelpers();
+      window.RadenSourceImage.bindImageUpload();
 
       const topoPreset = document.getElementById("topoPreset");
       if (topoPreset) {
