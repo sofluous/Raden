@@ -2835,6 +2835,7 @@
     <script src="./design-system/js/theme-selector.js"></script>
     <script src="./src/shared/math_color_palette.js"></script>
     <script src="./src/state/schema.js"></script>
+    <script src="./src/state/layers.js"></script>
     <script src="./src/state/configBuilder.js"></script>
     <script src="./src/state/persistence.js"></script>
     <script src="./src/core/status.js"></script>
@@ -3231,6 +3232,7 @@
 
       let simplex;
       let originalImageData = null;
+      let postFxBaseImageData = null;
       const renderPipeline = window.RadenRenderPipeline?.createRenderPipeline
         ? window.RadenRenderPipeline.createRenderPipeline()
         : null;
@@ -3540,10 +3542,10 @@
         return { h, s, l };
       }
 
-      function writePixel(data, i, r, g, b, boostR, boostG, boostB) {
-        data[i] = Math.max(0, Math.min(255, r * boostR));
-        data[i + 1] = Math.max(0, Math.min(255, g * boostG));
-        data[i + 2] = Math.max(0, Math.min(255, b * boostB));
+      function writePixel(data, i, r, g, b) {
+        data[i] = Math.max(0, Math.min(255, r));
+        data[i + 1] = Math.max(0, Math.min(255, g));
+        data[i + 2] = Math.max(0, Math.min(255, b));
         data[i + 3] = 255;
       }
 
@@ -3806,6 +3808,54 @@
 
       function applyExperimentalEffects(config) {
         window.RadenPostFx.applyExperimentalEffects(ctx, canvas, config);
+      }
+
+      function capturePostFxBase(width = canvas.width, height = canvas.height) {
+        if (!width || !height) {
+          postFxBaseImageData = null;
+          originalImageData = null;
+          return null;
+        }
+        postFxBaseImageData = ctx.getImageData(0, 0, width, height);
+        originalImageData = postFxBaseImageData;
+        return postFxBaseImageData;
+      }
+
+      function getLivePostFxConfig() {
+        return {
+          boostR: parseFloat(boostRInput.value) || 1,
+          boostG: parseFloat(boostGInput.value) || 1,
+          boostB: parseFloat(boostBInput.value) || 1,
+          gaussianBlur: parseFloat(document.getElementById("gaussianBlur")?.value || "0") || 0,
+          grain: !!document.getElementById("grainToggle")?.checked,
+          fxInvert: !!document.getElementById("fxInvert")?.checked,
+          fxChromatic: parseFloat(document.getElementById("fxChromatic")?.value || "0") || 0,
+          fxGlitch: parseFloat(document.getElementById("fxGlitch")?.value || "0") || 0,
+          fxScanline: parseFloat(document.getElementById("fxScanline")?.value || "0") || 0,
+        };
+      }
+
+      function applyPostFxStackFromBase(config, options = {}) {
+        if (!postFxBaseImageData) return false;
+        const fxConfig = Object.assign({}, getLivePostFxConfig(), config || {});
+        const blurAlpha = options.blurAlpha ?? 0.75;
+        ctx.putImageData(postFxBaseImageData, 0, 0);
+        window.RadenPostFx.applyColorBoosts(ctx, postFxBaseImageData, {
+          boostR: fxConfig.boostR,
+          boostG: fxConfig.boostG,
+          boostB: fxConfig.boostB,
+        });
+        applyGaussianBlurOverlay(canvas, fxConfig.gaussianBlur, blurAlpha);
+        if (fxConfig.grain) applyGrainOverlay(ctx, canvas.width, canvas.height);
+        applyExperimentalEffects(fxConfig);
+        captureDisplayBase();
+        applyCompareView();
+        return true;
+      }
+
+      function commitPostFxBaseAndApply(config, options = {}) {
+        capturePostFxBase(config.width, config.height);
+        applyPostFxStackFromBase(config, options);
       }
       function getRenderConfig(renderOptions = {}) {
         if (window.RadenState?.buildRenderConfig) {
@@ -5132,21 +5182,7 @@
         ctx.globalAlpha = 1;
         ctx.filter = "none";
         ctx.drawImage(offscreenCanvas, 0, 0);
-
-        if (config.gaussianBlur > 0.01) {
-          ctx.globalAlpha = 0.72;
-          ctx.filter = `blur(${config.gaussianBlur}px)`;
-          ctx.drawImage(offscreenCanvas, 0, 0);
-          ctx.globalAlpha = 1;
-          ctx.filter = "none";
-        }
-
-        if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
-        applyExperimentalEffects(config);
-        captureDisplayBase();
-        applyCompareView();
-
-        originalImageData = ctx.getImageData(0, 0, config.width, config.height);
+        commitPostFxBaseAndApply(config, { blurAlpha: 0.72 });
         if (!config.preview) {
           setStatus("complete", completeLabel);
           setTimeout(() => {
@@ -5603,10 +5639,6 @@
 
         const flowMode = config.flowMode;
 
-        const boostR = config.boostR;
-        const boostG = config.boostG;
-        const boostB = config.boostB;
-
         const lightVec = {
           x: Math.cos(lightAngle * 2 * Math.PI),
           y: Math.sin(lightAngle * 2 * Math.PI),
@@ -5785,7 +5817,7 @@
               g = substrate.g * (1 - coverage) + g * coverage;
               b = substrate.b * (1 - coverage) + b * coverage;
 
-              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+              writePixel(data, i, r, g, b);
             }
           }
           setProgressPercent((y / config.height) * 100);
@@ -5820,18 +5852,7 @@
             ctx.globalAlpha = 1.0;
             ctx.filter = "none";
 
-            if (config.grain) {
-              applyGrainOverlay(ctx, config.width, config.height);
-            }
-            applyExperimentalEffects(config);
-            captureDisplayBase();
-            applyCompareView();
-
-            originalImageData = new ImageData(
-              new Uint8ClampedArray(imageData.data),
-              imageData.width,
-              imageData.height,
-            );
+            commitPostFxBaseAndApply(config, { blurAlpha: 0.72 });
 
             if (!config.preview) {
               setStatus("complete", "Complete");
@@ -5882,10 +5903,6 @@
         const fireIntensity = config.opalFire || 1.2;
         const matrix = clamp01(config.opalMatrix || 0.52);
         const gaussianBlur = config.gaussianBlur;
-        const boostR = config.boostR;
-        const boostG = config.boostG;
-        const boostB = config.boostB;
-
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("opalvein", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
@@ -5949,7 +5966,7 @@
               g += sparkle * 0.92;
               b += sparkle;
 
-              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+              writePixel(data, i, r, g, b);
             }
           }
 
@@ -5976,17 +5993,7 @@
           ctx.globalAlpha = 1;
           ctx.filter = "none";
 
-          if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
-          applyExperimentalEffects(config);
-          captureDisplayBase();
-          applyCompareView();
-
-          originalImageData = ctx.getImageData(
-            0,
-            0,
-            config.width,
-            config.height,
-          );
+          commitPostFxBaseAndApply(config, { blurAlpha: 0.72 });
           if (!config.preview) {
             setStatus("complete", "Opal rendered");
             setTimeout(() => {
@@ -6028,10 +6035,6 @@
         const dirX = Math.cos(direction);
         const dirY = Math.sin(direction);
         const gaussianBlur = config.gaussianBlur;
-        const boostR = config.boostR;
-        const boostG = config.boostG;
-        const boostB = config.boostB;
-
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("labradorite", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
@@ -6107,7 +6110,7 @@
               g += spark * 0.8;
               b += spark;
 
-              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+              writePixel(data, i, r, g, b);
             }
           }
 
@@ -6134,17 +6137,7 @@
           ctx.globalAlpha = 1;
           ctx.filter = "none";
 
-          if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
-          applyExperimentalEffects(config);
-          captureDisplayBase();
-          applyCompareView();
-
-          originalImageData = ctx.getImageData(
-            0,
-            0,
-            config.width,
-            config.height,
-          );
+          commitPostFxBaseAndApply(config, { blurAlpha: 0.72 });
           if (!config.preview) {
             setStatus("complete", "Labradorite rendered");
             setTimeout(() => {
@@ -6184,10 +6177,6 @@
         const inkDrift = clamp01(config.marbleInkDrift || 0.42);
         const stoneLightness = clamp01(config.marbleLightness || 0.72);
         const gaussianBlur = config.gaussianBlur;
-        const boostR = config.boostR;
-        const boostG = config.boostG;
-        const boostB = config.boostB;
-
         let y = 0;
         const rowsPerFrame = getRowsPerFrame("marbleink", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
@@ -6257,7 +6246,7 @@
               g += cloud * 11;
               b += cloud * 7;
 
-              writePixel(data, i, r, g, b, boostR, boostG, boostB);
+              writePixel(data, i, r, g, b);
             }
           }
 
@@ -6284,17 +6273,7 @@
           ctx.globalAlpha = 1;
           ctx.filter = "none";
 
-          if (config.grain) applyGrainOverlay(ctx, config.width, config.height);
-          applyExperimentalEffects(config);
-          captureDisplayBase();
-          applyCompareView();
-
-          originalImageData = ctx.getImageData(
-            0,
-            0,
-            config.width,
-            config.height,
-          );
+          commitPostFxBaseAndApply(config, { blurAlpha: 0.72 });
           if (!config.preview) {
             setStatus("complete", "Marble rendered");
             setTimeout(() => {
@@ -6348,15 +6327,7 @@
             }
           }
         }
-        originalImageData = ctx.getImageData(0, 0, config.width, config.height);
-
-        const { boostR, boostG, boostB, grain } = getLiveRenderOverrides();
-        adjustColorBoosts();
-        applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.8);
-        if (grain) applyGrainOverlay(ctx, config.width, config.height);
-        applyExperimentalEffects(config);
-        captureDisplayBase();
-        applyCompareView();
+        commitPostFxBaseAndApply(config, { blurAlpha: 0.8 });
 
         setTimeout(
           () => {
@@ -6486,16 +6457,7 @@
         canvas.width = config.width;
         canvas.height = config.height;
         ctx.drawImage(offscreenCanvas, 0, 0);
-        originalImageData = ctx.getImageData(0, 0, config.width, config.height);
-
-        // Post-processing
-        const { grain } = getLiveRenderOverrides();
-        adjustColorBoosts();
-        applyGaussianBlurOverlay(canvas, config.gaussianBlur, 0.75);
-        if (grain) applyGrainOverlay(ctx, config.width, config.height);
-        applyExperimentalEffects(config);
-        captureDisplayBase();
-        applyCompareView();
+        commitPostFxBaseAndApply(config, { blurAlpha: 0.75 });
 
         if (!renderOptions.preview) {
           setStatus(
@@ -6520,6 +6482,10 @@
       }
 
       function adjustColorBoosts() {
+        if (postFxBaseImageData) {
+          applyPostFxStackFromBase(getLivePostFxConfig());
+          return;
+        }
         if (!originalImageData) return;
         const { boostR, boostG, boostB } = getLiveRenderOverrides();
         window.RadenPostFx.applyColorBoosts(ctx, originalImageData, {
@@ -6842,6 +6808,11 @@
             issues.push(`Schema: ${issue}`);
           });
         }
+        if (window.RadenLayers?.validateLayerState) {
+          window.RadenLayers.validateLayerState(getLayerState()).forEach((issue) => {
+            issues.push(`Layers: ${issue}`);
+          });
+        }
 
         allGenerateInputs.forEach((el) => {
           if (!el.id && !isUiOnlyControl(el)) {
@@ -7095,6 +7066,19 @@
         return window.RadenUiControls?.getControlState
           ? window.RadenUiControls.getControlState()
           : {};
+      }
+
+      function getLayerState(options = {}) {
+        const legacySettings = options.legacySettings || getControlState();
+        const modeId =
+          options.modeId || document.getElementById("modeSelector")?.value;
+        return window.RadenLayers?.buildLayerStateFromFlatState
+          ? window.RadenLayers.buildLayerStateFromFlatState(legacySettings, {
+              modeId,
+              width: canvas.width,
+              height: canvas.height,
+            })
+          : null;
       }
 
       function applyControlState(state) {
@@ -7397,6 +7381,7 @@
             applyControlState,
             buildSnapshotCanvas: buildExportCanvas,
             getControlState,
+            getLayerState,
             scheduleFinalRender,
             setActiveTab,
             setStatus,

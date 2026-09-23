@@ -40,11 +40,13 @@
     if (persistence && typeof persistence.loadGallery === "function") {
       galleryItems = persistence.loadGallery({
         storageKey,
-      });
+      }).map((item) => global.RadenLayers?.normalizeGalleryItem?.(item) || item);
       return galleryItems;
     }
     const raw = localStorage.getItem(storageKey);
-    galleryItems = raw ? JSON.parse(raw) : [];
+    galleryItems = (raw ? JSON.parse(raw) : []).map(
+      (item) => global.RadenLayers?.normalizeGalleryItem?.(item) || item,
+    );
     return galleryItems;
   }
 
@@ -61,8 +63,12 @@
   }
 
   function recallGalleryItem(item) {
+    const legacySettings =
+      item.legacySettings ||
+      item.settings ||
+      global.RadenLayers?.getLegacySettingsFromLayerState?.(item.state);
     if (typeof callbacks.applyControlState === "function") {
-      callbacks.applyControlState(item.settings);
+      callbacks.applyControlState(legacySettings);
     }
     if (typeof callbacks.setActiveTab === "function") {
       callbacks.setActiveTab("generate");
@@ -99,7 +105,7 @@
       name.textContent = item.label;
       const sub = document.createElement("div");
       sub.className = "snapshot-sub";
-      const seedVal = item.settings?.seed;
+      const seedVal = (item.legacySettings || item.settings)?.seed;
       sub.textContent = `seed ${seedVal === undefined || seedVal === null || seedVal === "" ? "-" : String(seedVal)}`;
       meta.appendChild(name);
       meta.appendChild(sub);
@@ -156,6 +162,7 @@
     const buildSnapshotCanvas =
       options.buildSnapshotCanvas || callbacks.buildSnapshotCanvas;
     const getControlState = options.getControlState || callbacks.getControlState;
+    const getLayerState = options.getLayerState || callbacks.getLayerState;
     const setStatus = options.setStatus || callbacks.setStatus;
     if (
       typeof buildSnapshotCanvas !== "function" ||
@@ -164,12 +171,22 @@
       return null;
     }
     const mode = document.getElementById("modeSelector").value;
+    const legacySettings = getControlState();
+    const layerState =
+      typeof getLayerState === "function"
+        ? getLayerState({ legacySettings, modeId: mode })
+        : global.RadenLayers?.buildLayerStateFromFlatState?.(legacySettings, {
+            modeId: mode,
+          });
     const id = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const item = {
       id,
+      version: global.RadenLayers?.LAYER_STATE_VERSION || 2,
       label: `${mode} ${new Date().toLocaleString()}`,
       thumbnail: createSnapshotThumbnail(buildSnapshotCanvas()),
-      settings: getControlState(),
+      state: layerState,
+      legacySettings,
+      settings: legacySettings,
     };
     galleryItems.unshift(item);
     galleryItems = galleryItems.slice(0, 60);
