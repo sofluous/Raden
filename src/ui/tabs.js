@@ -19,7 +19,7 @@
   function updateActionBar(tabName) {
     const actionButtons = {
       textureRandomizeBtn: tabName === "generate",
-      postRandomizeBtn: tabName === "post",
+      postRandomizeBtn: false,
       saveResultBtn: tabName === "generate" || tabName === "post",
       exportActionBtn: tabName === "export",
       clearGalleryActionBtn: tabName === "gallery",
@@ -63,9 +63,14 @@
   function mountDeferredPanelSections() {
     const postTab = document.getElementById("tabPost");
     if (!postTab) return;
+    const effectControlsPanel =
+      document.getElementById("effectControlsPanel") || postTab;
     ["postProcessingSection", "experimentalSection"].forEach((id) => {
       const section = document.getElementById(id);
-      if (section) postTab.appendChild(section);
+      if (!section) return;
+      section.dataset.effectControlSource = "true";
+      section.hidden = true;
+      effectControlsPanel.appendChild(section);
     });
   }
 

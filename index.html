@@ -227,6 +227,248 @@
         order: 80;
       }
 
+      .effect-stack-panel {
+        display: grid;
+        gap: var(--ds-space-2);
+        padding: var(--ds-space-2) 0 var(--ds-space-3);
+      }
+
+      .effect-stack-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) repeat(3, var(--ds-control-h-sm));
+        align-items: center;
+        gap: var(--ds-space-1);
+      }
+
+      .effect-stack-title {
+        min-width: 0;
+        color: var(--ds-text-muted);
+        font-size: var(--ds-fs-1);
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .effect-stack-action {
+        appearance: none;
+        width: var(--ds-control-h-sm);
+        height: var(--ds-control-h-sm);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-btn-bg);
+        color: var(--ds-text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .effect-stack-action:disabled {
+        cursor: not-allowed;
+        opacity: 0.38;
+      }
+
+      #effectMoveUpBtn,
+      #effectMoveDownBtn {
+        display: none;
+      }
+
+      .effect-stack-list {
+        display: grid;
+        gap: 4px;
+      }
+
+      .effect-row-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--ds-control-h-sm);
+        align-items: center;
+        gap: var(--ds-space-1);
+        padding-left: calc(var(--ds-control-h-sm) + var(--ds-space-1));
+      }
+
+      .effect-stack-row {
+        display: grid;
+        grid-template-columns: var(--ds-control-h-sm) minmax(0, 1fr) var(--ds-control-h-sm);
+        align-items: center;
+        gap: var(--ds-space-1);
+        min-height: 34px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-surface) 88%, transparent);
+        padding: 3px var(--ds-space-2);
+        text-align: left;
+        width: 100%;
+      }
+
+      .effect-stack-row.is-dragging {
+        opacity: 0.55;
+      }
+
+      .effect-stack-row.is-drop-target {
+        border-color: var(--ds-accent);
+      }
+
+      .effect-stack-row.is-selected {
+        border-color: var(--ds-accent);
+        background: color-mix(in oklab, var(--ds-accent) 12%, var(--ds-surface));
+      }
+
+      .effect-stack-row.is-base {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+      }
+
+      .effect-row-thumb {
+        width: 30px;
+        height: 24px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-1);
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--ds-accent) 22%, transparent), transparent),
+          var(--ds-surface-2);
+      }
+
+      .effect-row-grip {
+        width: var(--ds-control-h-sm);
+        height: var(--ds-control-h-sm);
+        border: 0;
+        background: transparent;
+        color: var(--ds-text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--ds-fs-2);
+        line-height: 1;
+        cursor: grab;
+        opacity: 0;
+        pointer-events: none;
+        margin-left: calc((var(--ds-control-h-sm) + var(--ds-space-1)) * -1);
+      }
+
+      .effect-row-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--ds-text);
+        font-size: var(--ds-fs-1);
+        font-weight: 650;
+      }
+
+      .effect-row-type {
+        order: 2;
+        min-width: 0;
+        width: max-content;
+        max-width: 190px;
+        justify-self: start;
+        appearance: none;
+        border: 0;
+        border-radius: var(--ds-radius-1);
+        background: transparent;
+        color: var(--ds-text);
+        font: inherit;
+        font-weight: 650;
+        padding: 0 18px 0 0;
+        cursor: pointer;
+        background-image:
+          linear-gradient(45deg, transparent 50%, var(--ds-text-muted) 50%),
+          linear-gradient(135deg, var(--ds-text-muted) 50%, transparent 50%);
+        background-position:
+          calc(100% - 8px) 50%,
+          calc(100% - 3px) 50%;
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+      }
+
+      .effect-row-type:focus-visible {
+        outline: 2px solid var(--ds-focus);
+        outline-offset: 2px;
+      }
+
+      .effect-row-meta {
+        color: var(--ds-text-muted);
+        font-size: var(--ds-fs-0);
+      }
+
+      .effect-row-switch {
+        order: 3;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ds-control-h-sm);
+        height: var(--ds-control-h-sm);
+        border: 0;
+        background: transparent;
+        color: var(--ds-text-muted);
+        cursor: pointer;
+        font-size: var(--ds-fs-2);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .effect-row-switch.is-hidden {
+        opacity: 0.55;
+        pointer-events: auto;
+      }
+
+      .effect-row-switch i {
+        font-size: var(--ds-fs-2);
+        line-height: 1;
+      }
+
+      .effect-row-delete {
+        appearance: none;
+        width: var(--ds-control-h-sm);
+        height: var(--ds-control-h-sm);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: var(--ds-btn-bg);
+        color: var(--ds-text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .effect-row-shell:hover .effect-row-delete,
+      .effect-row-shell:focus-within .effect-row-delete,
+      .effect-row-shell:has(.effect-stack-row.is-selected) .effect-row-delete,
+      .effect-row-shell:hover .effect-row-grip,
+      .effect-row-shell:focus-within .effect-row-grip,
+      .effect-row-shell:has(.effect-stack-row.is-selected) .effect-row-grip,
+      .effect-row-shell:hover .effect-row-switch,
+      .effect-row-shell:focus-within .effect-row-switch,
+      .effect-row-shell:has(.effect-stack-row.is-selected) .effect-row-switch {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .effect-controls-panel {
+        border-top: 1px solid var(--ds-border);
+        padding-top: var(--ds-space-2);
+      }
+
+      .effect-controls-panel .section {
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+
+      .effect-controls-panel .section h3 {
+        display: none;
+      }
+
+      #tabPost #postProcessingSection,
+      #tabPost #experimentalSection {
+        display: none !important;
+      }
+
+      .effect-controls-empty {
+        color: var(--ds-text-muted);
+        font-size: var(--ds-fs-1);
+        padding: var(--ds-space-2) 0;
+      }
+
       #experimentalSection {
         order: 90;
       }
@@ -1611,8 +1853,7 @@
                   max="2"
                   step="0.01"
                   value="1"
-                  oninput="adjustColorBoosts()"
-                  data-live="true"
+                  data-live="false"
                 />
               </div>
               <div class="control-icons"></div>
@@ -1628,8 +1869,7 @@
                   max="2"
                   step="0.01"
                   value="1"
-                  oninput="adjustColorBoosts()"
-                  data-live="true"
+                  data-live="false"
                 />
               </div>
               <div class="control-icons"></div>
@@ -1645,17 +1885,48 @@
                   max="2"
                   step="0.01"
                   value="1"
-                  oninput="adjustColorBoosts()"
-                  data-live="true"
+                  data-live="false"
                 />
               </div>
               <div class="control-icons"></div>
             </div>
 
-            <div class="control-row">
+            <div class="control-row" hidden>
               <div class="control-label">Grain Overlay:</div>
               <div class="control-input">
                 <input type="checkbox" id="grainToggle" checked />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Amount:</div>
+              <div class="control-input">
+                <input type="range" id="grainAmount" min="0" max="1" step="0.01" value="0.35" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Size:</div>
+              <div class="control-input">
+                <input type="range" id="grainSize" min="1" max="6" step="1" value="1" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Contrast:</div>
+              <div class="control-input">
+                <input type="range" id="grainContrast" min="0" max="2" step="0.01" value="1" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Monochrome:</div>
+              <div class="control-input">
+                <input type="checkbox" id="grainMonochrome" checked />
               </div>
               <div class="control-icons"></div>
             </div>
@@ -2534,7 +2805,7 @@
               <div class="control-icons"></div>
             </div>
             <div class="control-row">
-              <div class="control-label">Chromatic Aberration:</div>
+              <div class="control-label">Amount:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2549,7 +2820,7 @@
               <div class="control-icons"></div>
             </div>
             <div class="control-row">
-              <div class="control-label">Glitch Tearing:</div>
+              <div class="control-label">Amount:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2564,7 +2835,7 @@
               <div class="control-icons"></div>
             </div>
             <div class="control-row">
-              <div class="control-label">Scanlines:</div>
+              <div class="control-label">Amount:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2575,6 +2846,49 @@
                   value="0"
                   data-live="false"
                 />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Density:</div>
+              <div class="control-input">
+                <input type="range" id="scanlineDensity" min="2" max="12" step="1" value="2" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Width:</div>
+              <div class="control-input">
+                <input type="range" id="scanlineWidth" min="1" max="6" step="1" value="1" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Opacity:</div>
+              <div class="control-input">
+                <input type="range" id="scanlineOpacity" min="0" max="1" step="0.01" value="0.25" data-live="false" />
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Orientation:</div>
+              <div class="control-input">
+                <select id="scanlineOrientation" data-live="false">
+                  <option value="horizontal">Horizontal</option>
+                  <option value="vertical">Vertical</option>
+                </select>
+              </div>
+              <div class="control-icons"></div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">Softness:</div>
+              <div class="control-input">
+                <input type="range" id="scanlineSoftness" min="0" max="1" step="0.01" value="0" data-live="false" />
               </div>
               <div class="control-icons"></div>
             </div>
@@ -2638,7 +2952,67 @@
           </div>
         </div>
 
-        <div id="tabPost" class="panel-tab" hidden></div>
+        <div id="tabPost" class="panel-tab" hidden>
+          <div id="effectStackPanel" class="effect-stack-panel">
+            <div class="effect-stack-toolbar" aria-label="Effect stack actions">
+              <div class="effect-stack-title">Layers</div>
+              <button
+                type="button"
+                id="effectAddBtn"
+                class="effect-stack-action"
+                title="Add effect"
+                aria-label="Add effect"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                id="effectRandomizeBtn"
+                class="effect-stack-action"
+                title="Add randomized effects"
+                aria-label="Add randomized effects"
+              >
+                <i class="iconoir-shuffle" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                id="effectRandomizeSelectedBtn"
+                class="effect-stack-action"
+                title="Randomize selected effect"
+                aria-label="Randomize selected effect"
+                disabled
+              >
+                <i class="iconoir-refresh" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                id="effectMoveUpBtn"
+                class="effect-stack-action"
+                title="Move selected effect up"
+                aria-label="Move selected effect up"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                id="effectMoveDownBtn"
+                class="effect-stack-action"
+                title="Move selected effect down"
+                aria-label="Move selected effect down"
+              >
+                ↓
+              </button>
+            </div>
+            <div id="effectStackList" class="effect-stack-list"></div>
+            <div id="effectControlsPanel" class="effect-controls-panel">
+              <div id="effectControlsEmpty" class="effect-controls-empty">
+                No effect selected
+              </div>
+              <div id="effectControlsContent" hidden>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div id="tabExport" class="panel-tab" hidden>
           <div class="control-row">
@@ -2835,6 +3209,7 @@
     <script src="./design-system/js/theme-selector.js"></script>
     <script src="./src/shared/math_color_palette.js"></script>
     <script src="./src/state/schema.js"></script>
+    <script src="./src/state/effects.js"></script>
     <script src="./src/state/layers.js"></script>
     <script src="./src/state/configBuilder.js"></script>
     <script src="./src/state/persistence.js"></script>
@@ -3233,6 +3608,8 @@
       let simplex;
       let originalImageData = null;
       let postFxBaseImageData = null;
+      let activeLayerState = null;
+      let postFxApplyRunId = 0;
       const renderPipeline = window.RadenRenderPipeline?.createRenderPipeline
         ? window.RadenRenderPipeline.createRenderPipeline()
         : null;
@@ -3837,19 +4214,53 @@
 
       function applyPostFxStackFromBase(config, options = {}) {
         if (!postFxBaseImageData) return false;
+        postFxApplyRunId += 1;
         const fxConfig = Object.assign({}, getLivePostFxConfig(), config || {});
         const blurAlpha = options.blurAlpha ?? 0.75;
-        ctx.putImageData(postFxBaseImageData, 0, 0);
-        window.RadenPostFx.applyColorBoosts(ctx, postFxBaseImageData, {
-          boostR: fxConfig.boostR,
-          boostG: fxConfig.boostG,
-          boostB: fxConfig.boostB,
+        const enabledEffects = getEnabledEffects();
+        window.RadenPostFx.applyPostFxStack(ctx, canvas, postFxBaseImageData, enabledEffects, {
+          fallbackConfig: fxConfig,
+          blurAlpha,
         });
-        applyGaussianBlurOverlay(canvas, fxConfig.gaussianBlur, blurAlpha);
-        if (fxConfig.grain) applyGrainOverlay(ctx, canvas.width, canvas.height);
-        applyExperimentalEffects(fxConfig);
         captureDisplayBase();
         applyCompareView();
+        return true;
+      }
+
+      async function applyPostFxStackFromBaseAsync(config, options = {}) {
+        if (!postFxBaseImageData) return false;
+        const runId = ++postFxApplyRunId;
+        const fxConfig = Object.assign({}, getLivePostFxConfig(), config || {});
+        const blurAlpha = options.blurAlpha ?? 0.75;
+        const enabledEffects = getEnabledEffects();
+        setStatus("rendering", enabledEffects.length ? "Applying effects..." : "Effect applied");
+        setProgressPercent(enabledEffects.length ? 4 : 100);
+        const applied = await window.RadenPostFx.applyPostFxStackAsync(
+          ctx,
+          canvas,
+          postFxBaseImageData,
+          enabledEffects,
+          {
+            fallbackConfig: fxConfig,
+            blurAlpha,
+            onProgress: ({ percent }) => {
+              if (runId !== postFxApplyRunId) return;
+              setProgressPercent(Math.max(4, Math.min(100, percent)));
+            },
+          },
+        );
+        if (runId !== postFxApplyRunId) return false;
+        if (!applied) return false;
+        captureDisplayBase();
+        applyCompareView();
+        clearPendingIndicators();
+        setStatus("complete", "Effect applied");
+        setProgressPercent(100);
+        setTimeout(() => {
+          if (runId !== postFxApplyRunId) return;
+          setStatus("idle", "Idle");
+          setProgressPercent(0);
+        }, 450);
         return true;
       }
 
@@ -6482,6 +6893,7 @@
       }
 
       function adjustColorBoosts() {
+        syncActiveEffectConfigFromControls({ renderStack: false });
         if (postFxBaseImageData) {
           applyPostFxStackFromBase(getLivePostFxConfig());
           return;
@@ -7063,22 +7475,397 @@
       }
 
       function getControlState() {
-        return window.RadenUiControls?.getControlState
+        const state = window.RadenUiControls?.getControlState
           ? window.RadenUiControls.getControlState()
           : {};
+        UI_ONLY_CONTROL_IDS.forEach((id) => {
+          delete state[id];
+        });
+        return state;
       }
 
       function getLayerState(options = {}) {
+        if (activeLayerState && !options.forceFromControls) {
+          activeLayerState.legacySettings = getControlState();
+          activeLayerState.canvas = Object.assign({}, activeLayerState.canvas || {}, {
+            width: canvas.width || Number(activeLayerState.legacySettings.renderWidth) || null,
+            height: canvas.height || Number(activeLayerState.legacySettings.renderHeight) || null,
+          });
+          return activeLayerState;
+        }
         const legacySettings = options.legacySettings || getControlState();
         const modeId =
           options.modeId || document.getElementById("modeSelector")?.value;
-        return window.RadenLayers?.buildLayerStateFromFlatState
+        activeLayerState = window.RadenLayers?.buildLayerStateFromFlatState
           ? window.RadenLayers.buildLayerStateFromFlatState(legacySettings, {
               modeId,
               width: canvas.width,
               height: canvas.height,
             })
           : null;
+        return activeLayerState;
+      }
+
+      function resetLayerStateFromControls() {
+        activeLayerState = null;
+        renderEffectStack();
+      }
+
+      function setLayerState(layerState) {
+        activeLayerState = layerState ? JSON.parse(JSON.stringify(layerState)) : null;
+        renderEffectStack();
+      }
+
+      function getEffectStackParts() {
+        const layerState = getLayerState();
+        const layer = window.RadenLayers?.getActiveLayer?.(layerState);
+        const effects = Array.isArray(layer?.effects) ? layer.effects : [];
+        return { layerState, layer, effects };
+      }
+
+      function getSelectedEffect() {
+        const { layerState, effects } = getEffectStackParts();
+        if (!layerState?.activeEffectId) return null;
+        return effects.find((effect) => effect.id === layerState.activeEffectId) || null;
+      }
+
+      function getEffectLabel(effectId) {
+        if (window.RadenEffects?.getEffectLabel) return window.RadenEffects.getEffectLabel(effectId);
+        if (window.RadenLayers?.EFFECT_LABELS?.[effectId]) return window.RadenLayers.EFFECT_LABELS[effectId];
+        return window.RadenModes?.getMode?.(effectId)?.label || effectId || "Effect";
+      }
+
+      function getEnabledEffects() {
+        const state = getLayerState();
+        const layer = window.RadenLayers?.getActiveLayer?.(state);
+        if (!Array.isArray(layer?.effects)) return [];
+        return layer.effects.filter((effect) => effect.enabled !== false);
+      }
+
+      function hasEnabledEffect(effectId) {
+        const state = getLayerState();
+        const layer = window.RadenLayers?.getActiveLayer?.(state);
+        if (!Array.isArray(layer?.effects)) return effectId === "postFx";
+        return layer.effects.some(
+          (effect) => effect.effectId === effectId && effect.enabled !== false,
+        );
+      }
+
+      function getBaseLayerLabel(layer) {
+        if (!layer) return "Base Layer";
+        const source = layer.sourceType === "image" ? "Uploaded Image" : "Generated";
+        return `${source}: ${layer.label || getEffectLabel(layer.modeId)}`;
+      }
+
+      function getEffectTypeOptionsHtml(selectedEffectId) {
+        const effectTypes = window.RadenEffects?.getEffectTypeOptions?.() || [];
+        return effectTypes.map((effectId) => {
+          const selected = effectId === selectedEffectId ? " selected" : "";
+          return `<option value="${effectId}"${selected}>${getEffectLabel(effectId)}</option>`;
+        }).join("");
+      }
+
+      function getSelectedEffectControlPolicy(controlId) {
+        const effect = getSelectedEffect();
+        if (!effect || !controlId) return null;
+        return window.RadenEffects?.getEffectControlPolicy?.(effect.effectId, controlId) || "deferred";
+      }
+
+      function setEffectControlValues(effect) {
+        if (!effect) return;
+        const controlIds = window.RadenEffects?.getEffectControlIds?.(effect.effectId) || [];
+        controlIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el || !Object.prototype.hasOwnProperty.call(effect.config || {}, id)) return;
+          if (el.type === "checkbox") {
+            el.checked = !!effect.config[id];
+          } else {
+            el.value = String(effect.config[id]);
+          }
+          updateRangeReadout(el);
+        });
+      }
+
+      function isLiveFxControl(el) {
+        return getSelectedEffectControlPolicy(el?.id) === "live";
+      }
+
+      function updateSelectedEffectControlVisibility(effectId) {
+        const scopedIds = new Set(
+          effectId ? window.RadenEffects?.getEffectControlIds?.(effectId) || [] : [],
+        );
+        const content = document.getElementById("effectControlsContent");
+        const managedRows = Array.from(
+          document.querySelectorAll(".control-row[data-source-section-id]"),
+        );
+        let visibleCount = 0;
+        managedRows.forEach((row) => {
+          const sourceSection = document.getElementById(row.dataset.sourceSectionId);
+          if (sourceSection && row.parentElement !== sourceSection) {
+            sourceSection.appendChild(row);
+          }
+          row.hidden = true;
+        });
+        managedRows.forEach((row) => {
+          const control = row.querySelector("input[id], select[id]");
+          const visible = !!effectId && !!control && scopedIds.has(control.id);
+          row.hidden = !visible;
+          if (visible && content) {
+            content.appendChild(row);
+            visibleCount += 1;
+          }
+        });
+        [
+          document.getElementById("postProcessingSection"),
+          document.getElementById("experimentalSection"),
+        ].filter(Boolean).forEach((section) => {
+          section.hidden = true;
+        });
+        return visibleCount;
+      }
+
+      function syncSelectedEffectControls() {
+        const selectedEffect = getSelectedEffect();
+        const empty = document.getElementById("effectControlsEmpty");
+        const content = document.getElementById("effectControlsContent");
+        const hasSelection = !!selectedEffect;
+        const visibleControlCount = updateSelectedEffectControlVisibility(
+          selectedEffect?.effectId || null,
+        );
+        if (empty) {
+          empty.textContent = hasSelection
+            ? "No controls for this effect"
+            : "No effect selected";
+          empty.hidden = hasSelection && visibleControlCount > 0;
+        }
+        if (content) content.hidden = !hasSelection || visibleControlCount === 0;
+        setEffectControlValues(selectedEffect);
+      }
+
+      function handleEffectDrop(event, targetIndex) {
+        event.preventDefault();
+        const effectId = event.dataTransfer?.getData("text/plain");
+        if (!effectId) return;
+        activeLayerState = window.RadenLayers.moveEffectToIndex(
+          getLayerState(),
+          effectId,
+          targetIndex,
+        );
+        scheduleFinalRender();
+        renderEffectStack();
+      }
+
+      function renderEffectStack() {
+        const list = document.getElementById("effectStackList");
+        if (!list) return;
+        const { layerState, layer, effects } = getEffectStackParts();
+        const activeEffectId = layerState?.activeEffectId || null;
+        const baseSelected = !activeEffectId;
+
+        list.innerHTML = "";
+        const baseRow = document.createElement("button");
+        baseRow.type = "button";
+        baseRow.className = `effect-stack-row is-base${baseSelected ? " is-selected" : ""}`;
+        baseRow.innerHTML = `
+          <span class="effect-row-thumb" aria-hidden="true"></span>
+          <span class="effect-row-label"></span>
+          <span class="effect-row-meta">Base</span>
+        `;
+        baseRow.querySelector(".effect-row-label").textContent = getBaseLayerLabel(layer);
+        baseRow.addEventListener("click", () => {
+          activeLayerState = window.RadenLayers.selectBaseLayer(getLayerState());
+          renderEffectStack();
+        });
+        list.appendChild(baseRow);
+
+        effects.forEach((effect, index) => {
+          const rowShell = document.createElement("div");
+          rowShell.className = "effect-row-shell";
+          const row = document.createElement("div");
+          row.className = `effect-stack-row${effect.id === activeEffectId ? " is-selected" : ""}`;
+          row.draggable = true;
+          row.innerHTML = `
+            <span class="effect-row-grip" aria-hidden="true">::</span>
+            <button type="button" class="effect-row-switch${effect.enabled === false ? " is-hidden" : ""}" title="${effect.enabled === false ? "Show effect" : "Hide effect"}" aria-label="${effect.enabled === false ? "Show effect" : "Hide effect"}">${effect.enabled === false ? "○" : "◐"}</button>
+            <select class="effect-row-type" aria-label="Effect type">${getEffectTypeOptionsHtml(effect.effectId)}</select>
+          `;
+          row.addEventListener("click", () => {
+            activeLayerState = window.RadenLayers.selectEffect(getLayerState(), effect.id);
+            renderEffectStack();
+          });
+          row.addEventListener("dragstart", (event) => {
+            row.classList.add("is-dragging");
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", effect.id);
+          });
+          row.addEventListener("dragend", () => {
+            row.classList.remove("is-dragging");
+          });
+          row.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            row.classList.add("is-drop-target");
+          });
+          row.addEventListener("dragleave", () => {
+            row.classList.remove("is-drop-target");
+          });
+          row.addEventListener("drop", (event) => {
+            row.classList.remove("is-drop-target");
+            handleEffectDrop(event, index);
+          });
+          const typeSelect = row.querySelector(".effect-row-type");
+          typeSelect.addEventListener("click", (event) => {
+            event.stopPropagation();
+          });
+          typeSelect.addEventListener("change", (event) => {
+            event.stopPropagation();
+            activeLayerState = window.RadenLayers.removeEffect(getLayerState(), effect.id);
+            activeLayerState = window.RadenLayers.addEffect(activeLayerState, event.target.value, {
+              config: getControlState(),
+              index,
+            });
+            scheduleFinalRender();
+            renderEffectStack();
+          });
+          const toggle = row.querySelector(".effect-row-switch");
+          toggle.innerHTML =
+            effect.enabled === false
+              ? '<i class="iconoir-eye-closed" aria-hidden="true"></i>'
+              : '<i class="iconoir-eye" aria-hidden="true"></i>';
+          if (effect.enabled === false) {
+            toggle.addEventListener("mouseenter", () => {
+              toggle.innerHTML = '<i class="iconoir-eye" aria-hidden="true"></i>';
+            });
+            toggle.addEventListener("mouseleave", () => {
+              toggle.innerHTML = '<i class="iconoir-eye-closed" aria-hidden="true"></i>';
+            });
+          }
+          toggle.addEventListener("click", (event) => {
+            event.stopPropagation();
+            activeLayerState = window.RadenLayers.setEffectEnabled(
+              getLayerState(),
+              effect.id,
+              effect.enabled === false,
+            );
+            scheduleFinalRender();
+            renderEffectStack();
+          });
+          const deleteRowBtn = document.createElement("button");
+          deleteRowBtn.type = "button";
+          deleteRowBtn.className = "effect-row-delete";
+          deleteRowBtn.title = "Remove effect";
+          deleteRowBtn.setAttribute("aria-label", "Remove effect");
+          deleteRowBtn.textContent = "-";
+          deleteRowBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            activeLayerState = window.RadenLayers.removeEffect(getLayerState(), effect.id);
+            scheduleFinalRender();
+            renderEffectStack();
+          });
+          rowShell.appendChild(row);
+          rowShell.appendChild(deleteRowBtn);
+          list.appendChild(rowShell);
+        });
+
+        syncSelectedEffectControls();
+        const randomizeSelectedBtn = document.getElementById("effectRandomizeSelectedBtn");
+        if (randomizeSelectedBtn) randomizeSelectedBtn.disabled = !activeEffectId;
+      }
+
+      function getRandomEffectType() {
+        const types = window.RadenEffects?.getRandomizableEffectTypes?.() || ["rgbAdjust"];
+        return types[Math.floor(Math.random() * types.length)] || "rgbAdjust";
+      }
+
+      async function applyEffectLayerChange() {
+        renderEffectStack();
+        if (postFxBaseImageData) {
+          await applyPostFxStackFromBaseAsync(getLivePostFxConfig());
+          return;
+        }
+        scheduleFinalRender();
+      }
+
+      async function randomizeSelectedEffectLayer() {
+        const selectedEffect = getSelectedEffect();
+        if (!selectedEffect) return;
+        const config = window.RadenEffects?.randomizeEffectConfig?.(selectedEffect.effectId) || {};
+        activeLayerState = window.RadenLayers.updateEffectConfig(
+          getLayerState(),
+          selectedEffect.id,
+          config,
+        );
+        await applyEffectLayerChange();
+      }
+
+      async function randomizeEffectLayers() {
+        const count = Math.random() > 0.7 ? 3 : 2;
+        let state = getLayerState();
+        for (let i = 0; i < count; i += 1) {
+          const effectId = getRandomEffectType();
+          state = window.RadenLayers.addEffect(state, effectId, {
+            config: window.RadenEffects?.randomizeEffectConfig?.(effectId) || {},
+          });
+        }
+        activeLayerState = state;
+        await applyEffectLayerChange();
+      }
+
+      function bindEffectStackControls() {
+        const addBtn = document.getElementById("effectAddBtn");
+        if (addBtn && !addBtn.dataset.bound) {
+          addBtn.addEventListener("click", () => {
+            activeLayerState = window.RadenLayers.addEffect(getLayerState(), "rgbAdjust", {
+              config: getControlState(),
+            });
+            renderEffectStack();
+          });
+          addBtn.dataset.bound = "1";
+        }
+        const randomizeBtn = document.getElementById("effectRandomizeBtn");
+        if (randomizeBtn && !randomizeBtn.dataset.bound) {
+          randomizeBtn.addEventListener("click", () => {
+            randomizeEffectLayers();
+          });
+          randomizeBtn.dataset.bound = "1";
+        }
+        const randomizeSelectedBtn = document.getElementById("effectRandomizeSelectedBtn");
+        if (randomizeSelectedBtn && !randomizeSelectedBtn.dataset.bound) {
+          randomizeSelectedBtn.addEventListener("click", () => {
+            randomizeSelectedEffectLayer();
+          });
+          randomizeSelectedBtn.dataset.bound = "1";
+        }
+      }
+
+      function tagEffectControlSourceRows() {
+        ["postProcessingSection", "experimentalSection"].forEach((sectionId) => {
+          const section = document.getElementById(sectionId);
+          if (!section) return;
+          section.querySelectorAll(".control-row").forEach((row) => {
+            row.dataset.sourceSectionId = sectionId;
+          });
+        });
+      }
+
+      function syncActiveEffectConfigFromControls(options = {}) {
+        const state = getLayerState();
+        const effectId = state?.activeEffectId;
+        if (!effectId) return false;
+        activeLayerState = window.RadenLayers.updateEffectConfig(
+          state,
+          effectId,
+          getControlState(),
+        );
+        if (options.renderStack !== false) renderEffectStack();
+        return true;
+      }
+
+      async function applyPostFxConfigChange(options = {}) {
+        const didSync = syncActiveEffectConfigFromControls({
+          renderStack: options.renderStack !== false,
+        });
+        if (!didSync || !postFxBaseImageData) return false;
+        return applyPostFxStackFromBaseAsync(getLivePostFxConfig(), options);
       }
 
       function applyControlState(state) {
@@ -7384,6 +8171,7 @@
             getLayerState,
             scheduleFinalRender,
             setActiveTab,
+            setLayerState,
             setStatus,
           },
         });
@@ -7414,43 +8202,9 @@
         window.RadenUiGallery.clearGallery();
       }
 
-      function randomizePostSettings() {
-        const set = (id, val, decimals = 2) => {
-          if (isControlLocked(id)) return;
-          const el = document.getElementById(id);
-          if (!el) return;
-          const v = typeof val === "number" ? val.toFixed(decimals) : val;
-          el.value = String(v);
-          markControlPending(el);
-        };
-        const setCheck = (id, checked) => {
-          if (isControlLocked(id)) return;
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.checked = !!checked;
-          markControlPending(el);
-        };
-
-        set("boostR", randomBetween(0.9, 1.25), 2);
-        set("boostG", randomBetween(0.9, 1.25), 2);
-        set("boostB", randomBetween(0.9, 1.25), 2);
-        set("gaussianBlur", randomBetween(0.2, 3.2), 2);
-        setCheck("grainToggle", Math.random() > 0.2);
-        set("fxChromatic", randomBetween(0, 1.5), 1);
-        set("fxGlitch", randomBetween(0, 0.2), 2);
-        set("fxScanline", randomBetween(0, 0.25), 2);
-        const invertEl = document.getElementById("fxInvert");
-        if (invertEl && !isControlLocked("fxInvert")) {
-          invertEl.checked = Math.random() < 0.08;
-          markControlPending(invertEl);
-        }
-        updatePendingStatus();
-        schedulePreviewRender();
-        scheduleFinalRender();
-      }
-
       document.addEventListener("DOMContentLoaded", () => {
         mountDeferredPanelSections();
+        tagEffectControlSourceRows();
         syncModeSelectorLabels();
         const mode = document.getElementById("modeSelector").value;
         document.body.setAttribute("data-mode", mode);
@@ -7458,6 +8212,8 @@
         updateRisoLayerOverrideRows();
         setStatus("idle", "Idle");
         setActiveTab("generate");
+        bindEffectStackControls();
+        renderEffectStack();
 
         const debugPanelToggle = document.getElementById("debugPanelToggle");
         if (debugPanelToggle) {
@@ -7515,9 +8271,7 @@
         randomizeTextureSettings();
       });
 
-      document.getElementById("postRandomizeBtn").addEventListener("click", () => {
-        randomizePostSettings();
-      });
+      document.getElementById("postRandomizeBtn").hidden = true;
 
       document
         .getElementById("performanceProfile")
@@ -7631,6 +8385,7 @@
           document.body.setAttribute("data-mode", mode);
           updateVisibleSections(mode);
           updateRisoLayerOverrideRows();
+          resetLayerStateFromControls();
           schedulePreviewRender();
           scheduleFinalRender();
         });
@@ -7697,14 +8452,27 @@
             el.addEventListener("input", () => {
               if (!el.closest("#tabGenerate, #tabPost")) return;
               if (isUiOnlyControl(el)) return;
+              const inPostTab = !!el.closest("#tabPost");
+              const liveFx = inPostTab && isLiveFxControl(el);
               markControlPending(el);
-              schedulePreviewRender(el);
+              if (liveFx) {
+                syncActiveEffectConfigFromControls({ renderStack: false });
+                applyPostFxStackFromBase(getLivePostFxConfig());
+              } else if (!inPostTab) {
+                schedulePreviewRender(el);
+              } else {
+                setStatus("editing", "Release to apply effect");
+                setProgressPercent(0);
+              }
               updatePendingStatus();
             });
 
-            el.addEventListener("change", () => {
+            el.addEventListener("change", async () => {
               if (!el.closest("#tabGenerate, #tabPost")) return;
               if (isUiOnlyControl(el)) return;
+              if (el.closest("#tabPost")) {
+                if (await applyPostFxConfigChange()) return;
+              }
               scheduleFinalRender();
             });
           }

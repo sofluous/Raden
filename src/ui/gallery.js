@@ -70,6 +70,9 @@
     if (typeof callbacks.applyControlState === "function") {
       callbacks.applyControlState(legacySettings);
     }
+    if (typeof callbacks.setLayerState === "function" && item.state) {
+      callbacks.setLayerState(item.state);
+    }
     if (typeof callbacks.setActiveTab === "function") {
       callbacks.setActiveTab("generate");
     }

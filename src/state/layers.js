@@ -4,7 +4,7 @@
 (function registerRadenLayers(global) {
   const LAYER_STATE_VERSION = 2;
   const IMAGE_EFFECT_MODE_IDS = new Set(["risoimage", "pixelretro", "risograph"]);
-  const POST_FX_CONTROL_IDS = [
+  const POST_FX_CONTROL_IDS = global.RadenEffects?.POST_FX_CONTROL_IDS || [
     "boostR",
     "boostG",
     "boostB",
@@ -15,6 +15,16 @@
     "fxGlitch",
     "fxScanline",
   ];
+  const EFFECT_LABELS = global.RadenEffects?.EFFECT_LABELS || {
+    postFx: "Legacy Post FX Bundle",
+    rgbAdjust: "RGB Adjustment",
+    gaussianBlur: "Gaussian Blur",
+    grain: "Grain",
+    invert: "Invert",
+    chromatic: "Chromatic Shift",
+    glitch: "Glitch",
+    scanline: "Scanlines",
+  };
   const SOURCE_MODE_FALLBACK = "motherofpearl";
 
   function nowIso() {
@@ -26,6 +36,8 @@
   }
 
   function getModeLabel(modeId) {
+    if (global.RadenEffects?.getEffectLabel) return global.RadenEffects.getEffectLabel(modeId);
+    if (EFFECT_LABELS[modeId]) return EFFECT_LABELS[modeId];
     const mode = global.RadenModes?.getMode?.(modeId);
     return mode?.label || modeId || "Layer";
   }
@@ -94,9 +106,25 @@
       id: options.effectId || createId("effect_post"),
       type: "effect",
       effectId: "postFx",
-      label: "Post FX",
+      label: getModeLabel("postFx"),
       enabled: true,
       config,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+  }
+
+  function buildEffect(effectId, opts) {
+    const options = opts || {};
+    const id = effectId || "postFx";
+    const defaultConfig = global.RadenEffects?.getEffectDefaults?.(id) || {};
+    return {
+      id: options.id || createId(id === "postFx" ? "effect_post" : "effect"),
+      type: "effect",
+      effectId: id,
+      label: options.label || getModeLabel(id),
+      enabled: options.enabled !== false,
+      config: Object.assign({}, defaultConfig, clone(options.config || {})),
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -116,10 +144,12 @@
     if (imageEffect) {
       sourceLayer.effects.push(imageEffect);
     }
-    const postFxEffect = buildPostFxEffectFromFlatState(flatState, {
-      effectId: options.postFxEffectId,
-    });
-    sourceLayer.effects.push(postFxEffect);
+    if (options.includePostFxBundle) {
+      const postFxEffect = buildPostFxEffectFromFlatState(flatState, {
+        effectId: options.postFxEffectId,
+      });
+      sourceLayer.effects.push(postFxEffect);
+    }
 
     return {
       version: LAYER_STATE_VERSION,
@@ -129,7 +159,7 @@
         background: options.background || "#f2efe8",
       },
       activeLayerId: sourceLayer.id,
-      activeEffectId: imageEffect?.id || postFxEffect.id,
+      activeEffectId: null,
       layers: [sourceLayer],
       legacySettings: clone(flatState || {}),
       createdAt: nowIso(),
@@ -152,6 +182,125 @@
     return clone(activeEffect?.config || activeLayer.config || null);
   }
 
+  function getActiveLayer(layerState) {
+    if (!layerState || !Array.isArray(layerState.layers)) return null;
+    return (
+      layerState.layers.find((layer) => layer.id === layerState.activeLayerId) ||
+      layerState.layers[0] ||
+      null
+    );
+  }
+
+  function getActiveEffect(layerState) {
+    const layer = getActiveLayer(layerState);
+    if (!layer || !Array.isArray(layer.effects)) return null;
+    return (
+      layer.effects.find((effect) => effect.id === layerState.activeEffectId) ||
+      layer.effects[0] ||
+      null
+    );
+  }
+
+  function updateLayerState(layerState, updater) {
+    const nextState = clone(layerState);
+    const layer = getActiveLayer(nextState);
+    if (!layer) return nextState;
+    if (!Array.isArray(layer.effects)) layer.effects = [];
+    updater(nextState, layer);
+    nextState.updatedAt = nowIso();
+    layer.updatedAt = nowIso();
+    return nextState;
+  }
+
+  function selectBaseLayer(layerState) {
+    return updateLayerState(layerState, (nextState) => {
+      nextState.activeEffectId = null;
+    });
+  }
+
+  function selectEffect(layerState, effectId) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      const exists = layer.effects.some((effect) => effect.id === effectId);
+      nextState.activeEffectId = exists ? effectId : layer.effects[0]?.id || null;
+    });
+  }
+
+  function addEffect(layerState, effectId, opts) {
+    const options = opts || {};
+    return updateLayerState(layerState, (nextState, layer) => {
+      const effect = buildEffect(effectId || "postFx", {
+        config: options.config,
+        enabled: options.enabled,
+      });
+      const selectedIndex = layer.effects.findIndex(
+        (item) => item.id === nextState.activeEffectId,
+      );
+      const insertAt =
+        Number.isInteger(options.index) && options.index >= 0
+          ? Math.min(options.index, layer.effects.length)
+          : selectedIndex >= 0
+            ? selectedIndex + 1
+            : layer.effects.length;
+      layer.effects.splice(insertAt, 0, effect);
+      nextState.activeEffectId = effect.id;
+    });
+  }
+
+  function removeEffect(layerState, effectId) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      const index = layer.effects.findIndex((effect) => effect.id === effectId);
+      if (index < 0) return;
+      layer.effects.splice(index, 1);
+      if (nextState.activeEffectId === effectId) {
+        nextState.activeEffectId =
+          layer.effects[Math.min(index, layer.effects.length - 1)]?.id || null;
+      }
+    });
+  }
+
+  function moveEffect(layerState, effectId, direction) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      const index = layer.effects.findIndex((effect) => effect.id === effectId);
+      const delta = direction === "up" ? -1 : 1;
+      const nextIndex = index + delta;
+      if (index < 0 || nextIndex < 0 || nextIndex >= layer.effects.length) return;
+      const [effect] = layer.effects.splice(index, 1);
+      layer.effects.splice(nextIndex, 0, effect);
+      nextState.activeEffectId = effect.id;
+    });
+  }
+
+  function moveEffectToIndex(layerState, effectId, targetIndex) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      const index = layer.effects.findIndex((effect) => effect.id === effectId);
+      if (index < 0) return;
+      const boundedIndex = Math.max(0, Math.min(Number(targetIndex) || 0, layer.effects.length - 1));
+      if (index === boundedIndex) return;
+      const [effect] = layer.effects.splice(index, 1);
+      layer.effects.splice(boundedIndex, 0, effect);
+      nextState.activeEffectId = effect.id;
+    });
+  }
+
+  function setEffectEnabled(layerState, effectId, enabled) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      const effect = layer.effects.find((item) => item.id === effectId);
+      if (!effect) return;
+      effect.enabled = !!enabled;
+      effect.updatedAt = nowIso();
+      nextState.activeEffectId = effect.id;
+    });
+  }
+
+  function updateEffectConfig(layerState, effectId, configPatch) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      const effect = layer.effects.find((item) => item.id === effectId);
+      if (!effect) return;
+      effect.config = Object.assign({}, effect.config || {}, clone(configPatch || {}));
+      effect.updatedAt = nowIso();
+    });
+  }
+
   function normalizeGalleryItem(item) {
     if (!item || typeof item !== "object") return item;
     if (item.version >= LAYER_STATE_VERSION && item.state) return item;
@@ -159,7 +308,10 @@
     const modeId = settings.modeSelector || document.getElementById("modeSelector")?.value;
     return Object.assign({}, item, {
       version: LAYER_STATE_VERSION,
-      state: buildLayerStateFromFlatState(settings, { modeId }),
+      state: buildLayerStateFromFlatState(settings, {
+        modeId,
+        includePostFxBundle: true,
+      }),
       legacySettings: clone(settings),
     });
   }
@@ -218,9 +370,20 @@
     LAYER_STATE_VERSION,
     IMAGE_EFFECT_MODE_IDS,
     POST_FX_CONTROL_IDS,
+    EFFECT_LABELS,
     classifyMode,
     buildLayerStateFromFlatState,
+    getActiveLayer,
+    getActiveEffect,
     getLegacySettingsFromLayerState,
+    selectBaseLayer,
+    selectEffect,
+    addEffect,
+    removeEffect,
+    moveEffect,
+    moveEffectToIndex,
+    setEffectEnabled,
+    updateEffectConfig,
     normalizeGalleryItem,
     validateLayerState,
   });
