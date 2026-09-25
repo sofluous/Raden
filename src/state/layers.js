@@ -3,7 +3,7 @@
  */
 (function registerRadenLayers(global) {
   const LAYER_STATE_VERSION = 2;
-  const IMAGE_EFFECT_MODE_IDS = new Set(["risoimage", "pixelretro", "risograph"]);
+  const IMAGE_EFFECT_MODE_IDS = new Set(["risoimage", "pixelretro"]);
   const POST_FX_CONTROL_IDS = global.RadenEffects?.POST_FX_CONTROL_IDS || [
     "boostR",
     "boostG",
@@ -16,7 +16,7 @@
     "fxScanline",
   ];
   const EFFECT_LABELS = global.RadenEffects?.EFFECT_LABELS || {
-    postFx: "Legacy Post FX Bundle",
+    postFx: "Legacy Effects Bundle",
     rgbAdjust: "RGB Adjustment",
     gaussianBlur: "Gaussian Blur",
     grain: "Grain",
@@ -356,7 +356,7 @@
           issues.push(`Effect ${effect.id} is missing effectId.`);
         }
         if (effect.effectId === "postFx" && !effect.config) {
-          issues.push(`Post FX effect ${effect.id} is missing config.`);
+          issues.push(`Legacy effects bundle ${effect.id} is missing config.`);
         }
       });
     });

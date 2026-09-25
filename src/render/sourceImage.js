@@ -117,12 +117,6 @@
       const img = await loadImageFromFile(file);
       setUploadedImage(img, file.name || "uploaded image");
       options.setStatus?.("complete", `Image loaded: ${uploadedImageName}`);
-      const modeEl = document.getElementById("modeSelector");
-      if (modeEl && !["risoimage", "pixelretro"].includes(modeEl.value)) {
-        modeEl.value = "risoimage";
-        document.body.setAttribute("data-mode", "risoimage");
-        options.updateVisibleSections?.("risoimage");
-      }
       options.scheduleFinalRender?.();
       return img;
     } catch (err) {

@@ -18,7 +18,6 @@
 
   function updateActionBar(tabName) {
     const actionButtons = {
-      textureRandomizeBtn: tabName === "generate",
       postRandomizeBtn: false,
       saveResultBtn: tabName === "generate" || tabName === "post",
       exportActionBtn: tabName === "export",

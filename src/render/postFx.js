@@ -257,6 +257,317 @@
     return out;
   }
 
+  const RETRO_PALETTES = {
+    gb: ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"],
+    cga: ["#000000", "#55ffff", "#ff55ff", "#ffffff"],
+    ega: ["#000000", "#0000aa", "#00aa00", "#00aaaa", "#aa0000", "#aa00aa", "#aa5500", "#aaaaaa", "#555555", "#5555ff", "#55ff55", "#55ffff", "#ff5555", "#ff55ff", "#ffff55", "#ffffff"],
+    pc98: ["#101018", "#1e2a4a", "#3b5f9b", "#6c91d9", "#d8e7ff", "#6b3f2a", "#a66b43", "#d9a066", "#f2d29b", "#6a2a4a", "#a5487c", "#d17bb1", "#f0b7df", "#264a3d", "#3f7a67", "#6eb49b"],
+    "snes-lite": ["#140c1c", "#442434", "#30346d", "#4e4a4e", "#854c30", "#346524", "#d04648", "#757161", "#597dce", "#d27d2c", "#8595a1", "#6daa2c", "#d2aa99", "#6dc2ca", "#dad45e", "#deeed6"],
+  };
+
+  const RISO_PALETTES = {
+    "warm-duo": ["#1a1a1a", "#ff5a3c", "#f3d6b5", "#ffffff"],
+    "cmyk-lite": ["#00a0d2", "#ff3f8e", "#ffd400", "#111111"],
+    fluoro: ["#00e5ff", "#ff2ec4", "#ffe600", "#1a1a1a"],
+    "mono-noir": ["#111111", "#4d4d4d", "#8d8d8d", "#f4f1ea"],
+    custom: ["#1a1a1a", "#5e5e5e", "#b5b5b5", "#f4f1ea"],
+  };
+
+  function hexToRgb(hex) {
+    const raw = (hex || "").trim();
+    const m = raw.match(/^#([0-9a-f]{6})$/i);
+    if (!m) return { r: 0, g: 0, b: 0 };
+    return {
+      r: parseInt(m[1].slice(0, 2), 16),
+      g: parseInt(m[1].slice(2, 4), 16),
+      b: parseInt(m[1].slice(4, 6), 16),
+    };
+  }
+
+  function getPaletteColors(mode, preset, requestedSize) {
+    const palettes = mode === "risoimage" ? RISO_PALETTES : RETRO_PALETTES;
+    const fallback = mode === "risoimage" ? RISO_PALETTES["warm-duo"] : RETRO_PALETTES.gb;
+    const base = (palettes[preset] || fallback).map(hexToRgb);
+    const size = Math.max(2, Math.min(64, requestedSize || base.length));
+    if (size <= base.length) return base.slice(0, size);
+    const out = base.slice();
+    while (out.length < size) out.push(base[out.length % base.length]);
+    return out;
+  }
+
+  function nearestPaletteColor(r, g, b, palette) {
+    let best = palette[0];
+    let bestDist = Infinity;
+    for (let i = 0; i < palette.length; i += 1) {
+      const p = palette[i];
+      const dr = r - p.r;
+      const dg = g - p.g;
+      const db = b - p.b;
+      const d = dr * dr + dg * dg + db * db;
+      if (d < bestDist) {
+        bestDist = d;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  function nearestPaletteIndex(r, g, b, palette) {
+    let bestIndex = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < palette.length; i += 1) {
+      const p = palette[i];
+      const dr = r - p.r;
+      const dg = g - p.g;
+      const db = b - p.b;
+      const d = dr * dr + dg * dg + db * db;
+      if (d < bestDist) {
+        bestDist = d;
+        bestIndex = i;
+      }
+    }
+    return bestIndex;
+  }
+
+  function getBayerMatrix(size) {
+    const target = Math.max(2, Math.min(16, size));
+    const cache = getBayerMatrix._cache || (getBayerMatrix._cache = {});
+    if (cache[target]) return cache[target];
+    if (target === 2) {
+      cache[2] = [
+        [0, 2],
+        [3, 1],
+      ];
+      return cache[2];
+    }
+    const half = getBayerMatrix(target / 2);
+    const out = Array.from({ length: target }, () => new Array(target).fill(0));
+    for (let y = 0; y < target / 2; y += 1) {
+      for (let x = 0; x < target / 2; x += 1) {
+        const v = half[y][x] * 4;
+        out[y][x] = v;
+        out[y][x + target / 2] = v + 2;
+        out[y + target / 2][x] = v + 3;
+        out[y + target / 2][x + target / 2] = v + 1;
+      }
+    }
+    cache[target] = out;
+    return out;
+  }
+
+  function orderedNoise(x, y, size) {
+    const matrix = getBayerMatrix(size);
+    const n = matrix.length;
+    const v = matrix[y % n][x % n];
+    return (v + 0.5) / (n * n) - 0.5;
+  }
+
+  function getDitherShapeMask(shape, fx, fy) {
+    if (shape === "circle") return Math.sqrt(fx * fx + fy * fy) <= 1 ? 1 : 0;
+    if (shape === "diamond") return Math.abs(fx) + Math.abs(fy) <= 1 ? 1 : 0;
+    if (shape === "line") return Math.abs(fy) < 0.34 ? 1 : 0;
+    if (shape === "cross") return Math.abs(fx) < 0.24 || Math.abs(fy) < 0.24 ? 1 : 0;
+    return 1;
+  }
+
+  function isRisoLayerVisible(layerIndex, layerCount, config) {
+    const mode = config.risoLayerViewMode || "all";
+    if (mode === "all") return true;
+    if (mode === "solo") {
+      const active = Math.max(1, Math.min(layerCount, config.risoActiveLayer || 1));
+      return layerIndex === active - 1;
+    }
+    if (mode === "custom") {
+      const mask = Array.isArray(config.risoVisibleMask)
+        ? config.risoVisibleMask
+        : Array.from({ length: 6 }, (_, index) => config[`risoVisibleL${index + 1}`] !== false);
+      return !!mask[layerIndex];
+    }
+    return true;
+  }
+
+  function getRisoLayerOverride(config, layerIndex) {
+    if (Array.isArray(config.risoLayerOverrides) && config.risoLayerOverrides[layerIndex]) {
+      return config.risoLayerOverrides[layerIndex];
+    }
+    const layer = layerIndex + 1;
+    return {
+      angle: Number(config[`risoL${layer}Angle`]),
+      opacity: Number(config[`risoL${layer}Opacity`]),
+      toneMin: Number(config[`risoL${layer}ToneMin`]),
+      toneMax: Number(config[`risoL${layer}ToneMax`]),
+    };
+  }
+
+  function applyRisoImageEffect(ctx, imageData, config) {
+    const effectConfig = getEffectConfig("risoimage", config);
+    const out = ctx.createImageData(imageData.width, imageData.height);
+    const srcData = imageData.data;
+    const d = out.data;
+    const layerCount = Math.max(2, Math.min(6, effectConfig.risoLayerCount || 3));
+    const palette = getPaletteColors("risoimage", effectConfig.risoPalettePreset, layerCount);
+    const cell = Math.max(1, effectConfig.ditherDotSize || 4);
+    const spread = Math.max(0, Math.min(1, Number(effectConfig.ditherDotSpread ?? 0.72)));
+    const uniformity = Math.max(0, Math.min(1, Number(effectConfig.ditherUniformity ?? 0.56)));
+    const shape = effectConfig.ditherDotShape || "circle";
+    const layerOpacity = Math.max(0, Math.min(1, Number(effectConfig.risoLayerOpacity ?? 0.82)));
+    const overlap = Math.max(0, Math.min(1, Number(effectConfig.risoLayerOverlap ?? 0.32)));
+    const colorSplit = Math.max(0, Math.min(1, Number(effectConfig.risoColorSplit ?? 0.65)));
+    const style = effectConfig.risoRenderStyle || "original";
+
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = 245;
+      d[i + 1] = 241;
+      d[i + 2] = 233;
+      d[i + 3] = 255;
+    }
+
+    const width = imageData.width;
+    const height = imageData.height;
+    const renderLayer = (layer, toneMinOverride, toneMaxOverride, angleOverride, opacityOverride) => {
+      if (!isRisoLayerVisible(layer, layerCount, effectConfig)) return;
+      const color = palette[layer];
+      const center = layerCount === 1 ? 0.5 : layer / (layerCount - 1);
+      const bandHalf = (1 / layerCount) * (1 + overlap * 1.9);
+      const toneCenter = Number.isFinite(toneMinOverride) && Number.isFinite(toneMaxOverride)
+        ? (toneMinOverride + toneMaxOverride) * 0.5
+        : center;
+      const toneHalf = Number.isFinite(toneMinOverride) && Number.isFinite(toneMaxOverride)
+        ? Math.max(0.0001, Math.abs(toneMaxOverride - toneMinOverride) * 0.5)
+        : Math.max(0.0001, bandHalf);
+      const angleDeg = Number.isFinite(angleOverride)
+        ? angleOverride
+        : layer * (effectConfig.risoLayerAngleStep || 24);
+      const angle = angleDeg * (Math.PI / 180);
+      const ca = Math.cos(angle);
+      const sa = Math.sin(angle);
+      const currentLayerOpacity = Number.isFinite(opacityOverride)
+        ? Math.max(0, Math.min(1, opacityOverride))
+        : layerOpacity;
+
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const i = (y * width + x) * 4;
+          const r = srcData[i];
+          const g = srcData[i + 1];
+          const b = srcData[i + 2];
+          const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          const tone = 1 - lum;
+          const toneWeight = Math.max(0, Math.min(1, 1 - Math.abs(tone - toneCenter) / toneHalf));
+          if (toneWeight <= 0.001) continue;
+          const nearestIndex = nearestPaletteIndex(r, g, b, palette);
+          const idxDist = layerCount > 1 ? Math.abs(nearestIndex - layer) / (layerCount - 1) : 0;
+          const inkStrength = Math.max(0, Math.min(1, toneWeight * ((1 - colorSplit) + (1 - idxDist) * colorSplit)));
+          if (inkStrength <= 0.03) continue;
+          const rx = x * ca - y * sa;
+          const ry = x * sa + y * ca;
+          const noise = orderedNoise(Math.abs(Math.floor(rx)), Math.abs(Math.floor(ry)), 4);
+          const randomJitter = (Math.random() - 0.5) * (1 - uniformity) * 0.22;
+          const threshold = 0.58 - inkStrength * 0.52 + noise * spread * 0.72 + randomJitter;
+          if (inkStrength <= threshold) continue;
+          const fx = ((((rx % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+          const fy = ((((ry % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+          if (!getDitherShapeMask(shape, fx, fy)) continue;
+          const a = Math.max(0, Math.min(1, currentLayerOpacity * inkStrength * 1.12));
+          d[i] = d[i] * (1 - a) + color.r * a;
+          d[i + 1] = d[i + 1] * (1 - a) + color.g * a;
+          d[i + 2] = d[i + 2] * (1 - a) + color.b * a;
+        }
+      }
+    };
+
+    if (style === "legacy") {
+      const angle = ((effectConfig.risoLayerAngleStep || 24) % 180) * (Math.PI / 180);
+      const ca = Math.cos(angle);
+      const sa = Math.sin(angle);
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const i = (y * width + x) * 4;
+          const r = srcData[i];
+          const g = srcData[i + 1];
+          const b = srcData[i + 2];
+          const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          const mx = Math.max(r, g, b);
+          const mn = Math.min(r, g, b);
+          const saturation = (mx - mn) / 255;
+          const ink = Math.max(0, Math.min(1, (1 - lum) * 0.82 + saturation * 0.34));
+          if (ink <= 0.025) continue;
+          const rx = x * ca - y * sa;
+          const ry = x * sa + y * ca;
+          const noise = orderedNoise(Math.abs(Math.floor(rx)), Math.abs(Math.floor(ry)), 4);
+          const jitter = (Math.random() - 0.5) * (1 - uniformity) * 0.24;
+          if (ink <= 0.46 + noise * spread * 0.62 + jitter) continue;
+          const fx = ((((rx % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+          const fy = ((((ry % cell) + cell) % cell) + 0.5) / cell * 2 - 1;
+          if (!getDitherShapeMask(shape, fx, fy)) continue;
+          const c = nearestPaletteColor(r, g, b, palette);
+          const alpha = Math.max(0, Math.min(1, (0.24 + ink * 0.86) * (0.75 + saturation * 0.35)));
+          d[i] = d[i] * (1 - alpha) + c.r * alpha;
+          d[i + 1] = d[i + 1] * (1 - alpha) + c.g * alpha;
+          d[i + 2] = d[i + 2] * (1 - alpha) + c.b * alpha;
+        }
+      }
+      return out;
+    }
+
+    for (let layer = 0; layer < layerCount; layer += 1) {
+      const override = getRisoLayerOverride(effectConfig, layer);
+      renderLayer(
+        layer,
+        style === "layered" ? override?.toneMin : null,
+        style === "layered" ? override?.toneMax : null,
+        style === "layered" ? override?.angle : null,
+        style === "layered" ? override?.opacity : null,
+      );
+    }
+    return out;
+  }
+
+  function applyPixelRetroEffect(ctx, imageData, config) {
+    const effectConfig = getEffectConfig("pixelretro", config);
+    const out = ctx.createImageData(imageData.width, imageData.height);
+    const srcData = imageData.data;
+    const d = out.data;
+    const width = imageData.width;
+    const height = imageData.height;
+    const block = Math.max(1, effectConfig.pixelBlockSize || 6);
+    const palette = getPaletteColors(
+      "pixelretro",
+      effectConfig.palettePreset,
+      Math.max(2, Math.min(64, effectConfig.paletteSize || 8)),
+    );
+    const bayerSize = Math.max(2, Math.min(16, parseInt(effectConfig.ditherBayerSize || "8", 10) || 8));
+    const depthSteps = Math.max(2, Math.pow(2, Math.max(1, effectConfig.colorDepthBits || 4)));
+    const scanline = Math.max(0, Math.min(1, Number(effectConfig.scanlineStrength ?? 0.18)));
+
+    for (let by = 0; by < height; by += block) {
+      for (let bx = 0; bx < width; bx += block) {
+        const cx = Math.min(width - 1, bx + Math.floor(block / 2));
+        const cy = Math.min(height - 1, by + Math.floor(block / 2));
+        const ci = (cy * width + cx) * 4;
+        const n = orderedNoise(bx, by, bayerSize) * 36;
+        let r = srcData[ci];
+        let g = srcData[ci + 1];
+        let b = srcData[ci + 2];
+        r = Math.max(0, Math.min(255, Math.round(((r + n) / 255) * (depthSteps - 1)) * (255 / (depthSteps - 1))));
+        g = Math.max(0, Math.min(255, Math.round(((g + n) / 255) * (depthSteps - 1)) * (255 / (depthSteps - 1))));
+        b = Math.max(0, Math.min(255, Math.round(((b + n) / 255) * (depthSteps - 1)) * (255 / (depthSteps - 1))));
+        const c = nearestPaletteColor(r, g, b, palette);
+        for (let y = by; y < Math.min(height, by + block); y += 1) {
+          for (let x = bx; x < Math.min(width, bx + block); x += 1) {
+            const i = (y * width + x) * 4;
+            const k = scanline > 0 && y % 2 === 1 ? 1 - scanline * 0.45 : 1;
+            d[i] = c.r * k;
+            d[i + 1] = c.g * k;
+            d[i + 2] = c.b * k;
+            d[i + 3] = 255;
+          }
+        }
+      }
+    }
+    return out;
+  }
+
   function applyGlitchOverlay(ctx, canvas, amount) {
     const fxGlitch = Number(amount) || 0;
     if (fxGlitch <= 0.01) return;
@@ -396,6 +707,14 @@
       runtime.flushBuffer();
       applyScanlineOverlay(runtime.ctx, runtime.canvas, getScanlineLayerConfig(effect.config));
       runtime.captureCanvasToBuffer();
+    },
+    risoimage(effect, runtime) {
+      runtime.buffer = applyRisoImageEffect(runtime.ctx, runtime.buffer, effect.config);
+      runtime.markDirty();
+    },
+    pixelretro(effect, runtime) {
+      runtime.buffer = applyPixelRetroEffect(runtime.ctx, runtime.buffer, effect.config);
+      runtime.markDirty();
     },
   };
 
@@ -607,6 +926,20 @@
       applyScanlineOverlay(runtime.ctx, runtime.canvas, getScanlineLayerConfig(effect.config));
       runtime.captureCanvasToBuffer();
     },
+    async risoimage(effect, runtime, progressForEffect) {
+      progressForEffect(0.1);
+      await waitForNextFrame();
+      runtime.buffer = applyRisoImageEffect(runtime.ctx, runtime.buffer, effect.config);
+      runtime.markDirty();
+      progressForEffect(1);
+    },
+    async pixelretro(effect, runtime, progressForEffect) {
+      progressForEffect(0.1);
+      await waitForNextFrame();
+      runtime.buffer = applyPixelRetroEffect(runtime.ctx, runtime.buffer, effect.config);
+      runtime.markDirty();
+      progressForEffect(1);
+    },
   };
 
   async function applyPostFxStackAsync(ctx, canvas, baseImageData, effects, options) {
@@ -642,6 +975,8 @@
     applyGaussianBlurOverlay,
     applyExperimentalEffects,
     applyColorBoosts,
+    applyRisoImageEffect,
+    applyPixelRetroEffect,
     applyPostFxStack,
     applyPostFxStackAsync,
   });

@@ -134,8 +134,6 @@
       lightAngle: getInput("lightAngle"),
       lightCurvature: getInput("lightCurvature"),
       lightSpread: getInput("lightSpread"),
-      dotSize: getInput("risoDotSize", true),
-      threshold: getInput("risoThreshold", true),
       boostR: getInput("boostR"),
       boostG: getInput("boostG"),
       boostB: getInput("boostB"),
