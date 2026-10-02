@@ -63,10 +63,14 @@
   }
 
   function recallGalleryItem(item) {
-    const legacySettings =
+    const rawLegacySettings =
       item.legacySettings ||
       item.settings ||
       global.RadenLayers?.getLegacySettingsFromLayerState?.(item.state);
+    const legacySettings =
+      global.RadenLayers?.sanitizeLegacySettings?.(rawLegacySettings) ||
+      rawLegacySettings ||
+      {};
     if (typeof callbacks.applyControlState === "function") {
       callbacks.applyControlState(legacySettings);
     }
@@ -74,11 +78,31 @@
       callbacks.setLayerState(item.state);
     }
     if (typeof callbacks.setActiveTab === "function") {
-      callbacks.setActiveTab("generate");
+      callbacks.setActiveTab(item.state?.activeEffectId ? "post" : "generate");
     }
     if (typeof callbacks.scheduleFinalRender === "function") {
       callbacks.scheduleFinalRender();
     }
+  }
+
+  function getSnapshotModeLabel(modeId) {
+    if (global.RadenModes?.getModeLabel) return global.RadenModes.getModeLabel(modeId);
+    return modeId || "texture";
+  }
+
+  function getEffectSummary(layerState) {
+    const layer = global.RadenLayers?.getActiveLayer?.(layerState);
+    const effects = Array.isArray(layer?.effects)
+      ? layer.effects.filter((effect) => effect.enabled !== false)
+      : [];
+    if (!effects.length) return "";
+    return `${effects.length} effect${effects.length === 1 ? "" : "s"}`;
+  }
+
+  function getSnapshotLabel(modeId, layerState) {
+    const effectSummary = getEffectSummary(layerState);
+    const base = getSnapshotModeLabel(modeId);
+    return effectSummary ? `${base} + ${effectSummary}` : base;
   }
 
   function renderGallery() {
@@ -109,7 +133,9 @@
       const sub = document.createElement("div");
       sub.className = "snapshot-sub";
       const seedVal = (item.legacySettings || item.settings)?.seed;
-      sub.textContent = `seed ${seedVal === undefined || seedVal === null || seedVal === "" ? "-" : String(seedVal)}`;
+      const effectSummary = getEffectSummary(item.state);
+      const seedText = `seed ${seedVal === undefined || seedVal === null || seedVal === "" ? "-" : String(seedVal)}`;
+      sub.textContent = effectSummary ? `${seedText} | ${effectSummary}` : seedText;
       meta.appendChild(name);
       meta.appendChild(sub);
 
@@ -174,7 +200,9 @@
       return null;
     }
     const mode = document.getElementById("modeSelector").value;
-    const legacySettings = getControlState();
+    const legacySettings =
+      global.RadenLayers?.sanitizeLegacySettings?.(getControlState()) ||
+      getControlState();
     const layerState =
       typeof getLayerState === "function"
         ? getLayerState({ legacySettings, modeId: mode })
@@ -185,7 +213,7 @@
     const item = {
       id,
       version: global.RadenLayers?.LAYER_STATE_VERSION || 2,
-      label: `${mode} ${new Date().toLocaleString()}`,
+      label: `${getSnapshotLabel(mode, layerState)} ${new Date().toLocaleString()}`,
       thumbnail: createSnapshotThumbnail(buildSnapshotCanvas()),
       state: layerState,
       legacySettings,

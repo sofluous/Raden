@@ -56,6 +56,15 @@
     return JSON.parse(JSON.stringify(value));
   }
 
+  function sanitizeLegacySettings(settings, opts) {
+    const options = opts || {};
+    const nextSettings = clone(settings || {});
+    if (IMAGE_EFFECT_MODE_IDS.has(nextSettings.modeSelector)) {
+      nextSettings.modeSelector = options.sourceModeFallback || SOURCE_MODE_FALLBACK;
+    }
+    return nextSettings;
+  }
+
   function buildSourceLayerFromFlatState(flatState, opts) {
     const options = opts || {};
     const modeId = options.modeId || flatState?.modeSelector || SOURCE_MODE_FALLBACK;
@@ -303,12 +312,21 @@
 
   function normalizeGalleryItem(item) {
     if (!item || typeof item !== "object") return item;
-    if (item.version >= LAYER_STATE_VERSION && item.state) return item;
-    const settings = item.settings || item.legacySettings || {};
-    const modeId = settings.modeSelector || document.getElementById("modeSelector")?.value;
+    if (item.version >= LAYER_STATE_VERSION && item.state) {
+      const legacySettings = sanitizeLegacySettings(
+        item.legacySettings || item.settings || getLegacySettingsFromLayerState(item.state) || {},
+      );
+      return Object.assign({}, item, {
+        legacySettings,
+        settings: legacySettings,
+      });
+    }
+    const rawSettings = item.settings || item.legacySettings || {};
+    const settings = sanitizeLegacySettings(rawSettings);
+    const modeId = rawSettings.modeSelector || settings.modeSelector || document.getElementById("modeSelector")?.value;
     return Object.assign({}, item, {
       version: LAYER_STATE_VERSION,
-      state: buildLayerStateFromFlatState(settings, {
+      state: buildLayerStateFromFlatState(rawSettings, {
         modeId,
         includePostFxBundle: true,
       }),
@@ -385,6 +403,7 @@
     setEffectEnabled,
     updateEffectConfig,
     normalizeGalleryItem,
+    sanitizeLegacySettings,
     validateLayerState,
   });
 })(window);
