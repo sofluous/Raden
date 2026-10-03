@@ -21,10 +21,10 @@
         );
         --raden-grid-gap: var(--ds-shell-gap, var(--ds-space-3));
         --raden-frame-pad: var(--ds-shell-pad, var(--ds-space-3));
-        --raden-section-gap: var(--ds-space-2);
-        --raden-row-gap: var(--ds-space-2);
+        --raden-section-gap: var(--ds-rhythm-content, var(--ds-space-2));
+        --raden-row-gap: var(--ds-field-row-gap, var(--ds-space-2));
         --raden-row-label-width: minmax(6.5rem, 8.5rem);
-        --raden-row-action-w: var(--ds-control-h-sm);
+        --raden-row-action-w: var(--ds-icon-action-size, var(--ds-control-h-sm));
       }
 
       html,
@@ -3100,7 +3100,7 @@
               <div class="control-icons">
                 <button
                   id="captureCompareBtn"
-                  class="ds-btn ds-btn-sm icon-btn icon-only"
+                  class="ds-btn ds-btn-icon ds-btn-sm ds-icon-action icon-btn icon-only"
                   type="button"
                   title="Capture current frame as A"
                   aria-label="Capture current frame as A"
@@ -3155,7 +3155,7 @@
               <button
                 type="button"
                 id="effectAddBtn"
-                class="effect-stack-action"
+                class="effect-stack-action ds-icon-action"
                 title="Add effect"
                 aria-label="Add effect"
               >
@@ -3164,7 +3164,7 @@
               <button
                 type="button"
                 id="effectRandomizeBtn"
-                class="effect-stack-action"
+                class="effect-stack-action ds-icon-action"
                 title="Add randomized effects"
                 aria-label="Add randomized effects"
               >
@@ -3173,7 +3173,7 @@
               <button
                 type="button"
                 id="effectRandomizeSelectedBtn"
-                class="effect-stack-action"
+                class="effect-stack-action ds-icon-action"
                 title="Randomize selected effect"
                 aria-label="Randomize selected effect"
                 disabled
@@ -3354,7 +3354,7 @@
       <button
         type="button"
         id="effectUndoBtn"
-        class="workspace-action"
+        class="workspace-action ds-icon-action"
         title="Undo"
         aria-label="Undo"
         disabled
@@ -3364,7 +3364,7 @@
       <button
         type="button"
         id="effectRedoBtn"
-        class="workspace-action"
+        class="workspace-action ds-icon-action"
         title="Redo"
         aria-label="Redo"
         disabled
@@ -3373,7 +3373,7 @@
       </button>
       <button
         id="saveResultBtn"
-        class="workspace-action"
+        class="workspace-action ds-icon-action"
         type="button"
         title="Save snapshot"
         aria-label="Save snapshot"
@@ -3383,7 +3383,7 @@
     </div>
     <button
       id="exportActionBtn"
-      class="ds-btn ds-btn-primary icon-btn icon-only"
+      class="ds-btn ds-btn-primary ds-btn-icon icon-btn icon-only"
       type="button"
       title="Export file"
       aria-label="Export file"
@@ -3452,7 +3452,7 @@
         <div class="control-icons">
           <button
             id="resetCanvasViewBtn"
-            class="ds-btn ds-btn-sm icon-btn icon-only"
+            class="ds-btn ds-btn-icon ds-btn-sm ds-icon-action icon-btn icon-only"
             type="button"
             title="Reset canvas view"
             aria-label="Reset canvas view"
