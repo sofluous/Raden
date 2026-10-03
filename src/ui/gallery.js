@@ -105,8 +105,16 @@
     return effectSummary ? `${base} + ${effectSummary}` : base;
   }
 
+  function updateGalleryCount() {
+    const countEl = document.getElementById("gallerySnapshotCount");
+    if (!countEl) return;
+    const count = galleryItems.length;
+    countEl.textContent = `${count} snapshot${count === 1 ? "" : "s"}`;
+  }
+
   function renderGallery() {
     const grid = document.getElementById("galleryGrid");
+    updateGalleryCount();
     if (!grid) return;
     grid.innerHTML = "";
     galleryItems.forEach((item) => {
@@ -182,7 +190,24 @@
     tiny.width = 220;
     tiny.height = 220;
     const tctx = tiny.getContext("2d");
-    tctx.drawImage(sourceCanvas, 0, 0, tiny.width, tiny.height);
+    const sourceWidth = Math.max(1, sourceCanvas.width || tiny.width);
+    const sourceHeight = Math.max(1, sourceCanvas.height || tiny.height);
+    const sourceRatio = sourceWidth / sourceHeight;
+    const targetRatio = tiny.width / tiny.height;
+    let sx = 0;
+    let sy = 0;
+    let sw = sourceWidth;
+    let sh = sourceHeight;
+
+    if (sourceRatio > targetRatio) {
+      sw = sourceHeight * targetRatio;
+      sx = (sourceWidth - sw) / 2;
+    } else if (sourceRatio < targetRatio) {
+      sh = sourceWidth / targetRatio;
+      sy = (sourceHeight - sh) / 2;
+    }
+
+    tctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, tiny.width, tiny.height);
     return tiny.toDataURL("image/jpeg", 0.7);
   }
 

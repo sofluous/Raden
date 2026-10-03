@@ -156,9 +156,12 @@
     const srcH = Math.max(1, source?.height || 1);
     const canvas = getViewportCanvas();
     const rect = canvas.getBoundingClientRect();
+    const overlayRect = overlay.getBoundingClientRect();
     const state = getViewWindowState(rect.width, rect.height);
-    const left = state.dx + (exportCropRect.sx / srcW) * state.drawW;
-    const top = state.dy + (exportCropRect.sy / srcH) * state.drawH;
+    const canvasLeft = rect.left - overlayRect.left;
+    const canvasTop = rect.top - overlayRect.top;
+    const left = canvasLeft + state.dx + (exportCropRect.sx / srcW) * state.drawW;
+    const top = canvasTop + state.dy + (exportCropRect.sy / srcH) * state.drawH;
     const width = (exportCropRect.sw / srcW) * state.drawW;
     const height = (exportCropRect.sh / srcH) * state.drawH;
     frame.style.left = `${Math.round(left)}px`;

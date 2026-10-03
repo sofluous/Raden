@@ -17,23 +17,7 @@
   }
 
   function updateActionBar(tabName) {
-    const actionButtons = {
-      postRandomizeBtn: false,
-      saveResultBtn: tabName === "generate" || tabName === "post",
-      exportActionBtn: tabName === "export",
-      clearGalleryActionBtn: tabName === "gallery",
-      runQaActionBtn: tabName === "settings",
-    };
-    Object.entries(actionButtons).forEach(([id, visible]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.hidden = !visible;
-      el.style.marginLeft = "";
-    });
-    const clearGalleryBtn = document.getElementById("clearGalleryActionBtn");
-    if (clearGalleryBtn && tabName === "gallery") {
-      clearGalleryBtn.style.marginLeft = "auto";
-    }
+    void tabName;
   }
 
   function setActiveTab(tabName, opts) {

@@ -13,12 +13,18 @@
     <style>
       :root {
         --raden-panel-width: 520px;
+        --raden-panel-min-width: 360px;
+        --raden-panel-overlay-width: clamp(
+          var(--raden-panel-min-width),
+          34vw,
+          var(--raden-panel-width)
+        );
         --raden-grid-gap: var(--ds-shell-gap, var(--ds-space-3));
         --raden-frame-pad: var(--ds-shell-pad, var(--ds-space-3));
-        --raden-section-gap: var(--ds-space-3);
+        --raden-section-gap: var(--ds-space-2);
         --raden-row-gap: var(--ds-space-2);
-        --raden-row-label-width: var(--ds-field-label-w, 11.5rem);
-        --raden-row-action-w: max(var(--ds-field-action-w, 0px), 8.75rem);
+        --raden-row-label-width: minmax(6.5rem, 8.5rem);
+        --raden-row-action-w: var(--ds-control-h-sm);
       }
 
       html,
@@ -31,9 +37,10 @@
 
       body {
         display: grid;
-        grid-template-columns: var(--raden-panel-width) 1fr;
-        gap: var(--raden-grid-gap);
-        padding: var(--raden-frame-pad);
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+        gap: 0;
+        padding: 0;
         background:
           radial-gradient(
             700px 500px at 82% -10%,
@@ -51,14 +58,30 @@
       }
 
       #controls {
+        position: relative;
+        z-index: 5;
+        grid-area: 1 / 1;
+        align-self: stretch;
+        justify-self: start;
+        margin: var(--raden-frame-pad);
+        width: var(--raden-panel-overlay-width);
+        min-width: min(var(--raden-panel-min-width), calc(100vw - (2 * var(--raden-frame-pad))));
+        max-width: calc(100vw - (2 * var(--raden-frame-pad)));
+        max-height: calc(100vh - (2 * var(--raden-frame-pad)));
         display: grid;
         grid-template-rows: auto minmax(0, 1fr) auto;
         min-height: 0;
+        overflow: hidden;
+        resize: horizontal;
         border: var(--ds-border-w) var(--ds-border-style) var(--ds-card-border);
         border-radius: var(--ds-card-radius);
-        background: color-mix(in oklab, var(--ds-bg-elevated) 88%, transparent);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 82%, transparent);
         box-shadow: var(--ds-card-shadow);
         backdrop-filter: blur(8px);
+        transform: translate(0, 0);
+        transition:
+          opacity var(--ds-dur-fast) ease,
+          transform var(--ds-dur-fast) ease;
       }
 
       #control-header {
@@ -81,7 +104,7 @@
       .panel-tabs-wrap {
         position: relative;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto auto;
         gap: var(--ds-space-2);
         align-items: center;
       }
@@ -124,6 +147,145 @@
         border-color: var(--ds-tab-active-border, var(--ds-accent));
         background: var(--ds-tab-active-bg, color-mix(in oklab, var(--ds-accent) 18%, var(--ds-btn-bg)));
         color: var(--ds-tab-active-fg, var(--ds-text));
+      }
+
+      #panelRestoreBtn {
+        position: fixed;
+        left: var(--raden-frame-pad);
+        top: var(--raden-frame-pad);
+        z-index: 6;
+        min-height: var(--ds-control-h);
+        min-width: var(--ds-control-h);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 92%, transparent);
+        color: var(--ds-text);
+        box-shadow: var(--ds-card-shadow);
+        backdrop-filter: blur(8px);
+        cursor: pointer;
+      }
+
+      #workspaceToolbar {
+        position: fixed;
+        top: var(--raden-frame-pad);
+        left: var(--raden-workspace-toolbar-left, calc(
+          var(--raden-frame-pad) + var(--raden-panel-overlay-width) +
+            var(--ds-space-2)
+        ));
+        z-index: 6;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ds-space-1);
+        padding: var(--ds-space-1);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 88%, transparent);
+        box-shadow: var(--ds-card-shadow);
+        backdrop-filter: blur(8px);
+      }
+
+      #exportActionBtn {
+        position: fixed;
+        top: var(--raden-frame-pad);
+        right: var(--raden-frame-pad);
+        z-index: 6;
+        width: var(--ds-control-h);
+        height: var(--ds-control-h);
+        min-width: var(--ds-control-h);
+        padding: 0;
+        border-radius: var(--ds-radius-2);
+        box-shadow: var(--ds-card-shadow);
+        backdrop-filter: blur(8px);
+      }
+
+      #exportActionBtn span {
+        display: none;
+      }
+
+      body.controls-collapsed #workspaceToolbar {
+        left: var(--raden-workspace-toolbar-left, calc(var(--raden-frame-pad) + var(--ds-control-h) + var(--ds-space-2)));
+      }
+
+      .workspace-action {
+        appearance: none;
+        width: var(--ds-btn-icon-size-sm);
+        height: var(--ds-btn-icon-size-sm);
+        border: 0;
+        border-radius: var(--ds-radius-2);
+        background: transparent;
+        color: var(--ds-text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .workspace-action:hover,
+      .workspace-action:focus-visible {
+        background: var(--ds-icon-action-hover-bg);
+        color: var(--ds-icon-action-fg-hover);
+      }
+
+      .workspace-action:disabled {
+        cursor: not-allowed;
+        opacity: 0.38;
+      }
+
+      #canvasControlOverlay {
+        position: fixed;
+        right: var(--raden-frame-pad);
+        bottom: var(--raden-frame-pad);
+        z-index: 4;
+        display: grid;
+        grid-template-columns: minmax(4.5rem, 0.55fr) minmax(0, 1fr);
+        align-items: center;
+        gap: var(--ds-space-1);
+        width: min(320px, calc(100vw - (2 * var(--raden-frame-pad))));
+        padding: var(--ds-space-2);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 84%, transparent);
+        box-shadow: var(--ds-card-shadow);
+        backdrop-filter: blur(8px);
+      }
+
+      .canvas-control-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--ds-space-1);
+        min-width: 0;
+      }
+
+      .canvas-control-row.canvas-control-size {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .canvas-control-row.canvas-control-zoom {
+        grid-column: 1 / -1;
+      }
+
+      #canvasControlOverlay .control-input {
+        min-width: 0;
+      }
+
+      #canvasControlOverlay select,
+      #canvasControlOverlay input[type="number"] {
+        min-height: var(--ds-control-h-sm);
+      }
+
+      #canvasControlOverlay .res-inputs {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      }
+
+      body:not(.controls-collapsed) #panelRestoreBtn {
+        display: none;
+      }
+
+      body.controls-collapsed #controls {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(calc(-100% - var(--raden-frame-pad)));
       }
 
       .settings-row {
@@ -186,6 +348,9 @@
         gap: var(--raden-section-gap);
         align-content: flex-start;
         justify-content: flex-start;
+        align-items: stretch;
+        width: 100%;
+        min-width: 0;
         height: max-content;
       }
 
@@ -197,10 +362,12 @@
         display: grid;
         gap: var(--raden-row-gap);
         align-content: flex-start;
-        padding: var(--ds-space-3);
-        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
-        border-radius: var(--ds-radius-2);
-        background: color-mix(in oklab, var(--ds-bg-raised) 86%, transparent);
+        padding: var(--ds-space-2) 0;
+        border: 0;
+        border-top: var(--ds-border-w) var(--ds-border-style)
+          color-mix(in oklab, var(--ds-border) 78%, transparent);
+        border-radius: 0;
+        background: transparent;
       }
 
       #controls .section h3 {
@@ -269,7 +436,7 @@
 
       .effect-stack-toolbar {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) repeat(5, var(--ds-control-h-sm));
+        grid-template-columns: minmax(0, 1fr) repeat(3, var(--ds-control-h-sm));
         align-items: center;
         gap: var(--ds-space-1);
       }
@@ -521,12 +688,9 @@
 
       .control-row {
         display: grid;
-        grid-template-columns: minmax(
-            130px,
-            var(--ds-field-label-w, var(--raden-row-label-width))
-          ) minmax(0, 1fr) var(--raden-row-action-w);
+        grid-template-columns: var(--raden-row-label-width) minmax(0, 1fr) auto;
         align-items: center;
-        gap: var(--ds-field-row-gap, var(--ds-space-2));
+        gap: var(--ds-space-1);
         min-width: 0;
         min-height: var(--ds-control-h-sm);
       }
@@ -537,6 +701,10 @@
         letter-spacing: var(--ds-label-spacing);
         text-transform: var(--ds-label-transform);
         color: var(--ds-text-muted);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .section-heading {
@@ -644,18 +812,22 @@
 
       .control-input.has-range-readout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 4.75rem;
+        grid-template-columns: minmax(0, 1fr) minmax(3.2rem, 4rem);
         align-items: center;
-        gap: var(--ds-space-2);
+        gap: var(--ds-space-1);
       }
 
       .control-icons {
         display: flex;
-        gap: 6px;
+        gap: var(--ds-space-1);
         justify-content: flex-end;
         align-items: center;
         min-width: 0;
-        width: 100%;
+        width: auto;
+      }
+
+      .control-icons:empty {
+        display: none;
       }
 
       .icon-btn {
@@ -697,27 +869,49 @@
         white-space: nowrap;
       }
 
+      .control-icons .icon-btn.icon-only {
+        flex: 0 0 var(--ds-btn-icon-size-sm);
+      }
+
       .control-lock-btn {
         opacity: 1;
+        overflow: hidden;
         transition:
           color var(--ds-dur-fast) var(--ds-ease-standard),
           opacity var(--ds-dur-fast) var(--ds-ease-standard),
-          background var(--ds-dur-fast) var(--ds-ease-standard);
+          background var(--ds-dur-fast) var(--ds-ease-standard),
+          min-width var(--ds-dur-fast) var(--ds-ease-standard),
+          width var(--ds-dur-fast) var(--ds-ease-standard);
       }
 
       .control-lock-btn.is-faint {
         color: var(--ds-icon-action-fg);
-        opacity: 0.24;
+        width: 0;
+        min-width: 0;
+        opacity: 0;
         background: transparent;
+        pointer-events: none;
+      }
+
+      .control-row:hover .control-lock-btn.is-faint,
+      .control-row:focus-within .control-lock-btn.is-faint {
+        width: var(--ds-btn-icon-size-sm);
+        min-width: var(--ds-btn-icon-size-sm);
+        opacity: 0.42;
+        pointer-events: auto;
       }
 
       .control-lock-btn.is-locked {
+        width: var(--ds-btn-icon-size-sm);
+        min-width: var(--ds-btn-icon-size-sm);
         color: var(--ds-icon-action-fg-active);
         opacity: 1;
         background: transparent;
       }
 
       .control-lock-btn.is-preview {
+        width: var(--ds-btn-icon-size-sm);
+        min-width: var(--ds-btn-icon-size-sm);
         color: var(--ds-icon-action-fg-hover);
         opacity: 1;
         background: var(--ds-icon-action-hover-bg);
@@ -747,13 +941,13 @@
       .control-input input[type="number"],
       .control-input select {
         width: 100%;
-        min-height: var(--ds-control-h);
+        min-height: var(--ds-control-h-sm);
         border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
         border-radius: var(--ds-radius-2);
         background: var(--ds-input-bg);
         color: var(--ds-input-text);
         font: inherit;
-        padding: var(--ds-space-2) var(--ds-space-3);
+        padding: 0 var(--ds-space-2);
       }
 
       .control-input select {
@@ -771,7 +965,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: flex-end;
-        padding: 0 0.5rem;
+        padding: 0 var(--ds-space-1);
         border: var(--ds-border-w) var(--ds-border-style)
           color-mix(in oklab, var(--ds-input-border) 72%, transparent);
         border-radius: var(--ds-radius-2);
@@ -810,7 +1004,7 @@
         }
 
       .riso-layer-row {
-        grid-template-columns: minmax(2.25rem, var(--raden-row-label-width)) minmax(0, 1fr) var(--raden-row-action-w);
+        grid-template-columns: minmax(2.25rem, 3rem) minmax(0, 1fr) auto;
       }
 
       .riso-layer-row .control-label {
@@ -879,15 +1073,70 @@
 
       .gallery-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
         gap: var(--ds-space-2);
+        align-items: start;
+        justify-self: stretch;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .gallery-panel-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        justify-self: stretch;
+        gap: var(--ds-space-2);
+        width: 100%;
+        min-width: 0;
+      }
+
+      .gallery-count {
+        min-width: 0;
+        color: var(--ds-text-muted);
+        font-size: var(--ds-fs-1);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: var(--ds-label-spacing);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .gallery-menu {
+        position: relative;
+      }
+
+      .gallery-menu summary {
+        list-style: none;
+      }
+
+      .gallery-menu summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .gallery-menu-popover {
+        position: absolute;
+        top: calc(100% + var(--ds-space-1));
+        right: 0;
+        z-index: 8;
+        min-width: 11rem;
+        display: grid;
+        gap: var(--ds-space-1);
+        padding: var(--ds-space-1);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        border-radius: var(--ds-radius-2);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 94%, transparent);
+        box-shadow: var(--ds-card-shadow);
       }
 
       .gallery-tile {
         position: relative;
         display: grid;
         grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(2rem, auto);
         gap: 6px;
+        min-width: 0;
         border: 1px solid
           color-mix(in oklab, var(--ds-accent-strong) 28%, var(--ds-border));
         border-radius: var(--ds-radius-2);
@@ -933,7 +1182,9 @@
         width: 100%;
         aspect-ratio: 1 / 1;
         object-fit: cover;
+        object-position: center;
         display: block;
+        min-width: 0;
         border: 1px solid
           color-mix(in oklab, var(--ds-accent-strong) 28%, var(--ds-border));
         background: var(--ds-bg-elevated);
@@ -957,6 +1208,9 @@
         color: var(--ds-text-muted);
         font-size: 0.62rem;
         margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .gallery-actions {
@@ -1029,20 +1283,6 @@
         border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
       }
 
-      #control-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--ds-space-2);
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        padding: var(--ds-space-2) var(--ds-space-3);
-        border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
-      }
-
-      #control-actions [hidden] {
-        display: none !important;
-      }
-
       #status {
         max-width: 100%;
         white-space: nowrap;
@@ -1057,8 +1297,12 @@
 
       #tabGallery {
         display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: var(--ds-space-3);
         align-content: start;
+        justify-items: stretch;
+        width: 100%;
+        min-width: 0;
       }
 
       #tabGallery[hidden] {
@@ -1104,15 +1348,19 @@
       }
 
       #canvasViewport {
+        grid-area: 1 / 1;
+        z-index: 1;
         position: relative;
+        display: grid;
+        place-items: center;
         width: 100%;
         height: 100%;
         min-width: 0;
         min-height: 0;
         overflow: hidden;
-        border-radius: var(--ds-card-radius);
-        border: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
-        box-shadow: var(--ds-card-shadow);
+        border-radius: 0;
+        border: 0;
+        box-shadow: none;
         background: var(--ds-bg-raised);
         cursor: default;
       }
@@ -1126,9 +1374,12 @@
       }
 
       #canvas {
-        width: 100%;
-        height: 100%;
+        width: auto;
+        height: auto;
+        max-width: none;
+        max-height: none;
         display: block;
+        transform: translate(0, 0);
       }
 
       #exportCropOverlay {
@@ -1203,25 +1454,66 @@
       @media (max-width: 980px) {
         body {
           grid-template-columns: 1fr;
-          grid-template-rows: minmax(0, 1fr) minmax(240px, 45vh);
+          grid-template-rows: 1fr;
         }
 
         #canvasViewport {
-          grid-row: 1;
+          grid-area: 1 / 1;
         }
 
         #controls {
-          grid-row: 2;
+          grid-area: 1 / 1;
+          align-self: end;
+          justify-self: stretch;
+          width: auto;
+          min-width: 0;
+          max-height: min(52vh, 520px);
+          resize: none;
+        }
+
+        #panelRestoreBtn {
+          top: auto;
+          bottom: var(--raden-frame-pad);
+        }
+
+        #workspaceToolbar {
+          left: var(--raden-workspace-toolbar-left, var(--raden-frame-pad));
+        }
+
+        #canvasControlOverlay {
+          right: var(--raden-frame-pad);
+          bottom: calc(var(--raden-frame-pad) + min(52vh, 520px) + var(--ds-space-2));
+          width: min(360px, calc(100vw - (2 * var(--raden-frame-pad))));
+        }
+
+        body.controls-collapsed #canvasControlOverlay {
+          bottom: var(--raden-frame-pad);
+        }
+
+        body.controls-collapsed #controls {
+          transform: translateY(calc(100% + var(--raden-frame-pad)));
         }
       }
 
       @media (max-width: 720px) {
+        .control-row {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .control-label {
+          grid-column: 1 / -1;
+        }
+
         .layer-quad {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .riso-vis-grid {
           grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        #canvasControlOverlay {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -1275,6 +1567,16 @@
           >
             <i class="iconoir-settings"></i>
           </button>
+          <button
+            id="panelCollapseBtn"
+            class="panel-settings-btn icon-btn icon-only ds-icon-action"
+            type="button"
+            title="Hide controls"
+            aria-label="Hide controls"
+            aria-controls="controls"
+          >
+            <i class="iconoir-sidebar-collapse"></i>
+          </button>
         </div>
       </div>
       <div id="control-scroll" class="ds-scroll">
@@ -1308,9 +1610,9 @@
               <span>Randomize</span>
             </button>
           </div>
-          <!-- 1. SEED & RESOLUTION -->
+          <!-- 1. SEED -->
           <div class="section" data-mode="all">
-            <h3>Seed + Render Size</h3>
+            <h3>Seed</h3>
             <div
               class="control-row"
               data-mode="motherofpearl, topography, opalvein, labradorite, marbleink, agateband, malachiteflow, lichengrowth, icebloom, riverdelta, bubblefilm"
@@ -1318,99 +1620,6 @@
               <div class="control-label">Seed:</div>
               <div class="control-input">
                 <input id="seed" placeholder="(random)" type="number" />
-              </div>
-              <div class="control-icons"></div>
-            </div>
-
-            <div class="control-row">
-              <div class="control-label">Preset:</div>
-              <div class="control-input">
-                <select id="resolutionPreset">
-                  <option value="">Auto (Window Size)</option>
-                  <option value="1920x1080">HD (1920x1080)</option>
-                  <option value="1080x1080">Square (1080x1080)</option>
-                  <option value="3840x2160">4K (3840x2160)</option>
-                  <option value="4096x4096">4K Square (4096x4096)</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-              <div class="control-icons"></div>
-            </div>
-
-            <div class="control-row">
-              <div class="control-label">Dimension:</div>
-              <div class="control-input">
-                <div class="res-inputs">
-                  <input
-                    type="number"
-                    id="renderWidth"
-                    min="1"
-                    max="4096"
-                    placeholder="Width"
-                  />
-                  <span>x</span>
-                  <input
-                    type="number"
-                    id="renderHeight"
-                    min="1"
-                    max="4096"
-                    placeholder="Height"
-                  />
-                </div>
-              </div>
-              <div class="control-icons"></div>
-            </div>
-
-            <div class="control-row">
-              <div class="control-label">Canvas Zoom:</div>
-              <div class="control-input">
-                <input
-                  type="range"
-                  id="canvasViewZoom"
-                  min="0.25"
-                  max="2"
-                  step="0.01"
-                  value="1"
-                  data-live="true"
-                />
-              </div>
-              <div class="control-icons">
-                <button
-                  id="resetCanvasViewBtn"
-                  class="ds-btn ds-btn-sm"
-                  type="button"
-                  title="Reset canvas view"
-                >
-                  <span>Reset View</span>
-                </button>
-              </div>
-            </div>
-            <div class="control-row">
-              <div class="control-label">Canvas Pan:</div>
-              <div class="control-input">
-                <div class="res-inputs">
-                  <input
-                    type="number"
-                    id="canvasPanX"
-                    min="-2000"
-                    max="2000"
-                    step="1"
-                    value="0"
-                    placeholder="X"
-                    data-live="true"
-                  />
-                  <span>/</span>
-                  <input
-                    type="number"
-                    id="canvasPanY"
-                    min="-2000"
-                    max="2000"
-                    step="1"
-                    value="0"
-                    placeholder="Y"
-                    data-live="true"
-                  />
-                </div>
               </div>
               <div class="control-icons"></div>
             </div>
@@ -2891,12 +3100,12 @@
               <div class="control-icons">
                 <button
                   id="captureCompareBtn"
-                  class="ds-btn ds-btn-sm icon-btn"
+                  class="ds-btn ds-btn-sm icon-btn icon-only"
                   type="button"
                   title="Capture current frame as A"
+                  aria-label="Capture current frame as A"
                 >
-                  <i class="iconoir-screenshot"></i>
-                  <span>Compare Capture</span>
+                  <i class="iconoir-screenshot" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -2943,26 +3152,6 @@
           <div id="effectStackPanel" class="effect-stack-panel">
             <div class="effect-stack-toolbar" aria-label="Effect stack actions">
               <div class="effect-stack-title">Effects</div>
-              <button
-                type="button"
-                id="effectUndoBtn"
-                class="effect-stack-action"
-                title="Undo effect change"
-                aria-label="Undo effect change"
-                disabled
-              >
-                <i class="iconoir-undo" aria-hidden="true"></i>
-              </button>
-              <button
-                type="button"
-                id="effectRedoBtn"
-                class="effect-stack-action"
-                title="Redo effect change"
-                aria-label="Redo effect change"
-                disabled
-              >
-                <i class="iconoir-redo" aria-hidden="true"></i>
-              </button>
               <button
                 type="button"
                 id="effectAddBtn"
@@ -3063,6 +3252,28 @@
         </div>
 
         <div id="tabGallery" class="panel-tab" hidden>
+          <div class="gallery-panel-header">
+            <div id="gallerySnapshotCount" class="gallery-count">0 snapshots</div>
+            <details class="gallery-menu">
+              <summary
+                class="effect-stack-action"
+                title="Gallery actions"
+                aria-label="Gallery actions"
+              >
+                <i class="iconoir-more-horiz" aria-hidden="true"></i>
+              </summary>
+              <div class="gallery-menu-popover">
+                <button
+                  id="clearGalleryActionBtn"
+                  class="ds-btn icon-btn"
+                  type="button"
+                >
+                  <i class="iconoir-trash"></i>
+                  <span>Clear Gallery</span>
+                </button>
+              </div>
+            </details>
+          </div>
           <div id="galleryGrid" class="gallery-grid"></div>
         </div>
 
@@ -3095,58 +3306,24 @@
             </div>
             <div class="control-icons"></div>
           </div>
+          <div class="settings-row">
+            <label for="runQaActionBtn">QA Checks</label>
+            <div class="control-input">
+              <button
+                id="runQaActionBtn"
+                class="ds-btn icon-btn"
+                type="button"
+              >
+                <i class="iconoir-check-circle"></i>
+                <span>Run QA Checks</span>
+              </button>
+            </div>
+            <div class="control-icons"></div>
+          </div>
         </div>
       </div>
       <div id="control-footer">
         <div id="status" data-state="idle">Idle</div>
-      </div>
-      <div id="control-actions">
-        <button
-          id="postRandomizeBtn"
-          class="ds-btn icon-btn"
-          type="button"
-          title="Randomize effects settings"
-          hidden
-        >
-          <i class="iconoir-dice-three"></i>
-          <span>Randomize Effects</span>
-        </button>
-        <button
-          id="saveResultBtn"
-          class="ds-btn ds-btn-primary icon-btn"
-          type="button"
-          title="Save snapshot"
-        >
-          <i class="iconoir-media-image-plus"></i>
-          <span>Save</span>
-        </button>
-        <button
-          id="exportActionBtn"
-          class="ds-btn ds-btn-primary icon-btn"
-          type="button"
-          hidden
-        >
-          <i class="iconoir-download"></i>
-          <span>Export File</span>
-        </button>
-        <button
-          id="clearGalleryActionBtn"
-          class="ds-btn icon-btn"
-          type="button"
-          hidden
-        >
-          <i class="iconoir-trash"></i>
-          <span>Clear Gallery</span>
-        </button>
-        <button
-          id="runQaActionBtn"
-          class="ds-btn icon-btn"
-          type="button"
-          hidden
-        >
-          <i class="iconoir-check-circle"></i>
-          <span>Run QA Checks</span>
-        </button>
       </div>
     </div>
 
@@ -3173,6 +3350,118 @@
     </dialog>
 
     <div id="progress"></div>
+    <div id="workspaceToolbar" aria-label="Workspace actions">
+      <button
+        type="button"
+        id="effectUndoBtn"
+        class="workspace-action"
+        title="Undo"
+        aria-label="Undo"
+        disabled
+      >
+        <i class="iconoir-undo" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        id="effectRedoBtn"
+        class="workspace-action"
+        title="Redo"
+        aria-label="Redo"
+        disabled
+      >
+        <i class="iconoir-redo" aria-hidden="true"></i>
+      </button>
+      <button
+        id="saveResultBtn"
+        class="workspace-action"
+        type="button"
+        title="Save snapshot"
+        aria-label="Save snapshot"
+      >
+        <i class="iconoir-media-image-plus" aria-hidden="true"></i>
+      </button>
+    </div>
+    <button
+      id="exportActionBtn"
+      class="ds-btn ds-btn-primary icon-btn icon-only"
+      type="button"
+      title="Export file"
+      aria-label="Export file"
+    >
+      <i class="iconoir-download" aria-hidden="true"></i>
+      <span>Export File</span>
+    </button>
+    <button
+      id="panelRestoreBtn"
+      class="icon-btn icon-only ds-icon-action"
+      type="button"
+      title="Show controls"
+      aria-label="Show controls"
+      aria-controls="controls"
+    >
+      <i class="iconoir-sidebar-expand"></i>
+    </button>
+    <div id="canvasControlOverlay" aria-label="Canvas controls">
+      <div class="canvas-control-row">
+        <div class="control-input">
+          <select id="resolutionPreset">
+            <option value="">Auto</option>
+            <option value="1920x1080">HD</option>
+            <option value="1080x1080">Square</option>
+            <option value="3840x2160">4K</option>
+            <option value="4096x4096">4K Square</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="control-icons"></div>
+      </div>
+      <div class="canvas-control-row canvas-control-size">
+        <div class="control-input">
+          <div class="res-inputs">
+            <input
+              type="number"
+              id="renderWidth"
+              min="1"
+              max="4096"
+              placeholder="Width"
+            />
+            <span>x</span>
+            <input
+              type="number"
+              id="renderHeight"
+              min="1"
+              max="4096"
+              placeholder="Height"
+            />
+          </div>
+        </div>
+        <div class="control-icons"></div>
+      </div>
+      <div class="canvas-control-row canvas-control-zoom">
+        <div class="control-input">
+          <input
+            type="range"
+            id="canvasViewZoom"
+            min="0.25"
+            max="2"
+            step="0.01"
+            value="1"
+            data-live="true"
+          />
+        </div>
+        <div class="control-icons">
+          <button
+            id="resetCanvasViewBtn"
+            class="ds-btn ds-btn-sm icon-btn icon-only"
+            type="button"
+            title="Reset canvas view"
+            aria-label="Reset canvas view"
+          >
+            <i class="iconoir-refresh" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
     <div id="canvasViewport">
       <canvas id="canvas"></canvas>
       <div id="exportCropOverlay" hidden>
@@ -3368,6 +3657,7 @@
 
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      let canvasViewPan = { x: 0, y: 0 };
       const offscreenCanvas = document.createElement("canvas");
       const offscreenCtx = offscreenCanvas.getContext("2d");
       const MAX_RENDER_DIMENSION = 4096;
@@ -3444,37 +3734,57 @@
         return { width: w, height: h };
       }
 
-      function getViewWindowState(destWidth = canvas.width, destHeight = canvas.height) {
+      function getCanvasViewZoom() {
         const zoomInput = document.getElementById("canvasViewZoom");
-        const panXInput = document.getElementById("canvasPanX");
-        const panYInput = document.getElementById("canvasPanY");
-        const viewRect = canvas.getBoundingClientRect();
-        const viewScaleX = destWidth / Math.max(1, viewRect.width || destWidth);
-        const viewScaleY = destHeight / Math.max(1, viewRect.height || destHeight);
-        const zoom = Math.max(
+        return Math.max(
           0.25,
           Math.min(2, parseFloat(zoomInput?.value || "1") || 1),
         );
-        const desiredPanXDisplay = parseInt(panXInput?.value || "0", 10) || 0;
-        const desiredPanYDisplay = parseInt(panYInput?.value || "0", 10) || 0;
-        const desiredPanX = desiredPanXDisplay * viewScaleX;
-        const desiredPanY = desiredPanYDisplay * viewScaleY;
-        const drawW = destWidth * zoom;
-        const drawH = destHeight * zoom;
-        const maxPanX = Math.max(0, (drawW - destWidth) * 0.5);
-        const maxPanY = Math.max(0, (drawH - destHeight) * 0.5);
-        const panX = Math.max(-maxPanX, Math.min(maxPanX, desiredPanX));
-        const panY = Math.max(-maxPanY, Math.min(maxPanY, desiredPanY));
-        const panXDisplay = panX / viewScaleX;
-        const panYDisplay = panY / viewScaleY;
-        if (panXInput && Math.round(panXDisplay) !== desiredPanXDisplay) {
-          panXInput.value = String(Math.round(panXDisplay));
-        }
-        if (panYInput && Math.round(panYDisplay) !== desiredPanYDisplay) {
-          panYInput.value = String(Math.round(panYDisplay));
-        }
-        const dx = (destWidth - drawW) * 0.5 + panX;
-        const dy = (destHeight - drawH) * 0.5 + panY;
+      }
+
+      function getCanvasDisplayMetrics(zoom = getCanvasViewZoom()) {
+        const viewport = document.getElementById("canvasViewport");
+        const width = Math.max(1, canvas.width || 1);
+        const height = Math.max(1, canvas.height || 1);
+        const viewportWidth = Math.max(1, viewport?.clientWidth || width);
+        const viewportHeight = Math.max(1, viewport?.clientHeight || height);
+        const fitScale = Math.min(1, viewportWidth / width, viewportHeight / height);
+        const scale = fitScale * zoom;
+        return {
+          scale,
+          width,
+          height,
+          displayWidth: width * scale,
+          displayHeight: height * scale,
+          viewportWidth,
+          viewportHeight,
+        };
+      }
+
+      function clampCanvasViewPan(pan = canvasViewPan) {
+        const metrics = getCanvasDisplayMetrics();
+        const maxPanX = Math.max(0, (metrics.displayWidth - metrics.viewportWidth) * 0.5);
+        const maxPanY = Math.max(0, (metrics.displayHeight - metrics.viewportHeight) * 0.5);
+        canvasViewPan.x = Math.max(-maxPanX, Math.min(maxPanX, pan.x || 0));
+        canvasViewPan.y = Math.max(-maxPanY, Math.min(maxPanY, pan.y || 0));
+      }
+
+      function syncCanvasDisplaySize() {
+        const metrics = getCanvasDisplayMetrics();
+        canvas.style.width = `${Math.max(1, Math.round(metrics.displayWidth))}px`;
+        canvas.style.height = `${Math.max(1, Math.round(metrics.displayHeight))}px`;
+        clampCanvasViewPan();
+        canvas.style.transform = `translate(${Math.round(canvasViewPan.x)}px, ${Math.round(canvasViewPan.y)}px)`;
+      }
+
+      function getViewWindowState(destWidth = canvas.width, destHeight = canvas.height) {
+        const zoom = getCanvasViewZoom();
+        const panX = canvasViewPan.x;
+        const panY = canvasViewPan.y;
+        const drawW = destWidth;
+        const drawH = destHeight;
+        const dx = 0;
+        const dy = 0;
         return { zoom, panX, panY, drawW, drawH, dx, dy };
       }
 
@@ -3485,46 +3795,45 @@
         ctx.drawImage(source, state.dx, state.dy, state.drawW, state.drawH);
       }
 
-      function ensureViewportCanvasSize() {
-        const viewport = document.getElementById("canvasViewport");
-        if (!viewport) return;
-        const vw = Math.max(1, Math.floor(viewport.clientWidth || 1));
-        const vh = Math.max(1, Math.floor(viewport.clientHeight || 1));
-        if (canvas.width !== vw || canvas.height !== vh) {
-          canvas.width = vw;
-          canvas.height = vh;
+      function ensureDisplayCanvasSize(source = displayBaseCanvas) {
+        const width = Math.max(1, Math.floor(source?.width || canvas.width || 1));
+        const height = Math.max(1, Math.floor(source?.height || canvas.height || 1));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
         }
+        syncCanvasDisplaySize();
       }
 
       function applyCanvasViewTransform() {
+        syncCanvasDisplaySize();
         applyCompareView();
       }
 
       function resetCanvasView() {
         const zoomInput = document.getElementById("canvasViewZoom");
-        const panXInput = document.getElementById("canvasPanX");
-        const panYInput = document.getElementById("canvasPanY");
         if (zoomInput) zoomInput.value = "1";
-        if (panXInput) panXInput.value = "0";
-        if (panYInput) panYInput.value = "0";
+        canvasViewPan = { x: 0, y: 0 };
         syncRangeReadouts();
         applyCanvasViewTransform();
       }
 
       function updateCanvasViewportCursor() {
         const viewport = document.getElementById("canvasViewport");
-        const zoom = parseFloat(document.getElementById("canvasViewZoom")?.value || "1") || 1;
+        const zoom = getCanvasViewZoom();
+        const metrics = getCanvasDisplayMetrics(zoom);
+        const canPan =
+          metrics.displayWidth > metrics.viewportWidth + 1 ||
+          metrics.displayHeight > metrics.viewportHeight + 1;
         if (!viewport) return;
-        viewport.classList.toggle("is-pannable", zoom > 1.01);
+        viewport.classList.toggle("is-pannable", canPan && zoom > 1.01);
         viewport.classList.toggle("is-panning", !!viewportPanState);
       }
 
       function initCanvasViewportInteractions() {
         const viewport = document.getElementById("canvasViewport");
         const zoomInput = document.getElementById("canvasViewZoom");
-        const panXInput = document.getElementById("canvasPanX");
-        const panYInput = document.getElementById("canvasPanY");
-        if (!viewport || !zoomInput || !panXInput || !panYInput) return;
+        if (!viewport || !zoomInput) return;
 
         viewport.addEventListener(
           "wheel",
@@ -3535,7 +3844,16 @@
             const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
             const next = Math.max(0.25, Math.min(2, current * factor));
             if (Math.abs(next - current) < 0.0001) return;
+            const before = getCanvasDisplayMetrics(current);
+            const rect = viewport.getBoundingClientRect();
+            const cursorX = e.clientX - rect.left - before.viewportWidth * 0.5;
+            const cursorY = e.clientY - rect.top - before.viewportHeight * 0.5;
+            const anchorX = (cursorX - canvasViewPan.x) / Math.max(0.0001, before.scale);
+            const anchorY = (cursorY - canvasViewPan.y) / Math.max(0.0001, before.scale);
             zoomInput.value = next.toFixed(2);
+            const after = getCanvasDisplayMetrics(next);
+            canvasViewPan.x = cursorX - anchorX * after.scale;
+            canvasViewPan.y = cursorY - anchorY * after.scale;
             updateRangeReadout(zoomInput);
             applyCanvasViewTransform();
             updateExportCropOverlay();
@@ -3548,13 +3866,17 @@
           if (e.button !== 0) return;
           if (e.target?.closest?.("#exportCropFrame")) return;
           const zoom = parseFloat(zoomInput.value || "1") || 1;
-          if (zoom <= 1.01) return;
+          const metrics = getCanvasDisplayMetrics(zoom);
+          const canPan =
+            metrics.displayWidth > metrics.viewportWidth + 1 ||
+            metrics.displayHeight > metrics.viewportHeight + 1;
+          if (!canPan) return;
           viewportPanState = {
             pointerId: e.pointerId,
             startClientX: e.clientX,
             startClientY: e.clientY,
-            startPanX: parseInt(panXInput.value || "0", 10) || 0,
-            startPanY: parseInt(panYInput.value || "0", 10) || 0,
+            startPanX: canvasViewPan.x,
+            startPanY: canvasViewPan.y,
           };
           viewport.setPointerCapture(e.pointerId);
           updateCanvasViewportCursor();
@@ -3565,9 +3887,8 @@
           if (!viewportPanState || viewportPanState.pointerId !== e.pointerId) return;
           const dx = e.clientX - viewportPanState.startClientX;
           const dy = e.clientY - viewportPanState.startClientY;
-          panXInput.value = String(Math.round(viewportPanState.startPanX + dx));
-          panYInput.value = String(Math.round(viewportPanState.startPanY + dy));
-          syncRangeReadouts();
+          canvasViewPan.x = viewportPanState.startPanX + dx;
+          canvasViewPan.y = viewportPanState.startPanY + dy;
           applyCanvasViewTransform();
           updateExportCropOverlay();
         });
@@ -3589,13 +3910,13 @@
       let originalImageData = null;
       let postFxBaseImageData = null;
       let activeLayerState = null;
-      const EFFECT_HISTORY_LIMIT = 50;
-      const effectHistory = {
+      const COMMAND_HISTORY_LIMIT = 50;
+      const commandHistory = {
         undo: [],
         redo: [],
         restoring: false,
       };
-      let pendingEffectControlSnapshot = null;
+      let pendingControlSnapshot = null;
       let postFxApplyRunId = 0;
       const renderPipeline = window.RadenRenderPipeline?.createRenderPipeline
         ? window.RadenRenderPipeline.createRenderPipeline()
@@ -3620,8 +3941,6 @@
         "debugPanelToggle",
         "themeSelect",
         "canvasViewZoom",
-        "canvasPanX",
-        "canvasPanY",
       ];
       const MODE_ACTIVE_CONTROL_IDS = window.RadenModes?.getActiveControlIdMap
         ? window.RadenModes.getActiveControlIdMap()
@@ -4130,8 +4449,7 @@
             markControlPending(wInput);
             markControlPending(hInput);
           }
-          updatePendingStatus();
-          scheduleFinalRender();
+          applyRenderSizeControlChange();
         });
 
       function normalizeRenderSizeInputs() {
@@ -4149,6 +4467,16 @@
           markControlPending(hInput);
           updatePendingStatus();
         }
+      }
+
+      function applyRenderSizeControlChange() {
+        normalizeRenderSizeInputs();
+        const wInput = document.getElementById("renderWidth");
+        const hInput = document.getElementById("renderHeight");
+        if (wInput) markControlPending(wInput);
+        if (hInput) markControlPending(hInput);
+        updatePendingStatus();
+        scheduleFinalRender();
       }
 
       function applyGrainOverlay(ctx, width, height) {
@@ -5762,7 +6090,9 @@
             // Save current values as "applied"
             if (!config.preview) {
               document
-                .querySelectorAll("#controls input, #controls select")
+                .querySelectorAll(
+                  "#controls input, #controls select, #canvasControlOverlay input, #canvasControlOverlay select",
+                )
                 .forEach((el) => {
                   if (el.dataset.live !== "true") {
                     el.dataset.applied =
@@ -6721,8 +7051,8 @@
       }
 
       function applyCompareView() {
-        ensureViewportCanvasSize();
         if (!displayBaseCanvas.width || !displayBaseCanvas.height) return;
+        ensureDisplayCanvasSize(displayBaseCanvas);
         drawSourceInView(displayBaseCanvas);
         const compareEnabled =
           !!document.getElementById("compareToggle")?.checked;
@@ -6858,93 +7188,153 @@
         return layerState ? JSON.parse(JSON.stringify(layerState)) : null;
       }
 
-      function updateEffectHistoryButtons() {
+      function cloneCommandState(state) {
+        return state ? JSON.parse(JSON.stringify(state)) : null;
+      }
+
+      function getCommandState() {
+        return {
+          controls: getControlState(),
+          layerState: cloneLayerState(getLayerState()),
+        };
+      }
+
+      function updateCommandHistoryButtons() {
         const undoBtn = document.getElementById("effectUndoBtn");
         const redoBtn = document.getElementById("effectRedoBtn");
-        if (undoBtn) undoBtn.disabled = effectHistory.undo.length === 0;
-        if (redoBtn) redoBtn.disabled = effectHistory.redo.length === 0;
+        if (undoBtn) undoBtn.disabled = commandHistory.undo.length === 0;
+        if (redoBtn) redoBtn.disabled = commandHistory.redo.length === 0;
+      }
+
+      function updateEffectHistoryButtons() {
+        updateCommandHistoryButtons();
+      }
+
+      function clearCommandHistory() {
+        commandHistory.undo = [];
+        commandHistory.redo = [];
+        pendingControlSnapshot = null;
+        updateCommandHistoryButtons();
       }
 
       function clearEffectHistory() {
-        effectHistory.undo = [];
-        effectHistory.redo = [];
-        pendingEffectControlSnapshot = null;
-        updateEffectHistoryButtons();
+        clearCommandHistory();
+      }
+
+      function pushCommandHistoryEntry(state, label) {
+        if (commandHistory.restoring) return;
+        const snapshot = cloneCommandState(state);
+        if (!snapshot) return;
+        commandHistory.undo.push({ label: label || "Change", state: snapshot });
+        if (commandHistory.undo.length > COMMAND_HISTORY_LIMIT) {
+          commandHistory.undo.splice(0, commandHistory.undo.length - COMMAND_HISTORY_LIMIT);
+        }
+        commandHistory.redo = [];
+        updateCommandHistoryButtons();
       }
 
       function pushEffectHistoryEntry(state, label) {
-        if (effectHistory.restoring) return;
-        const snapshot = cloneLayerState(state);
-        if (!snapshot) return;
-        effectHistory.undo.push({ label: label || "Effect change", state: snapshot });
-        if (effectHistory.undo.length > EFFECT_HISTORY_LIMIT) {
-          effectHistory.undo.splice(0, effectHistory.undo.length - EFFECT_HISTORY_LIMIT);
-        }
-        effectHistory.redo = [];
-        updateEffectHistoryButtons();
+        const layerState = state && state.controls ? state.layerState : state;
+        pushCommandHistoryEntry(
+          state && state.controls ? state : { controls: getControlState(), layerState },
+          label || "Effect change",
+        );
+      }
+
+      function pushCommandHistorySnapshot(label) {
+        pushCommandHistoryEntry(getCommandState(), label);
       }
 
       function pushEffectHistorySnapshot(label) {
-        pushEffectHistoryEntry(getLayerState(), label);
+        pushCommandHistorySnapshot(label);
+      }
+
+      function beginControlEdit() {
+        if (pendingControlSnapshot || commandHistory.restoring) return;
+        pendingControlSnapshot = cloneCommandState(getCommandState());
       }
 
       function beginEffectControlEdit() {
-        if (pendingEffectControlSnapshot || effectHistory.restoring) return;
-        pendingEffectControlSnapshot = cloneLayerState(getLayerState());
+        beginControlEdit();
+      }
+
+      function commitPendingControlHistory(label) {
+        if (!pendingControlSnapshot) return;
+        pushCommandHistoryEntry(pendingControlSnapshot, label);
+        pendingControlSnapshot = null;
       }
 
       function commitLayerStateWithHistory(nextState, label) {
-        pushEffectHistorySnapshot(label);
-        pendingEffectControlSnapshot = null;
+        pushCommandHistorySnapshot(label);
+        pendingControlSnapshot = null;
         activeLayerState = nextState;
-        updateEffectHistoryButtons();
+        updateCommandHistoryButtons();
         return activeLayerState;
       }
 
-      async function restoreEffectHistoryState(snapshot) {
-        effectHistory.restoring = true;
-        activeLayerState = cloneLayerState(snapshot);
+      async function restoreCommandHistoryState(snapshot) {
+        commandHistory.restoring = true;
+        const controlsChanged =
+          JSON.stringify(snapshot?.controls || {}) !== JSON.stringify(getControlState());
+        applyControlState(snapshot?.controls || {});
+        activeLayerState = cloneLayerState(snapshot?.layerState);
         renderEffectStack();
-        if (postFxBaseImageData) {
+        if (controlsChanged) {
+          scheduleFinalRender();
+        } else if (postFxBaseImageData) {
           await applyPostFxStackFromBaseAsync(getLivePostFxConfig());
         } else {
           scheduleFinalRender();
         }
-        effectHistory.restoring = false;
-        updateEffectHistoryButtons();
+        commandHistory.restoring = false;
+        updateCommandHistoryButtons();
+      }
+
+      async function restoreEffectHistoryState(snapshot) {
+        await restoreCommandHistoryState(
+          snapshot && snapshot.controls ? snapshot : { controls: getControlState(), layerState: snapshot },
+        );
+      }
+
+      async function undoCommandHistory() {
+        const entry = commandHistory.undo.pop();
+        if (!entry) return;
+        pendingControlSnapshot = null;
+        commandHistory.redo.push({
+          label: entry.label,
+          state: cloneCommandState(getCommandState()),
+        });
+        await restoreCommandHistoryState(entry.state);
+      }
+
+      async function redoCommandHistory() {
+        const entry = commandHistory.redo.pop();
+        if (!entry) return;
+        pendingControlSnapshot = null;
+        commandHistory.undo.push({
+          label: entry.label,
+          state: cloneCommandState(getCommandState()),
+        });
+        await restoreCommandHistoryState(entry.state);
       }
 
       async function undoEffectHistory() {
-        const entry = effectHistory.undo.pop();
-        if (!entry) return;
-        pendingEffectControlSnapshot = null;
-        effectHistory.redo.push({
-          label: entry.label,
-          state: cloneLayerState(getLayerState()),
-        });
-        await restoreEffectHistoryState(entry.state);
+        await undoCommandHistory();
       }
 
       async function redoEffectHistory() {
-        const entry = effectHistory.redo.pop();
-        if (!entry) return;
-        pendingEffectControlSnapshot = null;
-        effectHistory.undo.push({
-          label: entry.label,
-          state: cloneLayerState(getLayerState()),
-        });
-        await restoreEffectHistoryState(entry.state);
+        await redoCommandHistory();
       }
 
-      function resetLayerStateFromControls() {
+      function resetLayerStateFromControls(options = {}) {
         activeLayerState = null;
-        clearEffectHistory();
+        if (options.clearHistory !== false) clearCommandHistory();
         renderEffectStack();
       }
 
-      function setLayerState(layerState) {
+      function setLayerState(layerState, options = {}) {
         activeLayerState = cloneLayerState(layerState);
-        clearEffectHistory();
+        if (options.clearHistory !== false) clearCommandHistory();
         renderEffectStack();
       }
 
@@ -7320,11 +7710,11 @@
         );
         if (options.history === false) {
           activeLayerState = nextState;
-        } else if (pendingEffectControlSnapshot) {
-          pushEffectHistoryEntry(pendingEffectControlSnapshot, "Change effect controls");
-          pendingEffectControlSnapshot = null;
+        } else if (pendingControlSnapshot) {
+          pushCommandHistoryEntry(pendingControlSnapshot, "Change effect controls");
+          pendingControlSnapshot = null;
           activeLayerState = nextState;
-          updateEffectHistoryButtons();
+          updateCommandHistoryButtons();
         } else {
           activeLayerState = commitLayerStateWithHistory(nextState, "Change effect controls");
         }
@@ -7347,6 +7737,9 @@
               const mode = document.getElementById("modeSelector").value;
               document.body.setAttribute("data-mode", mode);
               updateVisibleSections(mode);
+              updateRisoEngineVisibility();
+              updateRisoLayerOverrideRows();
+              syncRangeReadouts();
             },
           });
         }
@@ -7357,6 +7750,7 @@
       }
 
       function randomizeTextureSettings() {
+        const before = getCommandState();
         const mode = document.getElementById("modeSelector").value;
         const randomSeed = Math.floor(Math.random() * 2147483647);
         const set = (id, val, decimals = 2) => {
@@ -7500,6 +7894,7 @@
         updatePendingStatus();
         updateRisoEngineVisibility();
         updateRisoLayerOverrideRows();
+        pushCommandHistoryEntry(before, "Randomize texture");
         scheduleFinalRender();
       }
 
@@ -7620,20 +8015,75 @@
         setActiveTab("generate");
         bindEffectStackControls();
         renderEffectStack();
+        const panelCollapseBtn = document.getElementById("panelCollapseBtn");
+        const panelRestoreBtn = document.getElementById("panelRestoreBtn");
+        const controlsPanel = document.getElementById("controls");
+        const workspaceToolbar = document.getElementById("workspaceToolbar");
+        const syncWorkspaceToolbarPosition = () => {
+          if (!workspaceToolbar) return;
+          const framePad = parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue("--raden-frame-pad"),
+          ) || 12;
+          const gap = parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue("--ds-space-2"),
+          ) || 8;
+          let left = framePad;
+          if (document.body.classList.contains("controls-collapsed")) {
+            const restoreRect = panelRestoreBtn?.getBoundingClientRect();
+            left = (restoreRect?.right || framePad) + gap;
+          } else {
+            const controlsRect = controlsPanel?.getBoundingClientRect();
+            left = (controlsRect?.right || framePad) + gap;
+          }
+          const toolbarWidth = workspaceToolbar.offsetWidth || 0;
+          const maxLeft = Math.max(framePad, window.innerWidth - toolbarWidth - framePad);
+          document.documentElement.style.setProperty(
+            "--raden-workspace-toolbar-left",
+            `${Math.round(Math.min(Math.max(framePad, left), maxLeft))}px`,
+          );
+        };
+        const setControlsCollapsed = (collapsed) => {
+          document.body.classList.toggle("controls-collapsed", collapsed);
+          controlsPanel?.setAttribute("aria-hidden", String(collapsed));
+          panelCollapseBtn?.setAttribute("aria-expanded", String(!collapsed));
+          panelRestoreBtn?.setAttribute("aria-expanded", String(!collapsed));
+          syncWorkspaceToolbarPosition();
+          if (collapsed) {
+            panelRestoreBtn?.focus();
+          } else {
+            panelCollapseBtn?.focus();
+          }
+        };
+        panelCollapseBtn?.addEventListener("click", () => {
+          setControlsCollapsed(true);
+        });
+        panelRestoreBtn?.addEventListener("click", () => {
+          setControlsCollapsed(false);
+        });
+        if (window.ResizeObserver && controlsPanel) {
+          new ResizeObserver(syncWorkspaceToolbarPosition).observe(controlsPanel);
+        }
+        window.addEventListener("resize", syncWorkspaceToolbarPosition);
+        syncWorkspaceToolbarPosition();
         document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && document.body.classList.contains("controls-collapsed")) {
+            event.preventDefault();
+            setControlsCollapsed(false);
+            return;
+          }
           const isUndoRedoKey = event.key.toLowerCase() === "z" || event.key.toLowerCase() === "y";
           if (!(event.ctrlKey || event.metaKey) || !isUndoRedoKey || event.altKey) return;
           const wantsRedo =
             event.key.toLowerCase() === "y" ||
             (event.key.toLowerCase() === "z" && event.shiftKey);
-          if (wantsRedo && effectHistory.redo.length) {
+          if (wantsRedo && commandHistory.redo.length) {
             event.preventDefault();
-            redoEffectHistory();
+            redoCommandHistory();
             return;
           }
-          if (!wantsRedo && effectHistory.undo.length) {
+          if (!wantsRedo && commandHistory.undo.length) {
             event.preventDefault();
-            undoEffectHistory();
+            undoCommandHistory();
           }
         });
 
@@ -7668,7 +8118,9 @@
 
         clearPendingIndicators();
         document
-          .querySelectorAll("#controls input, #controls select")
+          .querySelectorAll(
+            "#controls input, #controls select, #canvasControlOverlay input, #canvasControlOverlay select",
+          )
           .forEach((el) => {
             if (el.dataset.live !== "true") {
               el.dataset.applied =
@@ -7692,8 +8144,6 @@
       document.getElementById("textureRandomizeBtn").addEventListener("click", () => {
         randomizeTextureSettings();
       });
-
-      document.getElementById("postRandomizeBtn").hidden = true;
 
       document
         .getElementById("performanceProfile")
@@ -7764,11 +8214,11 @@
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener("change", () => {
-          normalizeRenderSizeInputs();
+          applyRenderSizeControlChange();
         });
       });
 
-      ["canvasViewZoom", "canvasPanX", "canvasPanY"].forEach((id) => {
+      ["canvasViewZoom"].forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener("input", () => {
@@ -7798,7 +8248,8 @@
           document.body.setAttribute("data-mode", mode);
           updateVisibleSections(mode);
           updateRisoLayerOverrideRows();
-          resetLayerStateFromControls();
+          commitPendingControlHistory("Change texture type");
+          resetLayerStateFromControls({ clearHistory: false });
           schedulePreviewRender();
           scheduleFinalRender();
         });
@@ -7859,16 +8310,39 @@
       }
 
       document
-        .querySelectorAll("#controls input, #controls select")
+        .querySelectorAll(
+          "#controls input, #controls select, #canvasControlOverlay input, #canvasControlOverlay select",
+        )
         .forEach((el) => {
           if (el.dataset.live !== "true") {
+            const prepareHistory = () => {
+              if (!el.closest("#tabGenerate, #tabPost, #canvasControlOverlay")) return;
+              if (isUiOnlyControl(el)) return;
+              beginControlEdit();
+            };
+            el.addEventListener("pointerdown", prepareHistory);
+            el.addEventListener("focusin", prepareHistory);
+            el.addEventListener("keydown", (event) => {
+              if (event.altKey || event.ctrlKey || event.metaKey) return;
+              if (
+                event.key.length === 1 ||
+                event.key === "Backspace" ||
+                event.key === "Delete" ||
+                event.key === "Enter" ||
+                event.key === " " ||
+                event.key.startsWith("Arrow")
+              ) {
+                prepareHistory();
+              }
+            });
             el.addEventListener("input", () => {
-              if (!el.closest("#tabGenerate, #tabPost")) return;
+              if (!el.closest("#tabGenerate, #tabPost, #canvasControlOverlay")) return;
               if (isUiOnlyControl(el)) return;
               const inPostTab = !!el.closest("#tabPost");
               const liveFx = inPostTab && isLiveFxControl(el);
               markControlPending(el);
               if (inPostTab) beginEffectControlEdit();
+              else beginControlEdit();
               if (liveFx) {
                 syncActiveEffectConfigFromControls({ renderStack: false, history: false });
                 applyPostFxStackFromBase(getLivePostFxConfig());
@@ -7882,10 +8356,12 @@
             });
 
             el.addEventListener("change", async () => {
-              if (!el.closest("#tabGenerate, #tabPost")) return;
+              if (!el.closest("#tabGenerate, #tabPost, #canvasControlOverlay")) return;
               if (isUiOnlyControl(el)) return;
               if (el.closest("#tabPost")) {
                 if (await applyPostFxConfigChange()) return;
+              } else {
+                commitPendingControlHistory("Change texture controls");
               }
               scheduleFinalRender();
             });

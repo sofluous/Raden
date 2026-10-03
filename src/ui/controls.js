@@ -2,6 +2,11 @@
  * Exposed via window.RadenUiControls for compatibility with the static app shell.
  */
 (function registerRadenUiControls(global) {
+  const CONTROL_SELECTOR =
+    "#controls input, #controls select, #canvasControlOverlay input, #canvasControlOverlay select";
+  const RANGE_SELECTOR =
+    '#controls input[type="range"][id], #canvasControlOverlay input[type="range"][id]';
+
   function formatRangeReadout(range) {
     const raw = Number(range.value);
     if (!Number.isFinite(raw)) return range.value || "";
@@ -30,7 +35,7 @@
   }
 
   function enhanceRangeReadouts() {
-    document.querySelectorAll('#controls input[type="range"][id]').forEach((range) => {
+    document.querySelectorAll(RANGE_SELECTOR).forEach((range) => {
       const inputWrap = range.closest(".control-input");
       if (!inputWrap || inputWrap.querySelector(`#${range.id}Readout`)) {
         updateRangeReadout(range);
@@ -86,7 +91,7 @@
   function clearPendingIndicators(opts) {
     const options = opts || {};
     document
-      .querySelectorAll("#controls input, #controls select")
+      .querySelectorAll(CONTROL_SELECTOR)
       .forEach((el) => {
         el.classList.remove("pending-change");
         if (el.dataset.live !== "true") {
@@ -106,7 +111,7 @@
   function getControlState() {
     const state = {};
     document
-      .querySelectorAll("#controls input, #controls select")
+      .querySelectorAll(CONTROL_SELECTOR)
       .forEach((el) => {
         if (!el.id) return;
         if (el.type === "file") return;

@@ -106,8 +106,6 @@
     renderWidth: "Render width in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
     renderHeight: "Render height in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
     canvasViewZoom: "Display-only zoom for previewing detail. Does not change generation or export resolution.",
-    canvasPanX: "Display-only horizontal pan for the canvas view.",
-    canvasPanY: "Display-only vertical pan for the canvas view.",
     exportCropMode: "Choose the export crop frame. Custom enables draggable/resizable crop handles over the canvas view.",
     exportResizeEnabled: "When enabled, export is resized to the custom width/height below. When disabled, export keeps the crop size.",
     exportWidth: "Target export width in pixels when Resize Export is enabled.",
