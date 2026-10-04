@@ -62,6 +62,18 @@
     renderGallery();
   }
 
+  function renameGalleryItem(id) {
+    const item = galleryItems.find((entry) => entry.id === id);
+    if (!item) return;
+    const nextLabel = window.prompt("Rename snapshot", item.label);
+    if (nextLabel === null) return;
+    const label = nextLabel.trim();
+    if (!label) return;
+    item.label = label;
+    saveGallery();
+    renderGallery();
+  }
+
   function recallGalleryItem(item) {
     const rawLegacySettings =
       item.legacySettings ||
@@ -71,6 +83,9 @@
       global.RadenLayers?.sanitizeLegacySettings?.(rawLegacySettings) ||
       rawLegacySettings ||
       {};
+    if (typeof callbacks.beforeRecall === "function") {
+      callbacks.beforeRecall(item);
+    }
     if (typeof callbacks.applyControlState === "function") {
       callbacks.applyControlState(legacySettings);
     }
@@ -147,33 +162,59 @@
       meta.appendChild(name);
       meta.appendChild(sub);
 
-      const actions = document.createElement("div");
-      actions.className = "gallery-actions";
-      const delBtn = document.createElement("button");
-      delBtn.className = "ds-btn ds-btn-sm btn";
-      delBtn.title = "Delete snapshot";
-      delBtn.setAttribute("aria-label", `Delete snapshot ${item.label}`);
-      delBtn.innerHTML = '<i class="iconoir-trash"></i><span>Delete</span>';
-      delBtn.onclick = () => {
-        deleteGalleryItem(item.id);
-      };
-
-      const recallBtn = document.createElement("button");
-      recallBtn.className = "ds-btn ds-btn-sm ds-btn-primary btn";
-      recallBtn.title = "Recall snapshot";
-      recallBtn.setAttribute("aria-label", `Recall snapshot ${item.label}`);
-      recallBtn.innerHTML = '<i class="iconoir-refresh"></i><span>Recall</span>';
-      recallBtn.onclick = () => {
+      const openBtn = document.createElement("button");
+      openBtn.className = "ds-btn ds-btn-sm ds-btn-primary gallery-open-btn";
+      openBtn.type = "button";
+      openBtn.title = "Open snapshot";
+      openBtn.setAttribute("aria-label", `Open snapshot ${item.label}`);
+      openBtn.innerHTML = '<i class="iconoir-refresh"></i><span>Open</span>';
+      openBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         recallGalleryItem(item);
       };
 
-      actions.appendChild(delBtn);
-      actions.appendChild(recallBtn);
+      const menu = document.createElement("details");
+      menu.className = "gallery-card-menu";
+      const menuSummary = document.createElement("summary");
+      menuSummary.className = "effect-stack-action";
+      menuSummary.title = "Snapshot actions";
+      menuSummary.setAttribute("aria-label", `Snapshot actions for ${item.label}`);
+      menuSummary.innerHTML = '<i class="iconoir-more-horiz" aria-hidden="true"></i>';
+      const menuPopover = document.createElement("div");
+      menuPopover.className = "gallery-menu-popover";
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "ds-btn icon-btn";
+      renameBtn.type = "button";
+      renameBtn.title = "Rename snapshot";
+      renameBtn.setAttribute("aria-label", `Rename snapshot ${item.label}`);
+      renameBtn.innerHTML = '<i class="iconoir-edit-pencil"></i><span>Rename</span>';
+      renameBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        renameGalleryItem(item.id);
+      };
+      const delBtn = document.createElement("button");
+      delBtn.className = "ds-btn icon-btn";
+      delBtn.type = "button";
+      delBtn.title = "Delete snapshot";
+      delBtn.setAttribute("aria-label", `Delete snapshot ${item.label}`);
+      delBtn.innerHTML = '<i class="iconoir-trash"></i><span>Delete</span>';
+      delBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteGalleryItem(item.id);
+      };
+      menuPopover.appendChild(renameBtn);
+      menuPopover.appendChild(delBtn);
+      menu.appendChild(menuSummary);
+      menu.appendChild(menuPopover);
       tile.appendChild(img);
       tile.appendChild(meta);
-      tile.appendChild(actions);
+      tile.appendChild(openBtn);
+      tile.appendChild(menu);
       tile.addEventListener("click", (e) => {
-        if (e.target.closest("button")) return;
+        if (e.target.closest("button, details, summary")) return;
         selectGalleryItem(item.id);
       });
       tile.addEventListener("keydown", (e) => {
@@ -271,6 +312,7 @@
     saveSnapshot,
     clearGallery,
     deleteGalleryItem,
+    renameGalleryItem,
     selectGalleryItem,
   });
 })(window);

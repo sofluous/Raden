@@ -102,14 +102,13 @@
   ]);
 
   const CONTROL_HELP = {
-    resolutionPreset: "Sets the render canvas size. Auto uses your window size. Custom lets you enter pixel dimensions.",
-    renderWidth: "Render width in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
-    renderHeight: "Render height in pixels. Final render size is capped to 4096 per side and about 16.7M pixels total.",
+    resolutionPreset: "Sets the output frame. Auto uses your window size. Custom lets you enter pixel dimensions.",
+    renderWidth: "Output frame width in pixels. Changing width crops/reveals the generated field without stretching it.",
+    renderHeight: "Output frame height in pixels. Changing height crops/reveals the generated field without stretching it.",
     canvasViewZoom: "Display-only zoom for previewing detail. Does not change generation or export resolution.",
-    exportCropMode: "Choose the export crop frame. Custom enables draggable/resizable crop handles over the canvas view.",
-    exportResizeEnabled: "When enabled, export is resized to the custom width/height below. When disabled, export keeps the crop size.",
-    exportWidth: "Target export width in pixels when Resize Export is enabled.",
-    exportHeight: "Target export height in pixels when Resize Export is enabled.",
+    exportCropMode: "Choose the export frame. Auto uses the full canvas; Custom enables draggable crop handles.",
+    exportWidth: "Export frame width readout in whole pixels. The selected frame controls the output size.",
+    exportHeight: "Export frame height readout in whole pixels. The selected frame controls the output size.",
     scale: "Base pattern scale. Lower values create larger formations; higher values create tighter detail.",
     layers: "Detail layers (noise octaves). Higher values add texture complexity but cost more render time.",
     ringSpacing: "Distance/frequency of nacre growth bands. Higher values make denser stripe patterns.",

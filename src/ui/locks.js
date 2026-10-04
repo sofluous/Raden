@@ -5,6 +5,28 @@
   let lockedControlIds = new Set();
   let storageKey = "";
   let persistence = null;
+  const previewButtons = new Set();
+  let previewCleanupBound = false;
+
+  function ensurePreviewCleanup() {
+    if (previewCleanupBound) return;
+    previewCleanupBound = true;
+    document.addEventListener("pointermove", () => {
+      previewButtons.forEach((btn) => {
+        if (btn.matches(":hover, :focus, :focus-visible")) return;
+        const id = btn.dataset.lockFor;
+        updateControlLockButton(btn, isControlLocked(id), false);
+        previewButtons.delete(btn);
+      });
+    });
+    window.addEventListener("blur", () => {
+      previewButtons.forEach((btn) => {
+        const id = btn.dataset.lockFor;
+        updateControlLockButton(btn, isControlLocked(id), false);
+      });
+      previewButtons.clear();
+    });
+  }
 
   function configure(opts) {
     const options = opts || {};
@@ -100,18 +122,24 @@
         lockBtn.dataset.lockFor = control.id;
         lockBtn.setAttribute("aria-pressed", "false");
         lockBtn.innerHTML = '<i class="iconoir-lock"></i>';
-        lockBtn.addEventListener("mouseenter", () => {
+        const showPreview = () => {
+          previewButtons.add(lockBtn);
           updateControlLockButton(lockBtn, isControlLocked(control.id), true);
-        });
-        lockBtn.addEventListener("mouseleave", () => {
+        };
+        const clearPreview = () => {
+          previewButtons.delete(lockBtn);
           updateControlLockButton(lockBtn, isControlLocked(control.id), false);
-        });
-        lockBtn.addEventListener("focus", () => {
-          updateControlLockButton(lockBtn, isControlLocked(control.id), true);
-        });
-        lockBtn.addEventListener("blur", () => {
-          updateControlLockButton(lockBtn, isControlLocked(control.id), false);
-        });
+        };
+        lockBtn.addEventListener("mouseenter", showPreview);
+        lockBtn.addEventListener("pointerenter", showPreview);
+        lockBtn.addEventListener("mouseleave", clearPreview);
+        lockBtn.addEventListener("pointerleave", clearPreview);
+        lockBtn.addEventListener("pointercancel", clearPreview);
+        lockBtn.addEventListener("lostpointercapture", clearPreview);
+        lockBtn.addEventListener("focus", showPreview);
+        lockBtn.addEventListener("blur", clearPreview);
+        control.addEventListener("pointerleave", clearPreview);
+        row.addEventListener("pointerleave", clearPreview);
         lockBtn.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -130,6 +158,7 @@
           updateControlLockButton(lockBtn, isControlLocked(control.id), true);
         });
         icons.appendChild(lockBtn);
+        ensurePreviewCleanup();
         setControlLock(control.id, isControlLocked(control.id));
       }
     });

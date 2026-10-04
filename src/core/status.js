@@ -49,7 +49,7 @@
         debugVisible = !debugVisible;
       }
       if (debugPanelEl) {
-        debugPanelEl.style.display = debugVisible ? "block" : "none";
+        debugPanelEl.style.display = "none";
       }
       if (debugToggleEl) {
         debugToggleEl.checked = debugVisible;

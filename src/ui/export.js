@@ -108,36 +108,18 @@
   }
 
   function getExportTargetSize(exportCropRect) {
-    const resizeEnabled =
-      !!document.getElementById("exportResizeEnabled")?.checked;
-    if (resizeEnabled) {
-      const w =
-        parseInt(document.getElementById("exportWidth").value, 10) ||
-        exportCropRect.sw;
-      const h =
-        parseInt(document.getElementById("exportHeight").value, 10) ||
-        exportCropRect.sh;
-      return { width: Math.max(1, w), height: Math.max(1, h) };
-    }
-    return {
-      width: Math.max(1, exportCropRect.sw),
-      height: Math.max(1, exportCropRect.sh),
-    };
+    const w = Math.round(exportCropRect.sw);
+    const h = Math.round(exportCropRect.sh);
+    return { width: Math.max(1, w), height: Math.max(1, h) };
   }
 
   function syncExportSizeUi() {
-    const resizeEnabled =
-      !!document.getElementById("exportResizeEnabled")?.checked;
     const exportWidth = document.getElementById("exportWidth");
     const exportHeight = document.getElementById("exportHeight");
     if (!exportWidth || !exportHeight) return;
     const exportCropRect = getExportCropRect();
-    exportWidth.disabled = !resizeEnabled;
-    exportHeight.disabled = !resizeEnabled;
-    if (!resizeEnabled) {
-      exportWidth.value = String(exportCropRect.sw);
-      exportHeight.value = String(exportCropRect.sh);
-    }
+    exportWidth.value = String(Math.round(exportCropRect.sw));
+    exportHeight.value = String(Math.round(exportCropRect.sh));
     updateExportCropOverlay();
   }
 
@@ -145,9 +127,13 @@
     const overlay = document.getElementById("exportCropOverlay");
     const frame = document.getElementById("exportCropFrame");
     const exportTab = document.getElementById("tabExport");
+    const exportPanel = document.getElementById("exportPanel");
     if (!overlay || !frame) return;
     const mode = document.getElementById("exportCropMode")?.value || "full";
-    const shouldShow = exportTab && !exportTab.hidden && mode !== "full";
+    const exportUiOpen = exportPanel
+      ? !exportPanel.hidden
+      : exportTab && !exportTab.hidden;
+    const shouldShow = exportUiOpen && mode !== "full";
     overlay.hidden = !shouldShow;
     if (!shouldShow) return;
     const exportCropRect = getExportCropRect();
