@@ -80,6 +80,11 @@
       blendMode: "normal",
       modeId: sourceModeId,
       config: clone(flatState || {}),
+      palette: global.RadenPalettes?.normalizePaletteState?.(options.palette, {
+        modeId: sourceModeId,
+        presetId: flatState?.nacrePalette,
+        allowNull: true,
+      }) || null,
       bitmapRef: null,
       effects: [],
       createdAt: nowIso(),
@@ -310,6 +315,31 @@
     });
   }
 
+  function setLayerPalette(layerState, palette) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      layer.palette = global.RadenPalettes?.normalizePaletteState?.(palette, {
+        modeId: layer.modeId,
+        presetId: layer.config?.nacrePalette,
+        allowNull: true,
+      }) || null;
+    });
+  }
+
+  function normalizeLayerPalettes(layerState) {
+    const nextState = clone(layerState);
+    (nextState?.layers || []).forEach((layer) => {
+      if (layer.palette == null) return;
+      layer.palette = global.RadenPalettes?.normalizePaletteState?.(
+        layer.palette,
+        {
+          modeId: layer.modeId,
+          presetId: layer.config?.nacrePalette,
+        },
+      ) || null;
+    });
+    return nextState;
+  }
+
   function normalizeGalleryItem(item) {
     if (!item || typeof item !== "object") return item;
     if (item.version >= LAYER_STATE_VERSION && item.state) {
@@ -317,6 +347,7 @@
         item.legacySettings || item.settings || getLegacySettingsFromLayerState(item.state) || {},
       );
       return Object.assign({}, item, {
+        state: normalizeLayerPalettes(item.state),
         legacySettings,
         settings: legacySettings,
       });
@@ -360,6 +391,18 @@
       if (!layer.modeId && layer.sourceType === "generator") {
         issues.push(`Layer ${layer.id} is missing modeId.`);
       }
+      if (layer.palette != null) {
+        const normalizedPalette = global.RadenPalettes?.normalizePaletteState?.(
+          layer.palette,
+          {
+            modeId: layer.modeId,
+            presetId: layer.config?.nacrePalette,
+          },
+        );
+        if (!normalizedPalette || normalizedPalette.stops.length < 2) {
+          issues.push(`Layer ${layer.id} has an invalid palette.`);
+        }
+      }
       const effectIds = new Set();
       (layer.effects || []).forEach((effect) => {
         if (!effect?.id) {
@@ -402,6 +445,7 @@
     moveEffectToIndex,
     setEffectEnabled,
     updateEffectConfig,
+    setLayerPalette,
     normalizeGalleryItem,
     sanitizeLegacySettings,
     validateLayerState,

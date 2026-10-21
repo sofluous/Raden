@@ -1012,6 +1012,72 @@
         white-space: nowrap;
       }
 
+      .palette-authoring {
+        display: grid;
+        gap: var(--ds-space-2);
+        padding-block: var(--ds-space-2);
+      }
+
+      .palette-toolbar {
+        --palette-action-size: var(--ds-icon-action-size, var(--ds-control-h-sm));
+        --palette-toolbar-gap: var(--ds-toolbar-compact-gap, var(--ds-space-1));
+        display: grid;
+        grid-template-columns: var(--palette-action-size) minmax(0, 1fr) var(--palette-action-size) var(--palette-action-size);
+        align-items: center;
+        gap: var(--palette-toolbar-gap);
+      }
+
+      .palette-swatches {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(1.5rem, 1fr));
+        gap: var(--ds-space-1);
+        min-width: 0;
+      }
+
+      .palette-swatch {
+        position: relative;
+        min-width: 0;
+      }
+
+      .palette-swatch-color {
+        display: block;
+        width: 100%;
+        height: var(--ds-control-h-sm);
+        border: var(--ds-border-w) var(--ds-border-style) var(--ds-input-border);
+        border-radius: var(--ds-radius-1);
+        background: var(--swatch);
+        cursor: pointer;
+      }
+
+      .palette-swatch.is-selected .palette-swatch-color {
+        outline: 2px solid var(--ds-focus);
+        outline-offset: 1px;
+      }
+
+      .palette-color-controls {
+        display: grid;
+        gap: var(--raden-row-gap);
+        margin-inline-start: calc(var(--ds-icon-action-size, var(--ds-control-h-sm)) + var(--ds-toolbar-compact-gap, var(--ds-space-1)));
+        margin-inline-end: calc(var(--ds-icon-action-size, var(--ds-control-h-sm)) + var(--ds-icon-action-size, var(--ds-control-h-sm)) + var(--ds-toolbar-compact-gap, var(--ds-space-1)) + var(--ds-toolbar-compact-gap, var(--ds-space-1)));
+        padding-inline-start: var(--ds-space-3);
+        border-inline-start: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+      }
+
+      .palette-color-controls label {
+        display: grid;
+        grid-template-columns: 1.5rem minmax(0, 1fr) 3rem;
+        align-items: center;
+        gap: var(--raden-row-gap);
+        color: var(--ds-text-muted);
+        font-size: var(--ds-fs-1);
+      }
+
+      .palette-color-controls output {
+        text-align: right;
+        color: var(--ds-text);
+        font-family: var(--ds-font-mono);
+      }
+
       .control-icons .icon-btn.icon-only {
         flex: 0 0 var(--ds-btn-icon-size-sm);
       }
@@ -1412,9 +1478,9 @@
       }
 
       #control-footer {
-        display: flex;
+        display: grid;
+        grid-template-columns: auto minmax(3rem, 1fr);
         align-items: center;
-        justify-content: flex-start;
         gap: var(--ds-space-2);
         padding: var(--ds-space-2) var(--ds-space-3);
         border-top: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
@@ -1473,14 +1539,17 @@
         background: color-mix(in oklab, var(--ds-danger) 16%, transparent);
       }
 
+      .status-progress-track {
+        height: 3px;
+        overflow: hidden;
+        border-radius: var(--ds-radius-pill);
+        background: color-mix(in oklab, var(--ds-border) 72%, transparent);
+      }
+
       #progress {
-        position: fixed;
-        top: 0;
-        left: 0;
         height: 3px;
         width: 0%;
         background: linear-gradient(90deg, var(--ds-accent), var(--ds-focus));
-        z-index: var(--ds-z-toast);
         transition: width var(--ds-dur-fast) linear;
       }
 
@@ -1500,6 +1569,7 @@
         box-shadow: none;
         background: var(--ds-bg-raised);
         cursor: default;
+        touch-action: none;
       }
 
       #canvasViewport.is-pannable {
@@ -2327,10 +2397,12 @@
                   <option value="abalone">Abalone Bright</option>
                   <option value="silver">Silver Pearl</option>
                   <option value="pinkgreen">Pink-Green Shift</option>
+                  <option value="custom" hidden disabled>Custom</option>
                 </select>
               </div>
               <div class="control-icons"></div>
             </div>
+            <div id="nacrePaletteEditor" class="palette-authoring"></div>
             <div class="control-row">
               <div class="control-label">Brilliance:</div>
               <div class="control-input">
@@ -3456,6 +3528,16 @@
       </div>
       <div id="control-footer">
         <div id="status" data-state="idle">Idle</div>
+        <div class="status-progress-track">
+          <div
+            id="progress"
+            role="progressbar"
+            aria-label="Rendering progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          ></div>
+        </div>
       </div>
     </div>
 
@@ -3519,7 +3601,6 @@
       </div>
     </dialog>
 
-    <div id="progress"></div>
     <div id="workspaceToolbar" aria-label="Workspace actions">
       <button
         type="button"
@@ -3612,8 +3693,8 @@
           <input
             type="range"
             id="canvasViewZoom"
-            min="0.25"
-            max="2"
+            min="0.1"
+            max="8"
             step="0.01"
             value="1"
             data-live="true"
@@ -3647,6 +3728,8 @@
     <script src="./design-system/js/theme-registry.js"></script>
     <script src="./design-system/js/theme-selector.js"></script>
     <script src="./src/shared/math_color_palette.js"></script>
+    <script src="./src/shared/cellular.js"></script>
+    <script src="./src/state/palettes.js"></script>
     <script src="./src/state/schema.js"></script>
     <script src="./src/state/effects.js"></script>
     <script src="./src/state/layers.js"></script>
@@ -3655,14 +3738,28 @@
     <script src="./src/core/status.js"></script>
     <script src="./src/core/scheduler.js"></script>
     <script src="./src/modes/registry.js"></script>
+    <script src="./src/modes/motherOfPearl.js"></script>
+    <script src="./src/modes/bubbleFilm.js"></script>
+    <script src="./src/modes/opalVein.js"></script>
+    <script src="./src/modes/labradorite.js"></script>
+    <script src="./src/modes/marbleInk.js"></script>
+    <script src="./src/modes/agateBands.js"></script>
+    <script src="./src/modes/malachiteFlow.js"></script>
+    <script src="./src/modes/lichenGrowth.js"></script>
+    <script src="./src/modes/riverDelta.js"></script>
+    <script src="./src/modes/topography.js"></script>
+    <script src="./src/ui/canvasViewport.js"></script>
     <script src="./src/ui/visibility.js"></script>
     <script src="./src/ui/controls.js"></script>
     <script src="./src/ui/locks.js"></script>
+    <script src="./src/ui/palettes.js"></script>
     <script src="./src/ui/help.js"></script>
     <script src="./src/ui/tabs.js"></script>
     <script src="./src/ui/gallery.js"></script>
     <script src="./src/ui/export.js"></script>
     <script src="./src/render/sourceImage.js"></script>
+    <script src="./src/render/coordinates.js"></script>
+    <script src="./src/render/pixelLoop.js"></script>
     <script src="./src/render/pipeline.js"></script>
     <script src="./src/render/postFx.js"></script>
     <script>
@@ -3888,6 +3985,7 @@
         const value = Number(percent);
         const clamped = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
         progress.style.width = `${clamped}%`;
+        progress.setAttribute("aria-valuenow", String(Math.round(clamped)));
       }
 
       function setQueuedRenderFeedback(kind = "final") {
@@ -3917,25 +4015,11 @@
         return { width: w, height: h };
       }
 
-      function getCropSpacePoint(config, x, y) {
-        const width = Math.max(1, config.width || 1);
-        const height = Math.max(1, config.height || 1);
-        const basis = Math.max(1, Math.min(width, height));
-        const cx = (x - width * 0.5) / basis;
-        const cy = (y - height * 0.5) / basis;
-        return {
-          cx,
-          cy,
-          ux: cx + 0.5,
-          uy: cy + 0.5,
-        };
-      }
-
       function getCanvasViewZoom() {
         const zoomInput = document.getElementById("canvasViewZoom");
         return Math.max(
-          0.25,
-          Math.min(2, parseFloat(zoomInput?.value || "1") || 1),
+          0.1,
+          Math.min(8, parseFloat(zoomInput?.value || "1") || 1),
         );
       }
 
@@ -3945,7 +4029,12 @@
         const height = Math.max(1, canvas.height || 1);
         const viewportWidth = Math.max(1, viewport?.clientWidth || width);
         const viewportHeight = Math.max(1, viewport?.clientHeight || height);
-        const fitScale = Math.min(1, viewportWidth / width, viewportHeight / height);
+        const fitScale = window.RadenCanvasViewport.getFitScale(
+          width,
+          height,
+          viewportWidth,
+          viewportHeight,
+        );
         const scale = fitScale * zoom;
         return {
           scale,
@@ -3958,20 +4047,11 @@
         };
       }
 
-      function clampCanvasViewPan(pan = canvasViewPan) {
-        const metrics = getCanvasDisplayMetrics();
-        const maxPanX = Math.max(0, (metrics.displayWidth - metrics.viewportWidth) * 0.5);
-        const maxPanY = Math.max(0, (metrics.displayHeight - metrics.viewportHeight) * 0.5);
-        canvasViewPan.x = Math.max(-maxPanX, Math.min(maxPanX, pan.x || 0));
-        canvasViewPan.y = Math.max(-maxPanY, Math.min(maxPanY, pan.y || 0));
-      }
-
       function syncCanvasDisplaySize() {
         const metrics = getCanvasDisplayMetrics();
-        canvas.style.width = `${Math.max(1, Math.round(metrics.displayWidth))}px`;
-        canvas.style.height = `${Math.max(1, Math.round(metrics.displayHeight))}px`;
-        clampCanvasViewPan();
-        canvas.style.transform = `translate(${Math.round(canvasViewPan.x)}px, ${Math.round(canvasViewPan.y)}px)`;
+        canvas.style.width = `${Math.max(1, metrics.displayWidth)}px`;
+        canvas.style.height = `${Math.max(1, metrics.displayHeight)}px`;
+        canvas.style.transform = `translate(${canvasViewPan.x}px, ${canvasViewPan.y}px)`;
       }
 
       function getViewWindowState(destWidth = canvas.width, destHeight = canvas.height) {
@@ -4017,13 +4097,8 @@
 
       function updateCanvasViewportCursor() {
         const viewport = document.getElementById("canvasViewport");
-        const zoom = getCanvasViewZoom();
-        const metrics = getCanvasDisplayMetrics(zoom);
-        const canPan =
-          metrics.displayWidth > metrics.viewportWidth + 1 ||
-          metrics.displayHeight > metrics.viewportHeight + 1;
         if (!viewport) return;
-        viewport.classList.toggle("is-pannable", canPan && zoom > 1.01);
+        viewport.classList.toggle("is-pannable", true);
         viewport.classList.toggle("is-panning", !!viewportPanState);
       }
 
@@ -4035,22 +4110,22 @@
         viewport.addEventListener(
           "wheel",
           (e) => {
-            if (e.ctrlKey || e.metaKey) return;
             e.preventDefault();
             const current = parseFloat(zoomInput.value || "1") || 1;
-            const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
-            const next = Math.max(0.25, Math.min(2, current * factor));
-            if (Math.abs(next - current) < 0.0001) return;
-            const before = getCanvasDisplayMetrics(current);
-            const rect = viewport.getBoundingClientRect();
-            const cursorX = e.clientX - rect.left - before.viewportWidth * 0.5;
-            const cursorY = e.clientY - rect.top - before.viewportHeight * 0.5;
-            const anchorX = (cursorX - canvasViewPan.x) / Math.max(0.0001, before.scale);
-            const anchorY = (cursorY - canvasViewPan.y) / Math.max(0.0001, before.scale);
-            zoomInput.value = next.toFixed(2);
-            const after = getCanvasDisplayMetrics(next);
-            canvasViewPan.x = cursorX - anchorX * after.scale;
-            canvasViewPan.y = cursorY - anchorY * after.scale;
+            const boundedDelta = Math.max(-100, Math.min(100, e.deltaY));
+            const sensitivity = e.ctrlKey || e.metaKey ? 0.01 : 0.0015;
+            const factor = Math.exp(-boundedDelta * sensitivity);
+            const next = Math.max(0.1, Math.min(8, current * factor));
+            const nextZoom = Number(next.toFixed(2));
+            if (Math.abs(nextZoom - current) < 0.0001) return;
+            const viewportRect = viewport.getBoundingClientRect();
+            zoomInput.value = nextZoom.toFixed(2);
+            canvasViewPan = window.RadenCanvasViewport.zoomPanAroundWorkspacePoint(
+              canvasViewPan,
+              { x: e.clientX, y: e.clientY },
+              viewportRect,
+              nextZoom / current,
+            );
             updateRangeReadout(zoomInput);
             applyCanvasViewTransform();
             updateExportCropOverlay();
@@ -4062,12 +4137,6 @@
         viewport.addEventListener("pointerdown", (e) => {
           if (e.button !== 0) return;
           if (e.target?.closest?.("#exportCropFrame")) return;
-          const zoom = parseFloat(zoomInput.value || "1") || 1;
-          const metrics = getCanvasDisplayMetrics(zoom);
-          const canPan =
-            metrics.displayWidth > metrics.viewportWidth + 1 ||
-            metrics.displayHeight > metrics.viewportHeight + 1;
-          if (!canPan) return;
           viewportPanState = {
             pointerId: e.pointerId,
             startClientX: e.clientX,
@@ -4107,6 +4176,7 @@
       let originalImageData = null;
       let postFxBaseImageData = null;
       let activeLayerState = null;
+      let nacrePaletteEditorController = null;
       const COMMAND_HISTORY_LIMIT = 50;
       const commandHistory = {
         undo: [],
@@ -4294,45 +4364,6 @@
         }, perf.finalDebounceMs);
       }
 
-      function computeLightInfluence(
-        nx,
-        ny,
-        lightVec,
-        highlightStrength,
-        lightSpread = 0.55,
-        lightCurvature = 0.28,
-      ) {
-        const radial = Math.hypot(nx, ny);
-        const curvedNx = nx + nx * radial * lightCurvature * 1.2;
-        const curvedNy = ny + ny * radial * lightCurvature * 1.2;
-        const angleInfluence = curvedNx * lightVec.x + curvedNy * lightVec.y;
-        const bandFreq = 4 + (1 - lightSpread) * 18;
-        const band = Math.sin(
-          (curvedNx * lightVec.y - curvedNy * lightVec.x) * bandFreq * Math.PI,
-        );
-        const spreadDamp = Math.max(
-          0.25,
-          1 - radial * (0.35 + lightSpread * 0.45),
-        );
-        const highlightBoost = band * highlightStrength * spreadDamp;
-        return { angleInfluence, highlightBoost };
-      }
-
-      function getFlowCoordinates(x, y, cx, cy, flowMode, layerLength) {
-        let px = x,
-          py = y;
-        if (flowMode === "circular") {
-          const dx = x - cx;
-          const dy = y - cy;
-          const theta = Math.atan2(dy, dx);
-          px += Math.cos(theta) * layerLength * 40;
-          py += Math.sin(theta) * layerLength * 40;
-        } else if (flowMode === "linear") {
-          px += layerLength * 40;
-        }
-        return { px, py };
-      }
-
       function getNoiseValue(px, py, layers, scale, simplex) {
         let total = 0;
         let totalAmp = 0;
@@ -4397,31 +4428,6 @@
         };
       }
 
-      function blendPaletteColors(
-        value,
-        blendSharpness,
-        colorRange,
-        colorIntensity,
-        palette,
-      ) {
-        const valueClamped = Math.min(1, Math.max(0, value)) * colorRange;
-        const scaled = valueClamped * 4;
-        const index = Math.max(
-          0,
-          Math.min(Math.floor(scaled), palette.length - 2),
-        );
-        const frac = Math.pow(scaled - index, blendSharpness);
-
-        const c1 = palette[index];
-        const c2 = palette[index + 1];
-
-        let h = c1.h + (c2.h - c1.h) * frac;
-        let s = (c1.s + (c2.s - c1.s) * frac) * (colorIntensity / 100);
-        let l = c1.l + (c2.l - c1.l) * frac;
-
-        return { h, s, l };
-      }
-
       function writePixel(data, i, r, g, b) {
         data[i] = Math.max(0, Math.min(255, r));
         data[i + 1] = Math.max(0, Math.min(255, g));
@@ -4444,41 +4450,6 @@
           Math.round(f(8) * 255),
           Math.round(f(4) * 255),
         ];
-      }
-
-      const NACRE_PALETTES = {
-        classic: [
-          { h: 286, s: 26, l: 83 },
-          { h: 192, s: 28, l: 85 },
-          { h: 148, s: 24, l: 84 },
-          { h: 330, s: 20, l: 88 },
-          { h: 28, s: 12, l: 93 },
-        ],
-        abalone: [
-          { h: 278, s: 34, l: 82 },
-          { h: 232, s: 38, l: 79 },
-          { h: 186, s: 44, l: 79 },
-          { h: 154, s: 38, l: 80 },
-          { h: 334, s: 31, l: 86 },
-        ],
-        silver: [
-          { h: 230, s: 10, l: 88 },
-          { h: 210, s: 12, l: 84 },
-          { h: 185, s: 15, l: 86 },
-          { h: 260, s: 10, l: 87 },
-          { h: 26, s: 6, l: 94 },
-        ],
-        pinkgreen: [
-          { h: 328, s: 34, l: 86 },
-          { h: 300, s: 30, l: 84 },
-          { h: 164, s: 38, l: 81 },
-          { h: 136, s: 34, l: 82 },
-          { h: 28, s: 12, l: 93 },
-        ],
-      };
-
-      function getNacrePalette(name) {
-        return NACRE_PALETTES[name] || NACRE_PALETTES.classic;
       }
 
       let visibilityController = null;
@@ -4987,6 +4958,37 @@
       function startGeneration(force = false, renderOptions = {}) {
         const mode = document.getElementById("modeSelector").value;
 
+        return window.RadenRenderPipeline.renderMode(mode, {
+          force,
+          renderOptions,
+          getRuntime: (modeId) => window.RadenModes?.getRuntime?.(modeId),
+          registeredHandlers: {
+            motherofpearl: (runtime, nextForce, nextOptions) =>
+              generateMotherOfPearl(nextForce, nextOptions, runtime),
+            bubblefilm: (runtime, nextForce, nextOptions) =>
+              generateBubbleFilm(nextForce, nextOptions, runtime),
+            opalvein: (runtime, nextForce, nextOptions) =>
+              generateOpalVein(nextForce, nextOptions, runtime),
+            labradorite: (runtime, nextForce, nextOptions) =>
+              generateLabradoriteFlash(nextForce, nextOptions, runtime),
+            marbleink: (runtime, nextForce, nextOptions) =>
+              generateMarbleInk(nextForce, nextOptions, runtime),
+            agateband: (runtime, nextForce, nextOptions) =>
+              generateAgateBands(nextForce, nextOptions, runtime),
+            malachiteflow: (runtime, nextForce, nextOptions) =>
+              generateMalachiteFlow(nextForce, nextOptions, runtime),
+            lichengrowth: (runtime, nextForce, nextOptions) =>
+              generateLichenGrowth(nextForce, nextOptions, runtime),
+            riverdelta: (runtime, nextForce, nextOptions) =>
+              generateRiverDelta(nextForce, nextOptions, runtime),
+            topography: (runtime, nextForce, nextOptions) =>
+              generateTopography(nextForce, nextOptions, runtime),
+          },
+          renderLegacy: renderLegacyMode,
+        });
+      }
+
+      function renderLegacyMode(mode, force = false, renderOptions = {}) {
         switch (mode) {
           case "motherofpearl":
             generateMotherOfPearl(force, renderOptions);
@@ -5520,50 +5522,6 @@
         ];
       }
 
-      function sampleCellularField(x, y, cellScale, seed) {
-        const px = x * cellScale;
-        const py = y * cellScale;
-        const cx = Math.floor(px);
-        const cy = Math.floor(py);
-        let nearest = Infinity;
-        let second = Infinity;
-        let nearestX = 0;
-        let nearestY = 0;
-        let nearestId = 0;
-
-        for (let oy = -1; oy <= 1; oy++) {
-          for (let ox = -1; ox <= 1; ox++) {
-            const gx = cx + ox;
-            const gy = cy + oy;
-            const jitterX = hash2(gx, gy, seed) - 0.5;
-            const jitterY = hash2(gx + 13.2, gy - 8.4, seed + 17) - 0.5;
-            const fx = gx + 0.5 + jitterX * 0.82;
-            const fy = gy + 0.5 + jitterY * 0.82;
-            const dx = px - fx;
-            const dy = py - fy;
-            const dist = Math.hypot(dx, dy);
-            if (dist < nearest) {
-              second = nearest;
-              nearest = dist;
-              nearestX = fx;
-              nearestY = fy;
-              nearestId = hash2(gx - 4.1, gy + 6.7, seed + 31);
-            } else if (dist < second) {
-              second = dist;
-            }
-          }
-        }
-
-        return {
-          nearest,
-          second,
-          edge: Math.max(0, second - nearest),
-          cellX: nearestX,
-          cellY: nearestY,
-          cellId: nearestId,
-        };
-      }
-
       function renderLichenGrowthPixel(config, profile, runtime, nx, ny) {
         const { naturalScale, warp, simplexBase, simplexWarp, simplexDetail } = runtime;
         const patchScale = Math.max(0.2, config.lichenPatchScale || 0.94);
@@ -5578,7 +5536,12 @@
           (0.12 + warp * 1.8 + patchScale * 0.08);
         const px = dirX + colonyWarp;
         const py = dirY - colonyWarp * 0.4;
-        const cell = sampleCellularField(px, py, 4.8 + patchScale * 14.2, 9001);
+        const cell = window.RadenCellular.sampleCellularField(
+          px,
+          py,
+          4.8 + patchScale * 14.2,
+          9001,
+        );
         const colonyNoise =
           simplexBase.noise2D(px * naturalScale * 260 + 22.7, py * naturalScale * 260 - 14.2) * 0.5 +
           0.5;
@@ -5659,7 +5622,12 @@
           (0.52 + warp * 1.45 + turbulence * 0.4);
         const px = pxBase + warpX;
         const py = pyBase + warpY;
-        const cell = sampleCellularField(px, py, 2.2 + cellScale * 3.6, 12031);
+        const cell = window.RadenCellular.sampleCellularField(
+          px,
+          py,
+          2.2 + cellScale * 3.6,
+          12031,
+        );
         const membrane = 1 - smoothstep(wallThickness * 0.08, wallThickness * 1.25, cell.edge);
         const centerGlow = clamp01(1 - cell.nearest * (1.38 - breakup * 0.28));
         const pressure =
@@ -5923,7 +5891,8 @@
           const endY = Math.min(y + rowsPerFrame, config.height);
           for (; y < endY; y++) {
             for (let x = 0; x < config.width; x++) {
-              const { cx: nx, cy: ny } = getCropSpacePoint(config, x, y);
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
               const i = (y * config.width + x) * 4;
               const pixel =
                 mode === "agateband"
@@ -6002,15 +5971,497 @@
             clearRenderTask();
       }
 
-      function generateMotherOfPearl(force = false, renderOptions = {}) {
+      function generateAgateBands(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("agateband");
+        if (!modeRuntime) {
+          return generatePhase4ModePlaceholder(
+            "agateband",
+            force,
+            renderOptions,
+          );
+        }
+
+        const rawConfig = getRenderConfig(renderOptions);
+        const seed = parseInt(rawConfig.seed, 10) || 1;
+        const agateRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplexBase: createSeededSimplex(seed ^ 0x45d9f3b),
+          simplexWarp: createSeededSimplex(seed ^ 0x9e3779b9),
+          simplexDetail: createSeededSimplex(seed ^ 0x7f4a7c15),
+        });
+        const config = agateRenderer.config;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(24);
+
+        function startWork() {
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
+            return;
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const imageData = offscreenCtx.createImageData(
+            config.width,
+            config.height,
+          );
+          const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+            width: config.width,
+            height: config.height,
+            rowsPerFrame: getRowsPerFrame("agateband", config.preview),
+            buffer: imageData.data,
+            isCurrent: () => isRenderRunCurrent(runId),
+            setTask: setRenderTask,
+            clearTask: clearRenderTask,
+            requestFrame: requestRenderFrame,
+            onProgress: (percent) =>
+              setProgressPercent(24 + percent * 0.54),
+            renderPixel: (x, y) => {
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+              return agateRenderer.renderPixel({ nx, ny });
+            },
+            onComplete: () => {
+              setProgressPercent(86);
+              window.RadenRenderPipeline.finalizeCanvasRender({
+                config,
+                imageData,
+                offscreenCanvas,
+                offscreenContext: offscreenCtx,
+                targetCanvas: canvas,
+                targetContext: ctx,
+                drawPasses: [{ alpha: 1, filter: "none" }],
+                commit: () =>
+                  commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+                setStatus,
+                completeMessage: "Agate bands rendered",
+                completeDelayMs: 420,
+                onReady: () => {
+                  if (generateBtn) generateBtn.disabled = false;
+                },
+              });
+              showDebugInfo(config, {
+                natural_mode: "agateband",
+                status: "rendered",
+              });
+              setProgressPercent(100);
+            },
+          });
+          pixelLoop.start();
+        }
+
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
+      }
+
+      function generateMalachiteFlow(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("malachiteflow");
+        if (!modeRuntime) {
+          return generatePhase4ModePlaceholder(
+            "malachiteflow",
+            force,
+            renderOptions,
+          );
+        }
+
+        const rawConfig = getRenderConfig(renderOptions);
+        const seed = parseInt(rawConfig.seed, 10) || 1;
+        const malachiteRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplexBase: createSeededSimplex(seed ^ 0x45d9f3b),
+          simplexWarp: createSeededSimplex(seed ^ 0x9e3779b9),
+          simplexDetail: createSeededSimplex(seed ^ 0x7f4a7c15),
+        });
+        const config = malachiteRenderer.config;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(24);
+
+        function startWork() {
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
+            return;
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const imageData = offscreenCtx.createImageData(
+            config.width,
+            config.height,
+          );
+          const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+            width: config.width,
+            height: config.height,
+            rowsPerFrame: getRowsPerFrame("malachiteflow", config.preview),
+            buffer: imageData.data,
+            isCurrent: () => isRenderRunCurrent(runId),
+            setTask: setRenderTask,
+            clearTask: clearRenderTask,
+            requestFrame: requestRenderFrame,
+            onProgress: (percent) =>
+              setProgressPercent(24 + percent * 0.54),
+            renderPixel: (x, y) => {
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+              return malachiteRenderer.renderPixel({ nx, ny });
+            },
+            onComplete: () => {
+              setProgressPercent(86);
+              window.RadenRenderPipeline.finalizeCanvasRender({
+                config,
+                imageData,
+                offscreenCanvas,
+                offscreenContext: offscreenCtx,
+                targetCanvas: canvas,
+                targetContext: ctx,
+                drawPasses: [{ alpha: 1, filter: "none" }],
+                commit: () =>
+                  commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+                setStatus,
+                completeMessage: "Malachite flow rendered",
+                completeDelayMs: 420,
+                onReady: () => {
+                  if (generateBtn) generateBtn.disabled = false;
+                },
+              });
+              showDebugInfo(config, {
+                natural_mode: "malachiteflow",
+                status: "rendered",
+              });
+              setProgressPercent(100);
+            },
+          });
+          pixelLoop.start();
+        }
+
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
+      }
+
+      function generateLichenGrowth(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("lichengrowth");
+        if (!modeRuntime) {
+          return generatePhase4ModePlaceholder(
+            "lichengrowth",
+            force,
+            renderOptions,
+          );
+        }
+
+        const rawConfig = getRenderConfig(renderOptions);
+        const seed = parseInt(rawConfig.seed, 10) || 1;
+        const lichenRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplexBase: createSeededSimplex(seed ^ 0x45d9f3b),
+          simplexWarp: createSeededSimplex(seed ^ 0x9e3779b9),
+          simplexDetail: createSeededSimplex(seed ^ 0x7f4a7c15),
+        });
+        const config = lichenRenderer.config;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(24);
+
+        function startWork() {
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
+            return;
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const imageData = offscreenCtx.createImageData(
+            config.width,
+            config.height,
+          );
+          const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+            width: config.width,
+            height: config.height,
+            rowsPerFrame: getRowsPerFrame("lichengrowth", config.preview),
+            buffer: imageData.data,
+            isCurrent: () => isRenderRunCurrent(runId),
+            setTask: setRenderTask,
+            clearTask: clearRenderTask,
+            requestFrame: requestRenderFrame,
+            onProgress: (percent) =>
+              setProgressPercent(24 + percent * 0.54),
+            renderPixel: (x, y) => {
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+              return lichenRenderer.renderPixel({ nx, ny });
+            },
+            onComplete: () => {
+              setProgressPercent(86);
+              window.RadenRenderPipeline.finalizeCanvasRender({
+                config,
+                imageData,
+                offscreenCanvas,
+                offscreenContext: offscreenCtx,
+                targetCanvas: canvas,
+                targetContext: ctx,
+                drawPasses: [{ alpha: 1, filter: "none" }],
+                commit: () =>
+                  commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+                setStatus,
+                completeMessage: "Lichen growth rendered",
+                completeDelayMs: 420,
+                onReady: () => {
+                  if (generateBtn) generateBtn.disabled = false;
+                },
+              });
+              showDebugInfo(config, {
+                natural_mode: "lichengrowth",
+                status: "rendered",
+              });
+              setProgressPercent(100);
+            },
+          });
+          pixelLoop.start();
+        }
+
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
+      }
+
+      function generateRiverDelta(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("riverdelta");
+        if (!modeRuntime) {
+          return generatePhase4ModePlaceholder(
+            "riverdelta",
+            force,
+            renderOptions,
+          );
+        }
+
+        const rawConfig = getRenderConfig(renderOptions);
+        const seed = parseInt(rawConfig.seed, 10) || 1;
+        const riverDeltaRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplexBase: createSeededSimplex(seed ^ 0x45d9f3b),
+          simplexWarp: createSeededSimplex(seed ^ 0x9e3779b9),
+          simplexDetail: createSeededSimplex(seed ^ 0x7f4a7c15),
+        });
+        const config = riverDeltaRenderer.config;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(24);
+
+        function startWork() {
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
+            return;
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const imageData = offscreenCtx.createImageData(
+            config.width,
+            config.height,
+          );
+          const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+            width: config.width,
+            height: config.height,
+            rowsPerFrame: getRowsPerFrame("riverdelta", config.preview),
+            buffer: imageData.data,
+            isCurrent: () => isRenderRunCurrent(runId),
+            setTask: setRenderTask,
+            clearTask: clearRenderTask,
+            requestFrame: requestRenderFrame,
+            onProgress: (percent) =>
+              setProgressPercent(24 + percent * 0.54),
+            renderPixel: (x, y) => {
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+              return riverDeltaRenderer.renderPixel({ nx, ny });
+            },
+            onComplete: () => {
+              setProgressPercent(86);
+              window.RadenRenderPipeline.finalizeCanvasRender({
+                config,
+                imageData,
+                offscreenCanvas,
+                offscreenContext: offscreenCtx,
+                targetCanvas: canvas,
+                targetContext: ctx,
+                drawPasses: [{ alpha: 1, filter: "none" }],
+                commit: () =>
+                  commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+                setStatus,
+                completeMessage: "River delta rendered",
+                completeDelayMs: 420,
+                onReady: () => {
+                  if (generateBtn) generateBtn.disabled = false;
+                },
+              });
+              showDebugInfo(config, {
+                natural_mode: "riverdelta",
+                status: "rendered",
+              });
+              setProgressPercent(100);
+            },
+          });
+          pixelLoop.start();
+        }
+
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
+      }
+
+      function generateBubbleFilm(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("bubblefilm");
+        if (!modeRuntime) {
+          return generatePhase4ModePlaceholder(
+            "bubblefilm",
+            force,
+            renderOptions,
+          );
+        }
+
+        const rawConfig = getRenderConfig(renderOptions);
+        const seed = parseInt(rawConfig.seed, 10) || 1;
+        const bubbleRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplexBase: createSeededSimplex(seed ^ 0x45d9f3b),
+          simplexWarp: createSeededSimplex(seed ^ 0x9e3779b9),
+          simplexDetail: createSeededSimplex(seed ^ 0x7f4a7c15),
+        });
+        const config = bubbleRenderer.config;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(24);
+
+        function startWork() {
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
+            return;
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const imageData = offscreenCtx.createImageData(
+            config.width,
+            config.height,
+          );
+          const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+            width: config.width,
+            height: config.height,
+            rowsPerFrame: getRowsPerFrame("bubblefilm", config.preview),
+            buffer: imageData.data,
+            isCurrent: () => isRenderRunCurrent(runId),
+            setTask: setRenderTask,
+            clearTask: clearRenderTask,
+            requestFrame: requestRenderFrame,
+            onProgress: (percent) =>
+              setProgressPercent(24 + percent * 0.54),
+            renderPixel: (x, y) => {
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+              return bubbleRenderer.renderPixel({ nx, ny });
+            },
+            onComplete: () => {
+              setProgressPercent(86);
+              window.RadenRenderPipeline.finalizeCanvasRender({
+                config,
+                imageData,
+                offscreenCanvas,
+                offscreenContext: offscreenCtx,
+                targetCanvas: canvas,
+                targetContext: ctx,
+                drawPasses: [{ alpha: 1, filter: "none" }],
+                commit: () =>
+                  commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+                setStatus,
+                completeMessage: "Bubble film rendered",
+                completeDelayMs: 420,
+                onReady: () => {
+                  if (generateBtn) generateBtn.disabled = false;
+                },
+              });
+              showDebugInfo(config, {
+                natural_mode: "bubblefilm",
+                status: "rendered",
+              });
+              setProgressPercent(100);
+            },
+          });
+          pixelLoop.start();
+        }
+
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
+      }
+
+      function generateMotherOfPearl(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
         cancelRenderFrame();
 
         const runId = nextRenderRunId();
-        const config = getRenderConfig(renderOptions);
-        const palette = getNacrePalette(config.nacrePalette);
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("motherofpearl");
+        if (!modeRuntime) {
+          setStatus("error", "Renderer unavailable");
+          return;
+        }
+        const config = modeRuntime.normalizeConfig(getRenderConfig(renderOptions));
+        const activeSourceLayer = window.RadenLayers?.getActiveLayer?.(activeLayerState);
+        const palette = window.RadenPalettes.resolveColors({
+          modeId: "motherofpearl",
+          isPaletteLocked: () =>
+            window.RadenUiLocks?.isControlLocked?.("nacrePalette") || false,
+          presetId: config.nacrePalette,
+          palette: activeSourceLayer?.palette,
+        });
 
         if (!Array.isArray(palette) || palette.length < 2) {
           console.error("Palette must be an array with at least 2 colors.");
@@ -6023,8 +6474,6 @@
 
         simplex = createSeededSimplex(config.seed);
 
-        const layers = config.layers;
-
         const cx = config.width / 2;
         const cy = config.height / 2;
         const imageData = offscreenCtx.createImageData(
@@ -6033,276 +6482,162 @@
         );
         const data = imageData.data;
 
-        const scale = config.scale;
-        const blendSharpness = config.blend;
-        const layerLength = config.layerLength;
-        const ringSpacing = config.ringSpacing;
-        const ringJitter = config.ringJitter;
-        const seamThickness = config.seamThickness;
-        const seamContrast = config.seamContrast;
-        const scratchDensity = config.scratchDensity;
-        const scratchAngle = config.scratchAngle;
-        const surfacePolish = config.surfacePolish;
-        const colorIntensity = config.colorIntensity;
-        const colorRange = config.colorRange;
-        const nacreBrilliance = config.nacreBrilliance;
-        const nacreChromatic = config.nacreChromatic;
-        const textureFamily = config.textureFamily;
-        const substrateTone = config.substrateTone;
-        const substrateMix = clamp01(config.substrateMix);
-        const highlightStrength = config.highlightStrength;
-        const lightAngle = config.lightAngle;
-        const lightCurvature = clamp01(config.lightCurvature || 0.28);
-        const lightSpread = clamp01(config.lightSpread || 0.55);
         const gaussianBlur = config.gaussianBlur;
-        const substrate = getSubstrateRgb(substrateTone);
-
-        const flowMode = config.flowMode;
-
-        const lightVec = {
-          x: Math.cos(lightAngle * 2 * Math.PI),
-          y: Math.sin(lightAngle * 2 * Math.PI),
-        };
-        const scratchDir = {
-          x: Math.cos(scratchAngle * 2 * Math.PI),
-          y: Math.sin(scratchAngle * 2 * Math.PI),
-        };
+        const nacreRenderer = modeRuntime.createRenderer(config, {
+          palette,
+          substrate: getSubstrateRgb(config.substrateTone),
+          hslToRgb,
+          sampleNoise: (px, py, layers, scale) =>
+            getNoiseValue(px, py, layers, scale, simplex),
+        });
 
         showDebugInfo(config);
 
-        let y = 0;
         const rowsPerFrame = getRowsPerFrame("motherofpearl", config.preview);
         setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
         if (generateBtn) generateBtn.disabled = !config.preview;
 
         setProgressPercent(0);
 
-        function renderChunk() {
-          if (!isRenderRunCurrent(runId)) {
-            clearRenderTask();
-            return;
-          }
-          const endY = Math.min(y + rowsPerFrame, config.height);
-          for (; y < endY; y++) {
-            for (let x = 0; x < config.width; x++) {
-              const { cx: nx, cy: ny } = getCropSpacePoint(config, x, y);
-
-              const { angleInfluence, highlightBoost } = computeLightInfluence(
-                nx,
-                ny,
-                lightVec,
-                highlightStrength,
-                lightSpread,
-                lightCurvature,
-              );
-              const { px, py } = getFlowCoordinates(
-                x,
-                y,
-                cx,
-                cy,
-                flowMode,
-                layerLength,
-              );
-              const noise = getNoiseValue(px, py, layers, scale, simplex);
-
-              const growthAxis =
-                flowMode === "circular"
-                  ? Math.hypot(nx, ny) * 2.2
-                  : (nx * 0.72 + ny * 0.28) * layerLength * 1.4;
-              const structureDrift =
-                noise * (0.12 + ringJitter * 1.05) +
-                angleInfluence * (0.02 + highlightStrength * 0.08);
-              const ringPhase =
-                (growthAxis + structureDrift) * (10 + ringSpacing * 26);
-              const ringWave = Math.sin(ringPhase * Math.PI);
-              const seamMask = smoothstep(
-                1 - seamThickness * 1.3,
-                1,
-                Math.abs(ringWave),
-              );
-              const seamFeather = smoothstep(
-                0.32,
-                0.96,
-                Math.abs(Math.sin((ringPhase * (0.56 + ringJitter * 0.42) + noise * 0.9) * Math.PI)),
-              );
-
-              const geometricField = clamp01(
-                (noise * (0.56 + ringJitter * 0.12) + ringWave * (0.5 + ringSpacing * 0.06) + 1) / 2,
-              );
-              const lightingField =
-                angleInfluence * (0.24 + lightSpread * 0.22) +
-                highlightBoost * (0.2 + highlightStrength * 0.12);
-              const bandingField = clamp01(
-                (Math.sin((ringPhase + noise * (1.2 + ringJitter * 1.2)) * Math.PI) + 1) / 2,
-              );
-              let familyBanding = bandingField;
-              let familySeam = clamp01(seamMask * 0.72 + seamFeather * 0.28);
-              let familyBrillianceMul = 1;
-              let familyChromaticMul = 1;
-              let substrateCoverageBias = 0;
-              if (textureFamily === "opal") {
-                const cellField = clamp01(
-                  (Math.sin((noise * 4.2 + nx * 3.1 - ny * 2.7) * Math.PI) +
-                    1) /
-                    2,
-                );
-                familyBanding = clamp01(bandingField * 0.58 + cellField * 0.42);
-                familySeam = clamp01(
-                  seamMask * 0.52 + smoothstep(0.72, 1, cellField) * 0.48,
-                );
-                familyBrillianceMul = 1.08;
-                familyChromaticMul = 1.12;
-                substrateCoverageBias = -0.06;
-              } else if (textureFamily === "labradorite") {
-                const flash = Math.pow(clamp01((angleInfluence + 1) / 2), 2.7);
-                familyBanding = clamp01(bandingField * 0.7 + flash * 0.3);
-                familySeam = clamp01(seamMask * 1.18);
-                familyBrillianceMul = 1.04;
-                familyChromaticMul = 1.28;
-                substrateCoverageBias = 0.08;
-              }
-
-              const nacreField = clamp01(
-                geometricField * 0.52 + familyBanding * 0.34 + familySeam * 0.14,
-              );
-              const value = clamp01(nacreField * (0.78 + surfacePolish * 0.08) + lightingField * (0.14 + highlightStrength * 0.06));
-              let { h, s, l } = blendPaletteColors(
-                value,
-                blendSharpness,
-                colorRange,
-                colorIntensity,
-                palette,
-              );
-              s = Math.min(100, s * nacreBrilliance * familyBrillianceMul);
-              l = Math.min(
-                97,
-                l + (nacreBrilliance * familyBrillianceMul - 1) * 6,
-              );
-              if (textureFamily === "labradorite") {
-                l = Math.max(10, l - 8);
-              }
-
-              // Drive hue shifts from the same growth geometry so iridescence follows structure.
-              const structureHueShift =
-                (familyBanding - 0.5) *
-                  (44 * nacreChromatic * familyChromaticMul) *
-                  colorRange +
-                familySeam * (14 * nacreChromatic * familyChromaticMul) -
-                (nacreField - 0.5) * 12;
-              const directionalHueShift =
-                (angleInfluence * 9 + highlightBoost * 4) *
-                (0.35 + 0.45 * nacreChromatic * familyChromaticMul);
-              const shiftedHue =
-                (h + structureHueShift + directionalHueShift + 360) % 360;
-
-              let [r, g, b] = hslToRgb(shiftedHue, s, l);
-              const i = (y * config.width + x) * 4;
-
-              const seamStrength = familySeam * seamContrast;
-              const seamDark = 1 - seamStrength * 0.68;
-              const seamWarm = seamStrength * 95;
-              r = r * seamDark + seamWarm * 0.42;
-              g = g * seamDark + seamWarm * 0.28;
-              b = b * (1 - seamStrength * 0.34);
-
-              const geometryLift = nacreField * (12 + 20 * surfacePolish);
-              r += geometryLift * 0.55;
-              g += geometryLift * 0.62;
-              b += geometryLift * 0.78;
-
-              const scratchFreq = 60 + scratchDensity * 320;
-              const scratchPhase =
-                (nx * scratchDir.x + ny * scratchDir.y) * scratchFreq +
-                noise * 6;
-              const scratchLine = Math.pow(
-                Math.abs(Math.sin(scratchPhase * Math.PI)),
-                24,
-              );
-              const scratchAmount =
-                scratchLine * scratchDensity * (1 - surfacePolish) * 45;
-              r += scratchAmount;
-              g += scratchAmount * 0.88;
-              b += scratchAmount * 0.75;
-
-              const coverage = clamp01(
-                (0.28 +
-                  nacreField * 0.64 +
-                  highlightBoost * (0.1 + highlightStrength * 0.08) +
-                  substrateCoverageBias) *
-                  (1 - substrateMix) +
-                  substrateMix * (0.18 + familySeam * 0.3),
-              );
-              r = substrate.r * (1 - coverage) + r * coverage;
-              g = substrate.g * (1 - coverage) + g * coverage;
-              b = substrate.b * (1 - coverage) + b * coverage;
-
-              writePixel(data, i, r, g, b);
-            }
-          }
-          setProgressPercent((y / config.height) * 100);
-          if (y < config.height) {
-            requestRenderFrame(renderChunk);
-          } else {
-            if (!isRenderRunCurrent(runId)) {
-            clearRenderTask();
-              return;
-            }
-            offscreenCtx.putImageData(imageData, 0, 0);
-
-            // Apply a soft blur before compositing.
-            // Keep previous frame visible during computation and swap only when ready.
-            canvas.width = config.width;
-            canvas.height = config.height;
-            ctx.globalAlpha = 1;
-            ctx.drawImage(offscreenCanvas, 0, 0);
-
-            // Overlay blurred glow layer
-            ctx.globalAlpha = 0.2;
-            ctx.filter = "blur(8px)";
-            ctx.drawImage(offscreenCanvas, 0, 0);
-
+        const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+          width: config.width,
+          height: config.height,
+          rowsPerFrame,
+          buffer: data,
+          isCurrent: () => isRenderRunCurrent(runId),
+          setTask: setRenderTask,
+          clearTask: clearRenderTask,
+          requestFrame: requestRenderFrame,
+          onProgress: setProgressPercent,
+          renderPixel: (x, y) => {
+            const { cx: nx, cy: ny } =
+              window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+            return nacreRenderer.renderPixel({ x, y, nx, ny, cx, cy });
+          },
+          onComplete: () => {
+            const drawPasses = [
+              { alpha: 1, filter: "none" },
+              { alpha: 0.2, filter: "blur(8px)" },
+            ];
             if (gaussianBlur > 0) {
-              ctx.globalAlpha = 0.72;
-              ctx.filter = `blur(${gaussianBlur}px)`;
-              ctx.drawImage(offscreenCanvas, 0, 0);
+              drawPasses.push({
+                alpha: 0.72,
+                filter: `blur(${gaussianBlur}px)`,
+              });
             }
-
-            // Reset effects
-            ctx.globalAlpha = 1.0;
-            ctx.filter = "none";
-
-            commitPostFxBaseAndApply(config, { blurAlpha: 0.72 });
-
-            if (!config.preview) {
-              setStatus("complete", "Complete");
-              setTimeout(() => {
-                setStatus("idle", "Idle");
+            window.RadenRenderPipeline.finalizeCanvasRender({
+              config,
+              imageData,
+              offscreenCanvas,
+              offscreenContext: offscreenCtx,
+              targetCanvas: canvas,
+              targetContext: ctx,
+              drawPasses,
+              commit: () =>
+                commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+              setStatus,
+              onReady: () => {
                 if (generateBtn) generateBtn.disabled = false;
-              }, 500);
-            } else {
-              setStatus("idle", "Preview ready");
-            }
-            clearRenderTask();
-            // Save current values as "applied"
-            if (!config.preview) {
-              document
-                .querySelectorAll(
-                  "#controls input, #controls select, #canvasControlOverlay input, #canvasControlOverlay select",
-                )
-                .forEach((el) => {
-                  if (el.dataset.live !== "true") {
-                    el.dataset.applied =
-                      el.type === "checkbox" ? String(el.checked) : el.value;
-                  }
-                });
-            }
-          }
-        }
-        setRenderTask(renderChunk);
-        requestRenderFrame(renderChunk);
+              },
+              markApplied: () => {
+                document
+                  .querySelectorAll(
+                    "#controls input, #controls select, #canvasControlOverlay input, #canvasControlOverlay select",
+                  )
+                  .forEach((el) => {
+                    if (el.dataset.live !== "true") {
+                      el.dataset.applied =
+                        el.type === "checkbox" ? String(el.checked) : el.value;
+                    }
+                  });
+              },
+            });
+          },
+        });
+        pixelLoop.start();
       }
 
-      function generateOpalVein(force = false, renderOptions = {}) {
+      function generateOpalVein(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("opalvein");
+        if (!modeRuntime) {
+          return generateOpalVeinLegacy(force, renderOptions);
+        }
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const rawConfig = getRenderConfig(renderOptions);
+        const opalRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplex: createSeededSimplex(rawConfig.seed),
+        });
+        const config = opalRenderer.config;
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const gaussianBlur = config.gaussianBlur;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
+
+        const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+          width: config.width,
+          height: config.height,
+          rowsPerFrame: getRowsPerFrame("opalvein", config.preview),
+          buffer: imageData.data,
+          isCurrent: () => isRenderRunCurrent(runId),
+          setTask: setRenderTask,
+          clearTask: clearRenderTask,
+          requestFrame: requestRenderFrame,
+          onProgress: setProgressPercent,
+          renderPixel: (x, y) => {
+            const { ux: nx, uy: ny } =
+              window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+            return opalRenderer.renderPixel({ nx, ny });
+          },
+          onComplete: () => {
+            const drawPasses = [
+              { alpha: 1, filter: "none" },
+              { alpha: 0.22, filter: "blur(7px)" },
+            ];
+            if (gaussianBlur > 0) {
+              drawPasses.push({
+                alpha: 0.72,
+                filter: `blur(${gaussianBlur}px)`,
+              });
+            }
+            window.RadenRenderPipeline.finalizeCanvasRender({
+              config,
+              imageData,
+              offscreenCanvas,
+              offscreenContext: offscreenCtx,
+              targetCanvas: canvas,
+              targetContext: ctx,
+              drawPasses,
+              commit: () =>
+                commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+              setStatus,
+              completeMessage: "Opal rendered",
+              completeDelayMs: 450,
+              onReady: () => {
+                if (generateBtn) generateBtn.disabled = false;
+              },
+            });
+          },
+        });
+        pixelLoop.start();
+      }
+
+      function generateOpalVeinLegacy(force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
@@ -6338,7 +6673,8 @@
           const endY = Math.min(y + rowsPerFrame, config.height);
           for (; y < endY; y++) {
             for (let x = 0; x < config.width; x++) {
-              const { ux: nx, uy: ny } = getCropSpacePoint(config, x, y);
+              const { ux: nx, uy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
               const i = (y * config.width + x) * 4;
 
               const n1 = simplex.noise2D(
@@ -6430,7 +6766,90 @@
         requestRenderFrame(renderChunk);
       }
 
-      function generateLabradoriteFlash(force = false, renderOptions = {}) {
+      function generateLabradoriteFlash(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("labradorite");
+        if (!modeRuntime) {
+          return generateLabradoriteFlashLegacy(force, renderOptions);
+        }
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const rawConfig = getRenderConfig(renderOptions);
+        const labradoriteRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplex: createSeededSimplex(rawConfig.seed),
+        });
+        const config = labradoriteRenderer.config;
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const gaussianBlur = config.gaussianBlur;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
+
+        const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+          width: config.width,
+          height: config.height,
+          rowsPerFrame: getRowsPerFrame("labradorite", config.preview),
+          buffer: imageData.data,
+          isCurrent: () => isRenderRunCurrent(runId),
+          setTask: setRenderTask,
+          clearTask: clearRenderTask,
+          requestFrame: requestRenderFrame,
+          onProgress: setProgressPercent,
+          renderPixel: (x, y) => {
+            const { cx: nx, cy: ny } =
+              window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+            return labradoriteRenderer.renderPixel({ nx, ny });
+          },
+          onComplete: () => {
+            const drawPasses = [
+              { alpha: 1, filter: "none" },
+              { alpha: 0.24, filter: "blur(9px)" },
+            ];
+            if (gaussianBlur > 0) {
+              drawPasses.push({
+                alpha: 0.72,
+                filter: `blur(${gaussianBlur}px)`,
+              });
+            }
+            window.RadenRenderPipeline.finalizeCanvasRender({
+              config,
+              imageData,
+              offscreenCanvas,
+              offscreenContext: offscreenCtx,
+              targetCanvas: canvas,
+              targetContext: ctx,
+              drawPasses,
+              commit: () =>
+                commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+              setStatus,
+              completeMessage: "Labradorite rendered",
+              completeDelayMs: 450,
+              onReady: () => {
+                if (generateBtn) generateBtn.disabled = false;
+              },
+            });
+          },
+        });
+        pixelLoop.start();
+      }
+
+      function generateLabradoriteFlashLegacy(
+        force = false,
+        renderOptions = {},
+      ) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
@@ -6469,7 +6888,8 @@
           const endY = Math.min(y + rowsPerFrame, config.height);
           for (; y < endY; y++) {
             for (let x = 0; x < config.width; x++) {
-              const { cx: nx, cy: ny } = getCropSpacePoint(config, x, y);
+              const { cx: nx, cy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
               const i = (y * config.width + x) * 4;
 
               const nBase = simplex.noise2D(
@@ -6573,7 +6993,87 @@
         requestRenderFrame(renderChunk);
       }
 
-      function generateMarbleInk(force = false, renderOptions = {}) {
+      function generateMarbleInk(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("marbleink");
+        if (!modeRuntime) {
+          return generateMarbleInkLegacy(force, renderOptions);
+        }
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const rawConfig = getRenderConfig(renderOptions);
+        const marbleRenderer = modeRuntime.createRenderer(rawConfig, {
+          simplex: createSeededSimplex(rawConfig.seed),
+        });
+        const config = marbleRenderer.config;
+        offscreenCanvas.width = config.width;
+        offscreenCanvas.height = config.height;
+        const imageData = offscreenCtx.createImageData(
+          config.width,
+          config.height,
+        );
+        const gaussianBlur = config.gaussianBlur;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
+
+        const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+          width: config.width,
+          height: config.height,
+          rowsPerFrame: getRowsPerFrame("marbleink", config.preview),
+          buffer: imageData.data,
+          isCurrent: () => isRenderRunCurrent(runId),
+          setTask: setRenderTask,
+          clearTask: clearRenderTask,
+          requestFrame: requestRenderFrame,
+          onProgress: setProgressPercent,
+          renderPixel: (x, y) => {
+            const { ux: nx, uy: ny } =
+              window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+            return marbleRenderer.renderPixel({ nx, ny });
+          },
+          onComplete: () => {
+            const drawPasses = [
+              { alpha: 1, filter: "none" },
+              { alpha: 0.18, filter: "blur(5px)" },
+            ];
+            if (gaussianBlur > 0) {
+              drawPasses.push({
+                alpha: 0.72,
+                filter: `blur(${gaussianBlur}px)`,
+              });
+            }
+            window.RadenRenderPipeline.finalizeCanvasRender({
+              config,
+              imageData,
+              offscreenCanvas,
+              offscreenContext: offscreenCtx,
+              targetCanvas: canvas,
+              targetContext: ctx,
+              drawPasses,
+              commit: () =>
+                commitPostFxBaseAndApply(config, { blurAlpha: 0.72 }),
+              setStatus,
+              completeMessage: "Marble rendered",
+              completeDelayMs: 450,
+              onReady: () => {
+                if (generateBtn) generateBtn.disabled = false;
+              },
+            });
+          },
+        });
+        pixelLoop.start();
+      }
+
+      function generateMarbleInkLegacy(force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
@@ -6610,7 +7110,8 @@
           const endY = Math.min(y + rowsPerFrame, config.height);
           for (; y < endY; y++) {
             for (let x = 0; x < config.width; x++) {
-              const { ux: nx, uy: ny } = getCropSpacePoint(config, x, y);
+              const { ux: nx, uy: ny } =
+                window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
               const i = (y * config.width + x) * 4;
 
               const warp1 =
@@ -6708,7 +7209,108 @@
         requestRenderFrame(renderChunk);
       }
 
-      function generateTopography(force = false, renderOptions = {}) {
+      function generateTopography(
+        force = false,
+        renderOptions = {},
+        registeredRuntime = null,
+      ) {
+        const modeRuntime =
+          registeredRuntime || window.RadenModes?.getRuntime?.("topography");
+        if (!modeRuntime) {
+          return generateTopographyLegacy(force, renderOptions);
+        }
+        if (!renderOptions.preview) {
+          clearPendingIndicators();
+        }
+        cancelRenderFrame();
+        const runId = nextRenderRunId();
+        const rawConfig = Object.assign(getRenderConfig(renderOptions), {
+          topoBandCount: getInput("topoBandCount", true),
+          topoRenderMode: document.getElementById("topoRenderMode").value,
+          topoNoiseType: document.getElementById("topoNoiseType").value,
+        });
+        const simplex = createSeededSimplex(rawConfig.seed);
+        const topographyRenderer = modeRuntime.createRenderer(rawConfig, {
+          baseNoise: getNoiseFunction(
+            rawConfig.topoNoiseType,
+            simplex,
+            rawConfig.seed,
+          ),
+        });
+        const config = topographyRenderer.config;
+
+        setStatus("rendering", config.preview ? "Preview..." : "Rendering...");
+        if (generateBtn) generateBtn.disabled = !config.preview;
+        setProgressPercent(0);
+        showDebugInfo(config, {
+          effectiveScale: config.effectiveScale,
+          ridgeStrength: config.ridgeStrength,
+          warpStrength: config.warpStrength,
+          erosionStrength: config.erosionStrength,
+        });
+
+        function startWork() {
+          if (!isRenderRunCurrent(runId)) {
+            clearRenderTask();
+            return;
+          }
+          offscreenCanvas.width = config.width;
+          offscreenCanvas.height = config.height;
+          const heights = topographyRenderer.createHeightField((x, y) => {
+            const { ux: nx, uy: ny } =
+              window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
+            return { nx, ny };
+          });
+          setProgressPercent(45);
+          topographyRenderer.erodeHeightField(heights);
+          setProgressPercent(65);
+
+          const imageData = offscreenCtx.createImageData(
+            config.width,
+            config.height,
+          );
+          const pixelLoop = window.RadenPixelLoop.createPixelLoop({
+            width: config.width,
+            height: config.height,
+            rowsPerFrame: getRowsPerFrame("topography", config.preview),
+            buffer: imageData.data,
+            isCurrent: () => isRenderRunCurrent(runId),
+            setTask: setRenderTask,
+            clearTask: clearRenderTask,
+            requestFrame: requestRenderFrame,
+            onProgress: (percent) =>
+              setProgressPercent(65 + percent * 0.35),
+            renderPixel: (x, y) =>
+              topographyRenderer.renderPixel(x, y, heights),
+            onComplete: () => {
+              window.RadenRenderPipeline.finalizeCanvasRender({
+                config,
+                imageData,
+                offscreenCanvas,
+                offscreenContext: offscreenCtx,
+                targetCanvas: canvas,
+                targetContext: ctx,
+                drawPasses: [{ alpha: 1, filter: "none" }],
+                commit: () =>
+                  commitPostFxBaseAndApply(config, { blurAlpha: 0.75 }),
+                setStatus,
+                completeMessage: `Topography rendered: ${config.bandCount} bands, ${config.renderMode}`,
+                completeDelayMs: 800,
+                onReady: () => {
+                  if (generateBtn) generateBtn.disabled = false;
+                },
+              });
+              setProgressPercent(100);
+            },
+          });
+          pixelLoop.start();
+        }
+
+        setRenderTask(startWork);
+        requestRenderFrame(startWork);
+      }
+
+      function generateTopographyLegacy(force = false, renderOptions = {}) {
         if (!renderOptions.preview) {
           clearPendingIndicators();
         }
@@ -6754,7 +7356,8 @@
         const heights = new Float32Array(config.width * config.height);
         for (let y = 0; y < config.height; y++) {
           for (let x = 0; x < config.width; x++) {
-            const { ux: nx, uy: ny } = getCropSpacePoint(config, x, y);
+            const { ux: nx, uy: ny } =
+              window.RadenRenderCoordinates.getCropSpacePoint(config, x, y);
             const n = terrainNoise(nx, ny);
             heights[y * config.width + x] = clamp01((n + 1) / 2);
           }
@@ -7470,6 +8073,7 @@
           JSON.stringify(snapshot?.controls || {}) !== JSON.stringify(getControlState());
         applyControlState(snapshot?.controls || {});
         activeLayerState = cloneLayerState(snapshot?.layerState);
+        nacrePaletteEditorController?.render?.();
         renderEffectStack();
         if (controlsChanged) {
           scheduleFinalRender();
@@ -7522,12 +8126,46 @@
         activeLayerState = null;
         if (options.clearHistory !== false) clearCommandHistory();
         renderEffectStack();
+        nacrePaletteEditorController?.render?.();
       }
 
       function setLayerState(layerState, options = {}) {
         activeLayerState = cloneLayerState(layerState);
         if (options.clearHistory !== false) clearCommandHistory();
         renderEffectStack();
+        nacrePaletteEditorController?.render?.();
+      }
+
+      function configureNacrePaletteEditor() {
+        const root = document.getElementById("nacrePaletteEditor");
+        const presetSelect = document.getElementById("nacrePalette");
+        if (!root || !presetSelect || !window.RadenUiPalettes) return;
+        const getPalette = () =>
+          window.RadenLayers?.getActiveLayer?.(activeLayerState)?.palette || null;
+        const setPalette = (palette) => {
+          activeLayerState = window.RadenLayers.setLayerPalette(
+            getLayerState(),
+            palette,
+          );
+        };
+        nacrePaletteEditorController = window.RadenUiPalettes.createPaletteEditor({
+          root,
+          presetSelect,
+          modeId: "motherofpearl",
+          getPalette,
+          onEditStart: () => beginControlEdit(),
+          onEditCommit: (label) => {
+            commitPendingControlHistory(label);
+            scheduleFinalRender();
+          },
+          onPaletteChange: (palette, meta) => {
+            if (meta.phase === "action") pushCommandHistorySnapshot(meta.label);
+            setPalette(palette);
+            if (meta.phase === "input") schedulePreviewRender();
+            else scheduleFinalRender();
+          },
+          onPresetChange: () => setPalette(null),
+        });
       }
 
       function getEffectStackParts() {
@@ -8530,6 +9168,7 @@
 
       configureSourceImageHelpers();
       window.RadenSourceImage.bindImageUpload();
+      configureNacrePaletteEditor();
 
       const topoPreset = document.getElementById("topoPreset");
       if (topoPreset) {

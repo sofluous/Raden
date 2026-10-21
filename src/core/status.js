@@ -25,6 +25,7 @@
       if (!progressEl) return;
       const clamped = Math.max(0, Math.min(100, toNumber(percent, 0)));
       progressEl.style.width = `${clamped}%`;
+      progressEl.setAttribute("aria-valuenow", String(Math.round(clamped)));
     }
 
     function showDebugInfo(config, extras) {

@@ -98,6 +98,11 @@
     if (btn) {
       updateControlLockButton(btn, locked, false);
     }
+    document.dispatchEvent(
+      new CustomEvent("raden:control-lock-change", {
+        detail: { id, locked: !!locked },
+      }),
+    );
   }
 
   function enhanceLockControls(opts) {

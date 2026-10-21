@@ -182,6 +182,27 @@
   ];
 
   const modesById = new Map(MODE_DEFINITIONS.map((mode) => [mode.id, mode]));
+  const runtimesById = new Map();
+
+  function registerRuntime(modeId, runtime) {
+    if (!modesById.has(modeId)) {
+      throw new Error(`Cannot register runtime for unknown mode: ${modeId}`);
+    }
+    if (
+      !runtime ||
+      typeof runtime.normalizeConfig !== "function" ||
+      typeof runtime.createRenderer !== "function"
+    ) {
+      throw new TypeError(
+        `Mode runtime ${modeId} requires normalizeConfig() and createRenderer().`,
+      );
+    }
+    runtimesById.set(modeId, Object.freeze(Object.assign({}, runtime)));
+  }
+
+  function getRuntime(modeId) {
+    return runtimesById.get(modeId) || null;
+  }
 
   function cloneMode(mode) {
     return Object.assign({}, mode, {
@@ -252,6 +273,8 @@
     getModeLabel,
     getModeStatus,
     getActiveControlIdMap,
+    registerRuntime,
+    getRuntime,
     validateRegistry,
   });
 })(window);
