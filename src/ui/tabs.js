@@ -37,6 +37,8 @@
     if (settingsTabBtn) {
       settingsTabBtn.classList.toggle("is-active", nextTab === "settings");
     }
+    const textureContext = document.getElementById("textureContext");
+    if (textureContext) textureContext.hidden = nextTab !== "generate";
     updateActionBar(nextTab);
     if (typeof options.afterTabChange === "function") {
       options.afterTabChange(nextTab);

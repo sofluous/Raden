@@ -30,6 +30,14 @@ const graph = context.window.RadenGraphs.createGraphFromStageDescription(
 assert.equal(graph.version, 1);
 assert.equal(graph.modeId, "motherofpearl");
 assert.equal(graph.nodes.length, 7);
+assert.deepEqual(
+  plain(graph.nodes.find((node) => node.id === "palette").interfaceBindings),
+  { outputColor: "baseColor" },
+);
+assert.deepEqual(
+  plain(graph.nodes.find((node) => node.id === "surface").interfaceBindings),
+  { inputColor: "baseColor", outputColor: "surfaceColor" },
+);
 assert.equal(graph.nodes.find((node) => node.id === "family").enabled, false);
 assert.deepEqual(plain(graph.nodes.find((node) => node.id === "sampling").parameters), {
   flowMode: "circular",
@@ -65,6 +73,12 @@ assert.match(context.window.RadenGraphs.validateGraph(malformed).join(" "), /unc
 const requiredDisabled = plain(graph);
 requiredDisabled.nodes.find((node) => node.id === "growth").enabled = false;
 assert.match(context.window.RadenGraphs.validateGraph(requiredDisabled).join(" "), /Required graph node/);
+const invalidBinding = plain(graph);
+invalidBinding.nodes.find((node) => node.id === "palette").interfaceBindings.outputColor = "missing";
+assert.match(context.window.RadenGraphs.validateGraph(invalidBinding).join(" "), /invalid outputColor binding/);
+const wrongDirectionBinding = plain(graph);
+wrongDirectionBinding.nodes.find((node) => node.id === "surface").interfaceBindings.outputColor = "baseColor";
+assert.match(context.window.RadenGraphs.validateGraph(wrongDirectionBinding).join(" "), /invalid outputColor binding/);
 assert.throws(() => context.window.RadenGraphs.deserializeGraph("{"), /valid JSON/);
 
 const layerState = context.window.RadenLayers.buildLayerStateFromFlatState(

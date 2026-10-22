@@ -14,6 +14,9 @@
       label: "Material color source",
       allowedKinds: Object.freeze(["material"]),
       optional: false,
+      bindings: Object.freeze({
+        outputColor: Object.freeze({ direction: "output" }),
+      }),
     }),
     colorTransform: Object.freeze({
       id: "colorTransform",
@@ -21,6 +24,10 @@
       allowedKinds: Object.freeze(["material", "surface", "composite"]),
       optional: true,
       bypassType: "identity-color",
+      bindings: Object.freeze({
+        inputColor: Object.freeze({ direction: "input", bypassKey: "input" }),
+        outputColor: Object.freeze({ direction: "output", bypassKey: "output" }),
+      }),
     }),
   });
 
@@ -80,6 +87,31 @@
         throw new TypeError(`Stage ${id} identity bypass output is unavailable: ${bypass.output}.`);
       }
     }
+    const interfaceBindings = {};
+    if (stageInterface) {
+      const declaredBindings = stage.interfaceBindings || {};
+      Object.keys(declaredBindings).forEach((role) => {
+        if (!stageInterface.bindings?.[role]) {
+          throw new TypeError(`Stage ${id} has unknown ${interfaceId} binding: ${role}.`);
+        }
+      });
+      Object.entries(stageInterface.bindings || {}).forEach(([role, binding]) => {
+        const port = declaredBindings[role] ||
+          (binding.bypassKey ? bypass?.[binding.bypassKey] : null);
+        if (!port) {
+          throw new TypeError(`Stage ${id} requires ${interfaceId}.${role} binding.`);
+        }
+        const availablePorts = binding.direction === "input"
+          ? normalizeStringList(stage.inputs)
+          : outputs;
+        if (!availablePorts.includes(port)) {
+          throw new TypeError(
+            `Stage ${id} ${interfaceId}.${role} binding is not a declared ${binding.direction}: ${port}.`,
+          );
+        }
+        interfaceBindings[role] = port;
+      });
+    }
     return Object.freeze({
       id,
       label: String(stage.label || id),
@@ -88,6 +120,7 @@
       outputs: Object.freeze(outputs),
       controlIds: Object.freeze(normalizeStringList(stage.controlIds)),
       interfaceId,
+      interfaceBindings: Object.freeze(interfaceBindings),
       optional,
       bypass,
     });

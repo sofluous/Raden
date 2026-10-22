@@ -81,6 +81,7 @@
     btn.title = locked
       ? "Unlock randomize for this control"
       : "Lock this control from randomize";
+    btn.setAttribute("aria-label", btn.title);
     const icon = locked && preview ? "iconoir-lock-slash" : "iconoir-lock";
     btn.innerHTML = `<i class="${icon}"></i>`;
   }

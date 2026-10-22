@@ -227,9 +227,12 @@
       ),
       describeStages: stageDescription ? () => stageDescription : null,
       createRenderer: stageDescription
-        ? (...args) => Object.assign(createRenderer(...args), {
-            describeStages: () => stageDescription,
-          })
+        ? (...args) => {
+            const renderer = createRenderer(...args);
+            return Object.assign({}, renderer, {
+              describeStages: () => stageDescription,
+            });
+          }
         : createRenderer,
     });
     runtimesById.set(modeId, Object.freeze(registeredRuntime));

@@ -17,6 +17,12 @@ run(path.join("src", "state", "palettes.js"));
 run(path.join("src", "state", "layers.js"));
 run(path.join("src", "ui", "palettes.js"));
 
+const paletteUiSource = fs.readFileSync(
+  path.join(__dirname, "..", "src", "ui", "palettes.js"),
+  "utf8",
+);
+assert.match(paletteUiSource, /aria-label="\$\{key === "h" \? "Hue"/);
+
 const palettes = context.window.RadenPalettes;
 const paletteUi = context.window.RadenUiPalettes;
 const plain = (value) => JSON.parse(JSON.stringify(value));

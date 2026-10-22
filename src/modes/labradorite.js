@@ -3,7 +3,7 @@
   const LABRADORITE_STAGES = Object.freeze([
     { id: "stoneField", label: "Stone field", kind: "field", inputs: ["point", "runtime"], outputs: ["stoneField"], controlIds: ["labradoriteScale"] },
     { id: "directionalBands", label: "Directional bands", kind: "geometry", inputs: ["point", "stoneField"], outputs: ["bandStructure"], controlIds: ["labradoriteDirection", "labradoriteBanding"] },
-    { id: "flash", label: "Labradorescence flash", kind: "material", inputs: ["point", "bandStructure", "runtime"], outputs: ["flashColor"], controlIds: ["labradoriteFlash"], interfaceId: "materialSource" },
+    { id: "flash", label: "Labradorescence flash", kind: "material", inputs: ["point", "bandStructure", "runtime"], outputs: ["flashColor"], controlIds: ["labradoriteFlash"], interfaceId: "materialSource", interfaceBindings: { outputColor: "flashColor" } },
     { id: "matrix", label: "Dark stone matrix", kind: "composite", inputs: ["flashColor", "bandStructure"], outputs: ["nativeColor"], controlIds: ["labradoriteDarkness"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "flashColor", output: "nativeColor", description: "Forward the labradorescence contribution without the dark stone matrix." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Labradorite color unchanged." } },
   ]);

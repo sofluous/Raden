@@ -14,6 +14,10 @@ assert.deepEqual(
   ["materialSource", "colorTransform"],
 );
 assert.equal(stages.getInterface("colorTransform").bypassType, "identity-color");
+assert.equal(
+  stages.getInterface("materialSource").bindings.outputColor.direction,
+  "output",
+);
 const pipeline = stages.createStagePipeline({
   modeId: "test",
   stages: [
@@ -40,6 +44,30 @@ assert.equal(diagnosticPipeline.supportsDiagnostics, true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(diagnosticPipeline.inspect(4))),
   { input: 4, stages: { source: { field: 4 } } },
+);
+assert.throws(
+  () => stages.createStagePipeline({
+    modeId: "missing-material-binding",
+    stages: [{ id: "material", kind: "material", outputs: ["color"], interfaceId: "materialSource" }],
+    execute() {},
+  }),
+  /requires materialSource.outputColor binding/,
+);
+assert.throws(
+  () => stages.createStagePipeline({
+    modeId: "invalid-material-binding",
+    stages: [{ id: "material", kind: "material", outputs: ["color"], interfaceId: "materialSource", interfaceBindings: { outputColor: "missing" } }],
+    execute() {},
+  }),
+  /is not a declared output/,
+);
+assert.throws(
+  () => stages.createStagePipeline({
+    modeId: "unknown-material-binding",
+    stages: [{ id: "material", kind: "material", outputs: ["color"], interfaceId: "materialSource", interfaceBindings: { outputColor: "color", alpha: "color" } }],
+    execute() {},
+  }),
+  /unknown materialSource binding: alpha/,
 );
 assert.throws(
   () => stages.createStagePipeline({ modeId: "bad", stages: [], execute() {} }),
@@ -142,7 +170,7 @@ const pixelRenderer = stages.createPixelStageRenderer({
   runtime: { disabledStageIds: ["palette"] },
   externalInputs: ["point"],
   stages: [
-    { id: "source", kind: "material", inputs: ["point"], outputs: ["nativeColor"], interfaceId: "materialSource" },
+    { id: "source", kind: "material", inputs: ["point"], outputs: ["nativeColor"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "palette", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Forward native color." } },
   ],
   execute(point, state, diagnostics) {
@@ -162,6 +190,14 @@ assert.equal(pixelRenderer.renderPixel({ x: 4 }).r, 4);
 assert.equal(pixelRenderer.inspectPixel({ x: 5 }).pixel.r, 5);
 assert.equal(diagnosticCalls, 1);
 assert.equal(pixelRenderer.describeStages().modeId, "pixel-adapter");
+assert.deepEqual(
+  JSON.parse(JSON.stringify(pixelRenderer.describeStages().stages[0].interfaceBindings)),
+  { outputColor: "nativeColor" },
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(pixelRenderer.describeStages().stages[1].interfaceBindings)),
+  { inputColor: "nativeColor", outputColor: "pixel" },
+);
 assert.throws(
   () => stages.createPixelStageRenderer({ modeId: "missing-executor", stages: [] }),
   /requires execute/,

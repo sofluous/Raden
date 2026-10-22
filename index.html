@@ -69,7 +69,12 @@
         max-width: calc(100vw - (2 * var(--raden-frame-pad)));
         max-height: calc(100vh - (2 * var(--raden-frame-pad)));
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        grid-template-areas:
+          "header"
+          "context"
+          "content"
+          "footer";
         min-height: 0;
         overflow: hidden;
         resize: horizontal;
@@ -85,6 +90,7 @@
       }
 
       #control-header {
+        grid-area: header;
         display: grid;
         gap: var(--ds-space-3);
         padding: var(--ds-space-4);
@@ -93,6 +99,7 @@
       }
 
       #control-scroll {
+        grid-area: content;
         min-height: 0;
         overflow-y: scroll;
         overflow-x: hidden;
@@ -401,6 +408,34 @@
         display: none !important;
       }
 
+      .stage-inspector {
+        display: grid;
+        gap: 0;
+      }
+
+      .stage-inspector[hidden] {
+        display: none;
+      }
+
+      .stage-inspector-section {
+        position: relative;
+      }
+
+      .stage-enable-control {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--ds-icon-action-size);
+      }
+
+      .stage-enable-toggle {
+        margin: 0;
+      }
+
+      .stage-inspector-section.is-stage-disabled > .control-row,
+      .stage-inspector-section.is-stage-disabled > .palette-authoring {
+        opacity: var(--ds-opacity-disabled, 0.5);
+      }
+
       #postProcessingSection {
         order: 80;
       }
@@ -412,19 +447,25 @@
       }
 
       .texture-context {
+        grid-area: context;
         display: grid;
-        grid-template-columns: minmax(0, auto) var(--ds-control-h-sm);
+        grid-template-columns: minmax(0, 1fr) var(--ds-control-h-sm);
         align-items: center;
-        justify-content: start;
         gap: var(--ds-space-1);
-        padding: 0 0 var(--ds-space-2);
-        width: min(100%, 300px);
+        padding: var(--ds-space-2) var(--ds-space-3);
+        width: 100%;
         max-width: 100%;
+        border-bottom: var(--ds-border-w) var(--ds-border-style) var(--ds-border);
+        background: color-mix(in oklab, var(--ds-bg-elevated) 92%, transparent);
+      }
+
+      .texture-context[hidden] {
+        display: none;
       }
 
       .texture-context .control-row {
         margin: 0;
-        width: auto;
+        width: 100%;
       }
 
       .texture-context .control-label {
@@ -441,9 +482,33 @@
       }
 
       .texture-context #modeSelector {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+      }
+
+      .section-header-control-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--ds-space-1);
+        min-height: var(--ds-control-h-sm);
         width: auto;
-        min-width: 180px;
-        max-width: 240px;
+      }
+
+      .section-header-control-row .control-label {
+        display: none;
+      }
+
+      .palette-preset-row .control-input {
+        width: 8rem;
+      }
+
+      .seed-header-row .control-input {
+        width: 7rem;
+      }
+
+      #controls .section.is-header-only .section-collapse-btn {
+        display: none;
       }
 
       #textureRandomizeBtn {
@@ -1471,6 +1536,7 @@
       }
 
       #control-footer {
+        grid-area: footer;
         display: grid;
         grid-template-columns: auto minmax(3rem, 1fr);
         align-items: center;
@@ -1785,38 +1851,38 @@
           </button>
         </div>
       </div>
+      <div id="textureContext" class="texture-context">
+        <div class="control-row texture-mode-row">
+          <div class="control-input">
+            <select id="modeSelector">
+              <option value="motherofpearl">Mother of Pearl</option>
+              <option value="opalvein">Opal Vein</option>
+              <option value="labradorite">Labradorite Flash</option>
+              <option value="marbleink">Marble Ink</option>
+              <option value="agateband">Agate Bands</option>
+              <option value="malachiteflow">Malachite Flow</option>
+              <option value="lichengrowth">Lichen Growth</option>
+              <option value="icebloom">Ice Crystal Bloom (Deferred)</option>
+              <option value="riverdelta">River Delta</option>
+              <option value="bubblefilm">Bubble Film</option>
+              <option value="topography">Topography</option>
+            </select>
+          </div>
+          <div class="control-icons"></div>
+        </div>
+        <button
+          id="textureRandomizeBtn"
+          class="ds-btn ds-btn-icon ds-btn-sm ds-icon-action icon-btn icon-only"
+          type="button"
+          title="Randomize texture settings"
+          aria-label="Randomize texture settings"
+        >
+          <i class="iconoir-dice-three" aria-hidden="true"></i>
+          <span>Randomize</span>
+        </button>
+      </div>
       <div id="control-scroll" class="ds-scroll">
         <div id="tabGenerate" class="panel-tab">
-          <div id="textureContext" class="texture-context">
-            <div class="control-row texture-mode-row">
-              <div class="control-input">
-                <select id="modeSelector">
-                  <option value="motherofpearl">Mother of Pearl</option>
-                  <option value="opalvein">Opal Vein</option>
-                  <option value="labradorite">Labradorite Flash</option>
-                  <option value="marbleink">Marble Ink</option>
-                  <option value="agateband">Agate Bands</option>
-                  <option value="malachiteflow">Malachite Flow</option>
-                  <option value="lichengrowth">Lichen Growth</option>
-                  <option value="icebloom">Ice Crystal Bloom (Deferred)</option>
-                  <option value="riverdelta">River Delta</option>
-                  <option value="bubblefilm">Bubble Film</option>
-                  <option value="topography">Topography</option>
-                </select>
-              </div>
-              <div class="control-icons"></div>
-            </div>
-            <button
-              id="textureRandomizeBtn"
-              class="ds-btn ds-btn-icon ds-btn-sm ds-icon-action icon-btn icon-only"
-              type="button"
-              title="Randomize texture settings"
-              aria-label="Randomize texture settings"
-            >
-              <i class="iconoir-dice-three" aria-hidden="true"></i>
-              <span>Randomize</span>
-            </button>
-          </div>
           <!-- 1. SEED -->
           <div class="section" data-mode="all">
             <h3>Seed</h3>
@@ -2051,7 +2117,7 @@
             <h3>Surface Microstructure</h3>
 
             <div class="control-row">
-              <div class="control-label">Light Angle:</div>
+              <div class="control-label">Direction:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2067,7 +2133,7 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Light Curvature:</div>
+              <div class="control-label">Curvature:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2083,7 +2149,7 @@
             </div>
 
             <div class="control-row">
-              <div class="control-label">Light Spread:</div>
+              <div class="control-label">Spread:</div>
               <div class="control-input">
                 <input
                   type="range"
@@ -2266,6 +2332,7 @@
                 <input
                   type="range"
                   id="boostR"
+                  aria-label="Red channel boost"
                   min="0"
                   max="2"
                   step="0.01"
@@ -2282,6 +2349,7 @@
                 <input
                   type="range"
                   id="boostG"
+                  aria-label="Green channel boost"
                   min="0"
                   max="2"
                   step="0.01"
@@ -2298,6 +2366,7 @@
                 <input
                   type="range"
                   id="boostB"
+                  aria-label="Blue channel boost"
                   min="0"
                   max="2"
                   step="0.01"
@@ -3675,6 +3744,7 @@
             <input
               type="number"
               id="renderWidth"
+              aria-label="Canvas width"
               min="1"
               max="4096"
               placeholder="Width"
@@ -3683,6 +3753,7 @@
             <input
               type="number"
               id="renderHeight"
+              aria-label="Canvas height"
               min="1"
               max="4096"
               placeholder="Height"
@@ -3696,6 +3767,7 @@
           <input
             type="range"
             id="canvasViewZoom"
+            aria-label="Canvas zoom"
             min="0.1"
             max="8"
             step="0.01"
@@ -3756,6 +3828,7 @@
     <script src="./src/ui/canvasViewport.js"></script>
     <script src="./src/ui/visibility.js"></script>
     <script src="./src/ui/controls.js"></script>
+    <script src="./src/ui/stageInspector.js"></script>
     <script src="./src/ui/locks.js"></script>
     <script src="./src/ui/palettes.js"></script>
     <script src="./src/ui/help.js"></script>
@@ -4470,6 +4543,7 @@
       }
 
       let visibilityController = null;
+      let stageInspectorController = null;
 
       function getVisibilityController() {
         if (visibilityController) return visibilityController;
@@ -4495,6 +4569,19 @@
         if (controller?.updateVisibleSections) {
           controller.updateVisibleSections(mode);
         }
+        stageInspectorController?.update?.(mode);
+        compactContextSectionHeaders();
+      }
+
+      function compactContextSectionHeaders() {
+        window.RadenUiControls?.mountControlRowInSectionHeader?.(
+          "nacrePalette",
+          "palette-preset-row",
+        );
+        window.RadenUiControls?.mountControlRowInSectionHeader?.(
+          "seed",
+          "seed-header-row",
+        );
       }
 
       function isRisographEffectContext() {
@@ -6679,6 +6766,7 @@
           nextState,
           `${enabled === false ? "Disable" : "Enable"} texture stage`,
         );
+        stageInspectorController?.sync?.();
         schedulePreviewRender();
         scheduleFinalRender();
         return activeLayerState;
@@ -6694,6 +6782,7 @@
           JSON.stringify(snapshot?.controls || {}) !== JSON.stringify(getControlState());
         applyControlState(snapshot?.controls || {});
         activeLayerState = cloneLayerState(snapshot?.layerState);
+        stageInspectorController?.sync?.();
         nacrePaletteEditorController?.render?.();
         renderEffectStack();
         if (controlsChanged) {
@@ -6746,6 +6835,7 @@
       function resetLayerStateFromControls(options = {}) {
         activeLayerState = null;
         if (options.clearHistory !== false) clearCommandHistory();
+        stageInspectorController?.sync?.();
         renderEffectStack();
         nacrePaletteEditorController?.render?.();
       }
@@ -6753,6 +6843,7 @@
       function setLayerState(layerState, options = {}) {
         activeLayerState = cloneLayerState(layerState);
         if (options.clearHistory !== false) clearCommandHistory();
+        stageInspectorController?.sync?.();
         renderEffectStack();
         nacrePaletteEditorController?.render?.();
       }
@@ -7236,6 +7327,7 @@
         const randomSeed = Math.floor(Math.random() * 2147483647);
         const set = (id, val, decimals = 2) => {
           if (!isControlRelevantForMode(mode, id)) return;
+          if (stageInspectorController?.isControlEnabled?.(id) === false) return;
           if (isControlLocked(id)) return;
           const el = document.getElementById(id);
           if (!el) return;
@@ -7245,6 +7337,7 @@
         };
         const setCheck = (id, checked) => {
           if (!isControlRelevantForMode(mode, id)) return;
+          if (stageInspectorController?.isControlEnabled?.(id) === false) return;
           if (isControlLocked(id)) return;
           const el = document.getElementById(id);
           if (!el) return;
@@ -7462,7 +7555,8 @@
             getLayerState,
             scheduleFinalRender,
             setActiveTab,
-            setLayerState,
+            setLayerState: (layerState) =>
+              setLayerState(layerState, { clearHistory: false }),
             setStatus,
           },
         });
@@ -7656,7 +7750,15 @@
         toggleDebugPanel(false);
         enhanceRangeReadouts();
         enhanceControlUtilities();
+        stageInspectorController = window.RadenStageInspector?.createStageInspector?.({
+          getLayerState,
+          onSetStageEnabled: setSourceStageEnabledWithHistory,
+          onError: (error) => setStatus("error", error?.message || "Stage change failed"),
+        }) || null;
+        stageInspectorController?.update?.(mode);
         enhanceSectionHelp();
+        stageInspectorController?.enhance?.();
+        compactContextSectionHeaders();
 
         const topoPresetEl = document.getElementById("topoPreset");
         if (topoPresetEl && topoPresetEl.value !== "custom") {
@@ -7792,6 +7894,7 @@
             getControlState(),
             { modeId: mode },
           );
+          stageInspectorController?.sync?.();
           renderEffectStack();
           nacrePaletteEditorController?.render?.();
           schedulePreviewRender();

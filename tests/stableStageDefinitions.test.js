@@ -42,6 +42,20 @@ stableModes.forEach((modeId) => {
   context.window.RadenModes.getMode(modeId).activeControlIds.forEach((controlId) => {
     assert.ok(stagedControls.has(controlId), `${modeId}.${controlId} belongs to a stage`);
   });
+  const materialSources = runtime.describeStages().stages.filter(
+    (stage) => stage.interfaceId === "materialSource",
+  );
+  assert.equal(materialSources.length, 1, `${modeId} has one material source`);
+  assert.ok(
+    materialSources[0].outputs.includes(materialSources[0].interfaceBindings.outputColor),
+    `${modeId} binds its material color output`,
+  );
+  runtime.describeStages().stages
+    .filter((stage) => stage.interfaceId === "colorTransform")
+    .forEach((stage) => {
+      assert.equal(stage.interfaceBindings.inputColor, stage.bypass.input);
+      assert.equal(stage.interfaceBindings.outputColor, stage.bypass.output);
+    });
 });
 
 console.log("Stable texture stage definitions passed.");

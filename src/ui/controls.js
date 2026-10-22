@@ -140,6 +140,22 @@
     syncRangeReadouts();
   }
 
+  function mountControlRowInSectionHeader(controlId, className) {
+    const control = document.getElementById(controlId);
+    const row = control?.closest(".control-row");
+    const section = row?.closest(".section");
+    const actions = section?.querySelector(".section-heading-actions");
+    if (!row || !actions) return false;
+    row.classList.add("section-header-control-row");
+    if (className) row.classList.add(className);
+    actions.prepend(row);
+    const hasBodyContent = !!section.querySelector(
+      ":scope > .control-row, :scope > .palette-authoring",
+    );
+    section.classList.toggle("is-header-only", !hasBodyContent);
+    return true;
+  }
+
   global.RadenUiControls = Object.assign({}, global.RadenUiControls || {}, {
     formatRangeReadout,
     updateRangeReadout,
@@ -151,5 +167,6 @@
     clearPendingIndicators,
     getControlState,
     applyControlState,
+    mountControlRowInSectionHeader,
   });
 })(window);

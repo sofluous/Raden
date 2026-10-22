@@ -120,6 +120,13 @@ assert.deepEqual(Array.from(stages, (stage) => stage.id), [
 ]);
 assert.equal(stages.find((stage) => stage.id === "stone").interfaceId, "materialSource");
 assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+assert.deepEqual(Array.from(stages.find((stage) => stage.id === "veins").controlIds), [
+  "marbleVeinFreq",
+  "marbleContrast",
+]);
+assert.deepEqual(Array.from(stages.find((stage) => stage.id === "stone").controlIds), [
+  "marbleLightness",
+]);
 
 let paletteCalls = 0;
 const paletteRenderer = context.window.RadenMarbleInk.createMarbleRenderer(
@@ -144,6 +151,10 @@ assert.deepEqual(Object.keys(inspected.stages), [
   "stone",
   "authoredPalette",
 ]);
+assert.equal(
+  inspected.stages.veins.veinTone,
+  42 + paletteRenderer.config.contrast * 38,
+);
 
 const bypassRenderer = context.window.RadenMarbleInk.createMarbleRenderer(
   {},

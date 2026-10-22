@@ -39,6 +39,7 @@
         type: `${modeId}.${stage.id}`,
         kind: stage.kind,
         interfaceId: stage.interfaceId || null,
+        interfaceBindings: clone(stage.interfaceBindings || {}),
         optional: stage.optional === true,
         enabled: !disabled.has(stage.id),
         inputs: Array.from(stage.inputs || []),
@@ -94,6 +95,27 @@
       if (!Array.isArray(node.inputs) || !Array.isArray(node.outputs)) {
         issues.push(`Graph node ${node.id} requires input and output ports.`);
       }
+      const stageInterface = node.interfaceId
+        ? global.RadenStages?.getInterface?.(node.interfaceId)
+        : null;
+      if (node.interfaceId && !stageInterface) {
+        issues.push(`Graph node ${node.id} has unknown interface: ${node.interfaceId}.`);
+      }
+      Object.entries(node.interfaceBindings || {}).forEach(([role, port]) => {
+        const binding = stageInterface?.bindings?.[role];
+        if (stageInterface && !binding) {
+          issues.push(`Graph node ${node.id} has unknown ${node.interfaceId} binding: ${role}.`);
+          return;
+        }
+        const ports = binding?.direction === "input"
+          ? node.inputs || []
+          : binding?.direction === "output"
+            ? node.outputs || []
+            : [...(node.inputs || []), ...(node.outputs || [])];
+        if (!ports.includes(port)) {
+          issues.push(`Graph node ${node.id} has invalid ${role} binding: ${port}.`);
+        }
+      });
     });
     const connectedInputs = new Set();
     (graph.connections || []).forEach((connection, index) => {

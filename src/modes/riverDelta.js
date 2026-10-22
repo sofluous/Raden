@@ -3,7 +3,7 @@
   const RIVER_DELTA_STAGES = Object.freeze([
     { id: "flowField", label: "Directional flow field", kind: "field", inputs: ["point", "runtime"], outputs: ["flowField"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
     { id: "channels", label: "River channels", kind: "geometry", inputs: ["flowField", "runtime"], outputs: ["channelStructure"], controlIds: ["deltaChannelWidth", "deltaBranchRate"] },
-    { id: "floodplain", label: "Floodplain and sediment", kind: "material", inputs: ["channelStructure", "runtime"], outputs: ["floodplainColor"], controlIds: ["deltaSedimentMix", "deltaFloodplainSoftness"], interfaceId: "materialSource" },
+    { id: "floodplain", label: "Floodplain and sediment", kind: "material", inputs: ["channelStructure", "runtime"], outputs: ["floodplainColor"], controlIds: ["deltaSedimentMix", "deltaFloodplainSoftness"], interfaceId: "materialSource", interfaceBindings: { outputColor: "floodplainColor" } },
     { id: "erosion", label: "Eroded banks", kind: "surface", inputs: ["floodplainColor", "channelStructure"], outputs: ["nativeColor"], controlIds: ["deltaErosion"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "floodplainColor", output: "nativeColor", description: "Forward floodplain and water color without cut-bank erosion." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native River Delta color unchanged." } },
   ]);

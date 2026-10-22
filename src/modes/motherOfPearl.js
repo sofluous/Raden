@@ -5,7 +5,7 @@
   const NACRE_STAGES = Object.freeze([
     {
       id: "sampling",
-      label: "Coordinates and light field",
+      label: "Coordinates and directional modulation",
       kind: "coordinates",
       inputs: ["point", "lightVec"],
       outputs: ["angleInfluence", "highlightBoost", "samplePosition"],
@@ -45,6 +45,7 @@
       outputs: ["nacreField", "baseColor"],
       controlIds: ["blend", "intensity", "range", "nacrePalette", "nacreBrilliance", "nacreChromatic"],
       interfaceId: "materialSource",
+      interfaceBindings: { outputColor: "baseColor" },
     },
     {
       id: "surface",

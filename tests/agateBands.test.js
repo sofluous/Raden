@@ -118,6 +118,9 @@ assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
 assert.equal(registered.ownsAuthoredPalette, true);
 const stages = registered.describeStages().stages;
+const registeredRenderer = registered.createRenderer({}, runtime);
+assert.equal(typeof registeredRenderer.renderPixel, "function");
+assert.equal(registeredRenderer.describeStages().modeId, "agateband");
 assert.deepEqual(Array.from(stages, (stage) => stage.id), [
   "stoneField",
   "bands",

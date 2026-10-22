@@ -3,7 +3,7 @@
   const BUBBLE_FILM_STAGES = Object.freeze([
     { id: "pressureWarp", label: "Pressure warp", kind: "coordinates", inputs: ["point", "runtime"], outputs: ["warpedPoint"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence"] },
     { id: "cellStructure", label: "Cell and membrane structure", kind: "geometry", inputs: ["warpedPoint", "runtime"], outputs: ["filmStructure"], controlIds: [] },
-    { id: "thinFilm", label: "Thin-film interference", kind: "material", inputs: ["filmStructure"], outputs: ["filmColor"], controlIds: [], interfaceId: "materialSource" },
+    { id: "thinFilm", label: "Thin-film interference", kind: "material", inputs: ["filmStructure"], outputs: ["filmColor"], controlIds: [], interfaceId: "materialSource", interfaceBindings: { outputColor: "filmColor" } },
     { id: "surface", label: "Membrane surface", kind: "surface", inputs: ["filmColor", "filmStructure"], outputs: ["nativeColor"], controlIds: [], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "filmColor", output: "nativeColor", description: "Forward thin-film RGB without membrane shading or tear finishing." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return the native Bubble Film color unchanged." } },
   ]);

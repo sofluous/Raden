@@ -3,7 +3,7 @@
   const TOPOGRAPHY_STAGES = Object.freeze([
     { id: "terrain", label: "Terrain field", kind: "field", inputs: ["point", "runtime"], outputs: ["heightField"], controlIds: ["scale", "layers", "topoPreset", "topoNoiseType", "topoRidge", "topoWarp"] },
     { id: "erosion", label: "Terrain erosion", kind: "surface", inputs: ["heightField"], outputs: ["erodedHeightField"], controlIds: ["topoErosion"], optional: true, bypass: { type: "custom", description: "Forward the generated height field without erosion smoothing." } },
-    { id: "contours", label: "Contour rendering", kind: "material", inputs: ["erodedHeightField"], outputs: ["nativeColor"], controlIds: ["topoBandCount", "topoRenderMode"], interfaceId: "materialSource" },
+    { id: "contours", label: "Contour rendering", kind: "material", inputs: ["erodedHeightField"], outputs: ["nativeColor"], controlIds: ["topoBandCount", "topoRenderMode"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native grayscale Topography color unchanged." } },
   ]);
   function numberOr(value, fallback) {

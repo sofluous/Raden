@@ -2,7 +2,7 @@
 (function registerRadenOpalVein(global) {
   const OPAL_VEIN_STAGES = Object.freeze([
     { id: "cellField", label: "Opal cells and veins", kind: "geometry", inputs: ["point", "runtime"], outputs: ["cellStructure"], controlIds: ["opalCellScale", "opalVeinDensity"] },
-    { id: "fire", label: "Opal fire", kind: "material", inputs: ["cellStructure", "runtime"], outputs: ["fireColor"], controlIds: ["opalFire"], interfaceId: "materialSource" },
+    { id: "fire", label: "Opal fire", kind: "material", inputs: ["cellStructure", "runtime"], outputs: ["fireColor"], controlIds: ["opalFire"], interfaceId: "materialSource", interfaceBindings: { outputColor: "fireColor" } },
     { id: "matrix", label: "Host matrix", kind: "composite", inputs: ["fireColor", "cellStructure"], outputs: ["nativeColor"], controlIds: ["opalMatrix"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "fireColor", output: "nativeColor", description: "Forward the opal fire contribution without the host matrix." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Opal Vein color unchanged." } },
   ]);

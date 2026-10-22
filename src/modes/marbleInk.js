@@ -3,7 +3,7 @@
   const MARBLE_INK_STAGES = Object.freeze([
     { id: "flowField", label: "Marble flow field", kind: "field", inputs: ["point", "runtime"], outputs: ["flowField"], controlIds: ["marbleFlowScale", "marbleInkDrift"] },
     { id: "veins", label: "Stone veins", kind: "geometry", inputs: ["flowField"], outputs: ["veinStructure"], controlIds: ["marbleVeinFreq", "marbleContrast"] },
-    { id: "stone", label: "Stone material", kind: "material", inputs: ["veinStructure", "runtime"], outputs: ["nativeColor"], controlIds: ["marbleContrast", "marbleLightness"], interfaceId: "materialSource" },
+    { id: "stone", label: "Stone material", kind: "material", inputs: ["veinStructure", "runtime"], outputs: ["nativeColor"], controlIds: ["marbleLightness"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Marble Ink color unchanged." } },
   ]);
 
@@ -35,20 +35,20 @@
       1.4 + config.contrast * 1.7,
     );
     const veinMask = global.RadenShared.smoothstep(0.62 - config.contrast * 0.2, 0.96, vein);
-    return { ...flowField, vein, veinMask };
+    const veinTone = 42 + config.contrast * 38;
+    return { ...flowField, vein, veinMask, veinTone };
   }
 
   function computeStoneColor(config, runtime, veinStructure) {
     const { clamp01 } = global.RadenShared;
-    const { px, py, flow, veinMask } = veinStructure;
+    const { px, py, flow, veinMask, veinTone } = veinStructure;
     const stone = Math.round(145 + config.stoneLightness * 92 + flow * 9);
     let r = stone;
     let g = stone - 4;
     let b = stone - 10;
-    const warmVein = 42 + config.contrast * 38;
-    r = r * (1 - veinMask) + warmVein * veinMask;
-    g = g * (1 - veinMask) + (warmVein - 10) * veinMask;
-    b = b * (1 - veinMask) + (warmVein - 18) * veinMask;
+    r = r * (1 - veinMask) + veinTone * veinMask;
+    g = g * (1 - veinMask) + (veinTone - 10) * veinMask;
+    b = b * (1 - veinMask) + (veinTone - 18) * veinMask;
     const cloud = clamp01((runtime.simplex.noise2D(px * 400 * config.flowScale, py * 400 * config.flowScale) + 1) / 2);
     return { r: r + cloud * 14, g: g + cloud * 11, b: b + cloud * 7, a: 255 };
   }

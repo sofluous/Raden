@@ -46,7 +46,7 @@
           <button type="button" class="ds-icon-action" data-action="randomize" title="${paletteLocked ? "Palette randomization is locked" : "Randomize palette"}" aria-label="Randomize palette" ${paletteLocked ? "disabled" : ""}><i class="iconoir-dice-three"></i></button>
         </div>
         <div class="palette-color-controls">
-          ${["h", "s", "l"].map((key) => `<label><span>${key.toUpperCase()}</span><input data-channel="${key}" data-live="true" type="range" min="0" max="${key === "h" ? 360 : 100}" step="1" value="${selected.color[key]}"><output>${Math.round(selected.color[key])}</output></label>`).join("")}
+          ${["h", "s", "l"].map((key) => `<label><span>${key.toUpperCase()}</span><input data-channel="${key}" data-live="true" type="range" aria-label="${key === "h" ? "Hue" : key === "s" ? "Saturation" : "Lightness"}" min="0" max="${key === "h" ? 360 : 100}" step="1" value="${selected.color[key]}"><output>${Math.round(selected.color[key])}</output></label>`).join("")}
         </div>`;
       const swatches = root.querySelector(".palette-swatches");
       state.stops.forEach((stop, index) => {

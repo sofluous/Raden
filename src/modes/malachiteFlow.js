@@ -3,7 +3,7 @@
   const MALACHITE_FLOW_STAGES = Object.freeze([
     { id: "stoneField", label: "Directional stone field", kind: "field", inputs: ["point"], outputs: ["stoneField"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
     { id: "rings", label: "Malachite rings", kind: "geometry", inputs: ["stoneField", "runtime"], outputs: ["ringStructure"], controlIds: ["malachiteSwirl", "malachiteRingTightness", "malachiteRingVariance"] },
-    { id: "stone", label: "Malachite material", kind: "material", inputs: ["ringStructure"], outputs: ["nativeColor"], controlIds: ["malachiteContrast"], interfaceId: "materialSource" },
+    { id: "stone", label: "Malachite material", kind: "material", inputs: ["ringStructure"], outputs: ["nativeColor"], controlIds: ["malachiteContrast"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Malachite Flow color unchanged." } },
   ]);
   const PALETTE = Object.freeze([

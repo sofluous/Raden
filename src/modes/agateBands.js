@@ -4,7 +4,7 @@
     { id: "stoneField", label: "Warped stone field", kind: "field", inputs: ["point", "runtime"], outputs: ["stoneField"], controlIds: ["naturalScale", "naturalWarp"] },
     { id: "bands", label: "Agate bands", kind: "geometry", inputs: ["stoneField"], outputs: ["bandStructure"], controlIds: ["agateBandFreq", "agateBandJitter"] },
     { id: "veins", label: "Mineral veins", kind: "geometry", inputs: ["bandStructure"], outputs: ["veinStructure"], controlIds: ["agateVeinDensity", "agateEdgeDarken"] },
-    { id: "stone", label: "Translucent stone", kind: "material", inputs: ["veinStructure"], outputs: ["nativeColor"], controlIds: ["agateTranslucency"], interfaceId: "materialSource" },
+    { id: "stone", label: "Translucent stone", kind: "material", inputs: ["veinStructure"], outputs: ["nativeColor"], controlIds: ["agateTranslucency"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Agate Bands color unchanged." } },
   ]);
   const PALETTE = Object.freeze([

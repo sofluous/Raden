@@ -4,7 +4,7 @@
     { id: "colonyField", label: "Colony field", kind: "field", inputs: ["point", "runtime"], outputs: ["colonyField"], controlIds: ["naturalScale", "naturalWarp", "lichenPatchScale"] },
     { id: "growth", label: "Colony growth", kind: "geometry", inputs: ["colonyField"], outputs: ["growthStructure"], controlIds: ["lichenBranching", "lichenCoverage"] },
     { id: "edges", label: "Colony edges", kind: "surface", inputs: ["growthStructure"], outputs: ["edgeStructure"], controlIds: ["lichenEdgeRoughness"] },
-    { id: "moisture", label: "Moisture response", kind: "material", inputs: ["edgeStructure"], outputs: ["nativeColor"], controlIds: ["lichenMoistureTone"], interfaceId: "materialSource" },
+    { id: "moisture", label: "Moisture response", kind: "material", inputs: ["edgeStructure"], outputs: ["nativeColor"], controlIds: ["lichenMoistureTone"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Lichen Growth color unchanged." } },
   ]);
   const PALETTE = Object.freeze([[38, 48, 32], [88, 110, 68], [150, 167, 106], [213, 221, 180]].map((color) => Object.freeze(color)));
