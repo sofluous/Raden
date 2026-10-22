@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "topography.js"));
 
@@ -184,13 +185,60 @@ assert.throws(
 const registered = context.window.RadenModes.getRuntime("topography");
 assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
+assert.equal(registered.ownsAuthoredPalette, true);
+const stages = registered.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), ["terrain", "erosion", "contours", "authoredPalette"]);
+assert.equal(stages.find((stage) => stage.id === "contours").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+const bypassConfig = {
+  width: 3,
+  height: 2,
+  layers: 2,
+  scale: 0.006,
+  topoRidge: 0.4,
+  topoWarp: 0.3,
+  topoErosion: 1,
+  topoBandCount: 6,
+  topoRenderMode: "gradient",
+};
+const noErosion = context.window.RadenTopography.createTopographyRenderer(bypassConfig, {
+  baseNoise,
+  disabledStageIds: ["erosion", "authoredPalette"],
+  mapAuthoredPalette: () => { throw new Error("Disabled palette stage must not run."); },
+});
+const untouched = noErosion.createHeightField((x, y) => getPoint(x, y, bypassConfig));
+const beforeErosion = plain(untouched);
+assert.equal(noErosion.erodeHeightField(untouched), untouched);
+assert.deepEqual(plain(untouched), beforeErosion);
+const bypassInspection = noErosion.inspectPixel(0, 0, untouched);
+assert.deepEqual(bypassInspection.pixel, bypassInspection.stages.contours);
+
+let paletteCalls = 0;
+const paletteRenderer = context.window.RadenTopography.createTopographyRenderer(bypassConfig, {
+  baseNoise,
+  mapAuthoredPalette: (pixel) => {
+    paletteCalls += 1;
+    return { ...pixel, r: pixel.r + 1 };
+  },
+});
+const paletteHeights = paletteRenderer.createHeightField((x, y) => getPoint(x, y, bypassConfig));
+paletteRenderer.erodeHeightField(paletteHeights);
+const renderedPixel = paletteRenderer.renderPixel(0, 0, paletteHeights);
+assert.equal(paletteCalls, 1);
+assert.deepEqual(paletteRenderer.inspectPixel(0, 0, paletteHeights).pixel, renderedPixel);
+assert.equal(paletteCalls, 2);
+assert.throws(
+  () => context.window.RadenTopography.createTopographyRenderer(bypassConfig, { baseNoise, disabledStageIds: ["terrain"] }),
+  /Cannot disable required stage: terrain/,
+);
 
 const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 assert.match(
   html,
   /topography:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateTopography/,
 );
-assert.match(html, /function generateTopographyLegacy\(/);
+assert.doesNotMatch(html, /function generateTopographyLegacy\(/);
 assert.match(html, /getRowsPerFrame\("topography", config\.preview\)/);
 assert.match(html, /completeDelayMs:\s*800/);
 

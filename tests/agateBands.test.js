@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "agateBands.js"));
 
@@ -30,13 +31,8 @@ assert.match(
   /agateband:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateAgateBands/,
 );
 assert.match(html, /function generateAgateBands\(/);
-assert.match(html, /getRowsPerFrame\("agateband", config\.preview\)/);
-assert.match(html, /completeMessage:\s*"Agate bands rendered"/);
-
-const legacySource = html.match(
-  /function renderAgateBandPixel[\s\S]*?(?=\n      function renderMalachiteFlowPixel)/,
-)[0];
-vm.runInNewContext(legacySource, context);
+assert.match(html, /function generateRegisteredNaturalMode\(/);
+assert.match(html, /RadenRenderPipeline\.runPixelRenderer/);
 
 const zeroConfig = context.window.RadenAgateBands.normalizeAgateConfig({
   naturalScale: 0,
@@ -47,13 +43,13 @@ const zeroConfig = context.window.RadenAgateBands.normalizeAgateConfig({
   agateTranslucency: 0,
   agateEdgeDarken: 0,
 });
-assert.equal(zeroConfig.naturalScale, 0.008);
-assert.equal(zeroConfig.warp, 0.35);
-assert.equal(zeroConfig.bandFreq, 1.18);
-assert.equal(zeroConfig.bandJitter, 0.34);
-assert.equal(zeroConfig.veinDensity, 0.74);
-assert.equal(zeroConfig.translucency, 0.58);
-assert.equal(zeroConfig.edgeDarken, 0.52);
+assert.equal(zeroConfig.naturalScale, 0.0005);
+assert.equal(zeroConfig.warp, 0);
+assert.equal(zeroConfig.bandFreq, 0.2);
+assert.equal(zeroConfig.bandJitter, 0);
+assert.equal(zeroConfig.veinDensity, 0);
+assert.equal(zeroConfig.translucency, 0);
+assert.equal(zeroConfig.edgeDarken, 0);
 
 const makeSimplex = (offset) => ({
   noise2D: (x, y) => Math.sin(x * 0.731 + y * 1.173 + offset),
@@ -86,6 +82,7 @@ for (const testCase of [
     },
     nx: -0.44,
     ny: 0.21,
+    expected: [212, 169, 128, 255],
   },
   {
     config: {
@@ -99,21 +96,11 @@ for (const testCase of [
     },
     nx: 0.73,
     ny: -0.58,
+    expected: [114, 72, 52, 255],
   },
 ]) {
   const normalized = context.window.RadenAgateBands.normalizeAgateConfig(
     testCase.config,
-  );
-  const legacyRuntime = Object.assign({}, runtime, {
-    naturalScale: normalized.naturalScale,
-    warp: normalized.warp,
-  });
-  const expected = context.renderAgateBandPixel(
-    testCase.config,
-    profile,
-    legacyRuntime,
-    testCase.nx,
-    testCase.ny,
   );
   const renderer = context.window.RadenAgateBands.createAgateRenderer(
     testCase.config,
@@ -122,13 +109,66 @@ for (const testCase of [
   const actual = renderer.renderPixel({ nx: testCase.nx, ny: testCase.ny });
   assert.deepEqual(
     [actual.r, actual.g, actual.b, actual.a],
-    JSON.parse(JSON.stringify(expected)),
+    testCase.expected,
   );
 }
 
 const registered = context.window.RadenModes.getRuntime("agateband");
 assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
+assert.equal(registered.ownsAuthoredPalette, true);
+const stages = registered.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), [
+  "stoneField",
+  "bands",
+  "veins",
+  "stone",
+  "authoredPalette",
+]);
+assert.equal(stages.find((stage) => stage.id === "stone").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const paletteRenderer = context.window.RadenAgateBands.createAgateRenderer(
+  {},
+  {
+    ...runtime,
+    mapAuthoredPalette: (pixel) => {
+      paletteCalls += 1;
+      return { ...pixel, r: pixel.r + 1 };
+    },
+  },
+);
+const point = { nx: 0.24, ny: -0.35 };
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), [
+  "stoneField",
+  "bands",
+  "veins",
+  "stone",
+  "authoredPalette",
+]);
+
+const bypassRenderer = context.window.RadenAgateBands.createAgateRenderer(
+  {},
+  {
+    ...runtime,
+    disabledStageIds: ["authoredPalette"],
+    mapAuthoredPalette: () => {
+      throw new Error("Disabled palette stage must not run.");
+    },
+  },
+);
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.deepEqual(bypassInspection.pixel, bypassInspection.stages.stone);
+assert.throws(
+  () => context.window.RadenAgateBands.createAgateRenderer({}, { ...runtime, disabledStageIds: ["bands"] }),
+  /Cannot disable required stage: bands/,
+);
 assert.throws(
   () => context.window.RadenAgateBands.createAgateRenderer({}, {}),
   /three simplex samplers/,

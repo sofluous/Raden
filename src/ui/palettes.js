@@ -12,10 +12,12 @@
     let selectedIndex = 0;
     let editing = false;
 
+    const getModeId = () => options.getModeId?.() || options.modeId;
+
     function currentState() {
       return (
         options.getPalette?.() ||
-        global.RadenPalettes.createPaletteState(options.modeId, presetSelect.value)
+        global.RadenPalettes.createPaletteState(getModeId(), presetSelect.value)
       );
     }
 
@@ -24,6 +26,7 @@
     }
 
     function render() {
+      options.beforeRender?.({ modeId: getModeId(), presetSelect });
       const state = currentState();
       if (!state) return;
       const customOption = presetSelect.querySelector('option[value="custom"]');
@@ -62,7 +65,7 @@
           editing = true;
         });
         input.addEventListener("input", () => {
-          const next = global.RadenPalettes.normalizePaletteState(state, { modeId: options.modeId });
+          const next = global.RadenPalettes.normalizePaletteState(state, { modeId: getModeId() });
           next.source = "custom";
           next.presetId = null;
           next.stops[selectedIndex].color[input.dataset.channel] = Number(input.value);
@@ -92,7 +95,7 @@
       root.querySelector('[data-action="randomize"]').onclick = () => {
         if (options.isPaletteLocked?.()) return;
         const next = global.RadenPalettes.randomizePaletteState(state, {
-          modeId: options.modeId,
+          modeId: getModeId(),
         });
         commit(next, "Randomize palette", "action");
         render();
@@ -106,7 +109,7 @@
       render();
     });
     document.addEventListener("raden:control-lock-change", (event) => {
-      if (event.detail?.id === "nacrePalette") render();
+      if (event.detail?.id === (options.lockControlId || presetSelect.id)) render();
     });
     render();
     return { render };

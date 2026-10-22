@@ -45,6 +45,7 @@
         "opalVeinDensity",
         "opalFire",
         "opalMatrix",
+        "nacrePalette",
       ],
     },
     {
@@ -58,6 +59,7 @@
         "labradoriteBanding",
         "labradoriteFlash",
         "labradoriteDarkness",
+        "nacrePalette",
       ],
     },
     {
@@ -71,6 +73,7 @@
         "marbleContrast",
         "marbleInkDrift",
         "marbleLightness",
+        "nacrePalette",
       ],
     },
     {
@@ -86,6 +89,7 @@
         "agateVeinDensity",
         "agateTranslucency",
         "agateEdgeDarken",
+        "nacrePalette",
       ],
     },
     {
@@ -102,6 +106,7 @@
         "malachiteRingTightness",
         "malachiteRingVariance",
         "malachiteContrast",
+        "nacrePalette",
       ],
     },
     {
@@ -117,6 +122,7 @@
         "lichenCoverage",
         "lichenMoistureTone",
         "lichenEdgeRoughness",
+        "nacrePalette",
       ],
     },
     {
@@ -132,6 +138,7 @@
         "iceFrostDensity",
         "iceMeltSoftness",
         "iceHaze",
+        "nacrePalette",
       ],
     },
     {
@@ -149,6 +156,7 @@
         "deltaSedimentMix",
         "deltaFloodplainSoftness",
         "deltaErosion",
+        "nacrePalette",
       ],
     },
     {
@@ -160,6 +168,7 @@
         "naturalScale",
         "naturalWarp",
         "naturalTurbulence",
+        "nacrePalette",
       ],
     },
     {
@@ -177,6 +186,7 @@
         "topoRidge",
         "topoWarp",
         "topoErosion",
+        "nacrePalette",
       ],
     },
   ];
@@ -197,7 +207,32 @@
         `Mode runtime ${modeId} requires normalizeConfig() and createRenderer().`,
       );
     }
-    runtimesById.set(modeId, Object.freeze(Object.assign({}, runtime)));
+    const stageDefinition = runtime.stages
+      ? { externalInputs: runtime.externalInputs || ["point", "runtime"], stages: runtime.stages }
+      : null;
+    let stageDescription = null;
+    if (stageDefinition && global.RadenStages?.createStagePipeline) {
+      stageDescription = global.RadenStages.createStagePipeline({
+        modeId,
+        externalInputs: stageDefinition.externalInputs,
+        stages: stageDefinition.stages,
+        execute: (value) => value,
+      }).describe();
+    }
+    const createRenderer = runtime.createRenderer;
+    const registeredRuntime = Object.assign({}, runtime, {
+      stages: stageDescription?.stages || runtime.stages || null,
+      ownsAuthoredPalette: !!stageDescription?.stages.some(
+        (stage) => stage.id === "authoredPalette",
+      ),
+      describeStages: stageDescription ? () => stageDescription : null,
+      createRenderer: stageDescription
+        ? (...args) => Object.assign(createRenderer(...args), {
+            describeStages: () => stageDescription,
+          })
+        : createRenderer,
+    });
+    runtimesById.set(modeId, Object.freeze(registeredRuntime));
   }
 
   function getRuntime(modeId) {

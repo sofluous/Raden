@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "labradorite.js"));
 
@@ -71,11 +72,11 @@ const zero = context.window.RadenLabradorite.normalizeLabradoriteConfig({
   labradoriteFlash: 0,
   labradoriteDarkness: 0,
 });
-assert.equal(zero.scale, 0.008);
-assert.equal(zero.direction, 0.33 * Math.PI * 2);
-assert.equal(zero.bandSharpness, 1.6);
-assert.equal(zero.flashStrength, 1.35);
-assert.equal(zero.baseDarkness, 0.68);
+assert.equal(zero.scale, 0.002);
+assert.equal(zero.direction, 0);
+assert.equal(zero.bandSharpness, 0.4);
+assert.equal(zero.flashStrength, 0);
+assert.equal(zero.baseDarkness, 0);
 
 const simplex = {
   noise2D: (x, y) => Math.sin(x * 0.619 + y * 1.271 - 0.28),
@@ -119,6 +120,67 @@ for (const testCase of [
 const runtime = context.window.RadenModes.getRuntime("labradorite");
 assert.equal(typeof runtime.normalizeConfig, "function");
 assert.equal(typeof runtime.createRenderer, "function");
+const stages = runtime.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), [
+  "stoneField",
+  "directionalBands",
+  "flash",
+  "matrix",
+  "authoredPalette",
+]);
+assert.equal(stages.find((stage) => stage.id === "flash").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "matrix").interfaceId, "colorTransform");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const paletteRenderer = context.window.RadenLabradorite.createLabradoriteRenderer(
+  {
+    labradoriteScale: 0.008,
+    labradoriteDirection: 0.33,
+    labradoriteBanding: 1.6,
+    labradoriteFlash: 1.35,
+    labradoriteDarkness: 0.68,
+  },
+  {
+    simplex,
+    mapAuthoredPalette: (pixel) => {
+      paletteCalls += 1;
+      return { ...pixel, b: pixel.b + 1 };
+    },
+  },
+);
+const point = { nx: 0.17, ny: -0.29 };
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), [
+  "stoneField",
+  "directionalBands",
+  "flash",
+  "matrix",
+  "authoredPalette",
+]);
+
+const bypassRenderer = context.window.RadenLabradorite.createLabradoriteRenderer(
+  {},
+  {
+    simplex,
+    disabledStageIds: ["matrix", "authoredPalette"],
+    mapAuthoredPalette: () => {
+      throw new Error("Disabled palette stage must not run.");
+    },
+  },
+);
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.equal(bypassInspection.pixel.r, bypassInspection.stages.flash.r);
+assert.equal(bypassInspection.pixel.g, bypassInspection.stages.flash.g);
+assert.equal(bypassInspection.pixel.b, bypassInspection.stages.flash.b);
+assert.throws(
+  () => context.window.RadenLabradorite.createLabradoriteRenderer({}, { simplex, disabledStageIds: ["stoneField"] }),
+  /Cannot disable required stage: stoneField/,
+);
 assert.throws(
   () => context.window.RadenLabradorite.createLabradoriteRenderer({}, {}),
   /simplex sampler/,
@@ -129,7 +191,7 @@ assert.match(
   html,
   /labradorite:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateLabradoriteFlash/,
 );
-assert.match(html, /function generateLabradoriteFlashLegacy\(/);
+assert.doesNotMatch(html, /function generateLabradoriteFlashLegacy\(/);
 assert.match(html, /completeMessage:\s*"Labradorite rendered"/);
 assert.match(html, /filter:\s*"blur\(9px\)"/);
 

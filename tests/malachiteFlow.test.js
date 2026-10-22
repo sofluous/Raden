@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "malachiteFlow.js"));
 
@@ -30,13 +31,8 @@ assert.match(
   /malachiteflow:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateMalachiteFlow/,
 );
 assert.match(html, /function generateMalachiteFlow\(/);
-assert.match(html, /getRowsPerFrame\("malachiteflow", config\.preview\)/);
-assert.match(html, /completeMessage:\s*"Malachite flow rendered"/);
-
-const legacySource = html.match(
-  /function renderMalachiteFlowPixel[\s\S]*?(?=\n      function pointSegmentDistance)/,
-)[0];
-vm.runInNewContext(legacySource, context);
+assert.match(html, /function generateRegisteredNaturalMode\(/);
+assert.match(html, /RadenRenderPipeline\.runPixelRenderer/);
 
 const zeroConfig = context.window.RadenMalachiteFlow.normalizeMalachiteConfig({
   naturalScale: 0,
@@ -48,14 +44,14 @@ const zeroConfig = context.window.RadenMalachiteFlow.normalizeMalachiteConfig({
   malachiteRingVariance: 0,
   malachiteContrast: 0,
 });
-assert.equal(zeroConfig.naturalScale, 0.008);
-assert.equal(zeroConfig.warp, 0.35);
-assert.equal(zeroConfig.turbulence, 0.62);
-assert.equal(zeroConfig.anisotropy, 0.25);
-assert.equal(zeroConfig.swirl, 0.58);
-assert.equal(zeroConfig.ringTightness, 1.16);
-assert.equal(zeroConfig.ringVariance, 0.36);
-assert.equal(zeroConfig.contrast, 1.08);
+assert.equal(zeroConfig.naturalScale, 0.0005);
+assert.equal(zeroConfig.warp, 0);
+assert.equal(zeroConfig.turbulence, 0);
+assert.equal(zeroConfig.anisotropy, 0);
+assert.equal(zeroConfig.swirl, 0);
+assert.equal(zeroConfig.ringTightness, 0.2);
+assert.equal(zeroConfig.ringVariance, 0);
+assert.equal(zeroConfig.contrast, 0.2);
 
 const makeSimplex = (offset) => ({
   noise2D: (x, y) => Math.sin(x * 0.731 + y * 1.173 + offset),
@@ -89,6 +85,7 @@ for (const testCase of [
     },
     nx: -0.44,
     ny: 0.21,
+    expected: [36, 114, 86, 255],
   },
   {
     config: {
@@ -103,23 +100,11 @@ for (const testCase of [
     },
     nx: 0.73,
     ny: -0.58,
+    expected: [142, 204, 171, 255],
   },
 ]) {
   const normalized = context.window.RadenMalachiteFlow.normalizeMalachiteConfig(
     testCase.config,
-  );
-  const legacyRuntime = Object.assign({}, runtime, {
-    naturalScale: normalized.naturalScale,
-    warp: normalized.warp,
-    turbulence: normalized.turbulence,
-    anisotropy: normalized.anisotropy,
-  });
-  const expected = context.renderMalachiteFlowPixel(
-    testCase.config,
-    profile,
-    legacyRuntime,
-    testCase.nx,
-    testCase.ny,
   );
   const renderer = context.window.RadenMalachiteFlow.createMalachiteRenderer(
     testCase.config,
@@ -128,13 +113,64 @@ for (const testCase of [
   const actual = renderer.renderPixel({ nx: testCase.nx, ny: testCase.ny });
   assert.deepEqual(
     [actual.r, actual.g, actual.b, actual.a],
-    JSON.parse(JSON.stringify(expected)),
+    testCase.expected,
   );
 }
 
 const registered = context.window.RadenModes.getRuntime("malachiteflow");
 assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
+assert.equal(registered.ownsAuthoredPalette, true);
+const stages = registered.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), [
+  "stoneField",
+  "rings",
+  "stone",
+  "authoredPalette",
+]);
+assert.equal(stages.find((stage) => stage.id === "stone").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const paletteRenderer = context.window.RadenMalachiteFlow.createMalachiteRenderer(
+  {},
+  {
+    ...runtime,
+    mapAuthoredPalette: (pixel) => {
+      paletteCalls += 1;
+      return { ...pixel, g: pixel.g + 1 };
+    },
+  },
+);
+const point = { nx: 0.28, ny: -0.39 };
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), [
+  "stoneField",
+  "rings",
+  "stone",
+  "authoredPalette",
+]);
+
+const bypassRenderer = context.window.RadenMalachiteFlow.createMalachiteRenderer(
+  {},
+  {
+    ...runtime,
+    disabledStageIds: ["authoredPalette"],
+    mapAuthoredPalette: () => {
+      throw new Error("Disabled palette stage must not run.");
+    },
+  },
+);
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.deepEqual(bypassInspection.pixel, bypassInspection.stages.stone);
+assert.throws(
+  () => context.window.RadenMalachiteFlow.createMalachiteRenderer({}, { ...runtime, disabledStageIds: ["rings"] }),
+  /Cannot disable required stage: rings/,
+);
 assert.throws(
   () => context.window.RadenMalachiteFlow.createMalachiteRenderer({}, {}),
   /three simplex samplers/,

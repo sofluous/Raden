@@ -6,6 +6,12 @@
     return Math.max(0, Math.min(1, v));
   }
 
+  function finiteOr(value, fallback) {
+    if (value === null || value === undefined || value === "") return fallback;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
@@ -84,6 +90,7 @@
 
   global.RadenShared = Object.assign({}, global.RadenShared || {}, {
     clamp01,
+    finiteOr,
     lerp,
     smoothstep,
     fade,

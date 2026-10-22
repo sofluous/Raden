@@ -2,6 +2,73 @@
  * Exposed via window.RadenNacre while the renderer remains in the static shell.
  */
 (function registerRadenNacre(global) {
+  const NACRE_STAGES = Object.freeze([
+    {
+      id: "sampling",
+      label: "Coordinates and light field",
+      kind: "coordinates",
+      inputs: ["point", "lightVec"],
+      outputs: ["angleInfluence", "highlightBoost", "samplePosition"],
+      controlIds: ["flowMode", "layerLength", "lightAngle", "lightCurvature", "lightSpread", "highlightStrength"],
+    },
+    {
+      id: "noise",
+      label: "Flow noise",
+      kind: "field",
+      inputs: ["samplePosition"],
+      outputs: ["noise"],
+      controlIds: ["scale", "layers"],
+    },
+    {
+      id: "growth",
+      label: "Growth bands and seams",
+      kind: "geometry",
+      inputs: ["point", "noise", "angleInfluence", "highlightBoost"],
+      outputs: ["growthField", "seamField", "lightingField"],
+      controlIds: ["flowMode", "layerLength", "ringSpacing", "ringJitter", "seamThickness", "highlightStrength", "lightSpread"],
+    },
+    {
+      id: "family",
+      label: "Texture family modulation",
+      kind: "geometry",
+      inputs: ["growthField", "seamField", "noise", "point"],
+      outputs: ["familyBanding", "familySeam", "familyMaterialMultipliers"],
+      controlIds: ["textureFamily"],
+      optional: true,
+      bypass: "Use unmodified growth bands and seams with neutral material multipliers.",
+    },
+    {
+      id: "palette",
+      label: "Nacre color mapping",
+      kind: "material",
+      inputs: ["growthField", "familyBanding", "familySeam", "lightingField"],
+      outputs: ["nacreField", "baseColor"],
+      controlIds: ["blend", "intensity", "range", "nacrePalette", "nacreBrilliance", "nacreChromatic"],
+      interfaceId: "materialSource",
+    },
+    {
+      id: "surface",
+      label: "Surface and microstructure",
+      kind: "surface",
+      inputs: ["baseColor", "familySeam", "nacreField", "noise", "point"],
+      outputs: ["surfaceColor"],
+      controlIds: ["seamContrast", "surfacePolish", "scratchDensity", "scratchAngle"],
+      interfaceId: "colorTransform",
+      optional: true,
+      bypass: { type: "identity-color", input: "baseColor", output: "surfaceColor", description: "Forward palette RGB without seam shading, lift, or scratches." },
+    },
+    {
+      id: "substrate",
+      label: "Substrate composite",
+      kind: "composite",
+      inputs: ["surfaceColor", "nacreField", "familySeam", "highlightBoost"],
+      outputs: ["pixel"],
+      controlIds: ["substrateTone", "substrateMix", "highlightStrength"],
+      interfaceId: "colorTransform",
+      optional: true,
+      bypass: { type: "identity-color", input: "surfaceColor", output: "pixel", description: "Return surface RGB directly at full opacity." },
+    },
+  ]);
   const NACRE_DEFAULTS = Object.freeze({
     layers: 3,
     scale: 0.006,
@@ -381,7 +448,7 @@
       y: Math.sin(config.scratchAngle * 2 * Math.PI),
     };
 
-    function renderPixel(point) {
+    function executeStages(point, stageState) {
       const { x, y, nx, ny, cx, cy } = point;
       const { angleInfluence, highlightBoost, px, py } =
         computeNacreSamplingFields({
@@ -418,16 +485,24 @@
         lightSpread,
         highlightBoost,
       });
-      const family = computeNacreFamilyFields({
-        textureFamily: config.textureFamily,
-        bandingField: growth.bandingField,
-        seamMask: growth.seamMask,
-        seamFeather: growth.seamFeather,
-        noise,
-        nx,
-        ny,
-        angleInfluence,
-      });
+      const family = stageState.isEnabled("family")
+        ? computeNacreFamilyFields({
+            textureFamily: config.textureFamily,
+            bandingField: growth.bandingField,
+            seamMask: growth.seamMask,
+            seamFeather: growth.seamFeather,
+            noise,
+            nx,
+            ny,
+            angleInfluence,
+          })
+        : {
+            familyBanding: growth.bandingField,
+            familySeam: clamp01(growth.seamMask * 0.72 + growth.seamFeather * 0.28),
+            familyBrillianceMul: 1,
+            familyChromaticMul: 1,
+            substrateCoverageBias: 0,
+          };
       const color = computeNacrePaletteColor({
         geometricField: growth.geometricField,
         familyBanding: family.familyBanding,
@@ -448,20 +523,25 @@
         highlightBoost,
       });
       const baseRgb = runtime.hslToRgb(color.shiftedHue, color.s, color.l);
-      const surface = applyNacreSurfaceAndScratches({
-        r: baseRgb[0],
-        g: baseRgb[1],
-        b: baseRgb[2],
-        familySeam: family.familySeam,
-        seamContrast: config.seamContrast,
-        nacreField: color.nacreField,
-        surfacePolish: config.surfacePolish,
-        nx,
-        ny,
-        scratchDir,
-        scratchDensity: config.scratchDensity,
-        noise,
-      });
+      const surface = stageState.isEnabled("surface")
+        ? applyNacreSurfaceAndScratches({
+            r: baseRgb[0],
+            g: baseRgb[1],
+            b: baseRgb[2],
+            familySeam: family.familySeam,
+            seamContrast: config.seamContrast,
+            nacreField: color.nacreField,
+            surfacePolish: config.surfacePolish,
+            nx,
+            ny,
+            scratchDir,
+            scratchDensity: config.scratchDensity,
+            noise,
+          })
+        : { r: baseRgb[0], g: baseRgb[1], b: baseRgb[2] };
+      if (!stageState.isEnabled("substrate")) {
+        return { r: surface.r, g: surface.g, b: surface.b, a: 255 };
+      }
       return compositeNacreSubstrate({
         r: surface.r,
         g: surface.g,
@@ -476,7 +556,21 @@
       });
     }
 
-    return { config, renderPixel };
+    if (!global.RadenStages?.createStagePipeline) {
+      throw new TypeError("Mother of Pearl renderer requires the procedural-stage contract.");
+    }
+    const stagePipeline = global.RadenStages.createStagePipeline({
+      modeId: "motherofpearl",
+      externalInputs: ["point", "lightVec"],
+      stages: NACRE_STAGES,
+      execute: executeStages,
+      disabledStageIds: runtime.disabledStageIds,
+    });
+    return {
+      config,
+      renderPixel: stagePipeline.run,
+      describeStages: stagePipeline.describe,
+    };
   }
 
   const api = {
@@ -488,10 +582,13 @@
     computeNacrePaletteColor,
     applyNacreSurfaceAndScratches,
     compositeNacreSubstrate,
+    NACRE_STAGES,
   };
   global.RadenNacre = Object.assign({}, global.RadenNacre || {}, api);
   global.RadenModes?.registerRuntime?.("motherofpearl", {
     normalizeConfig: normalizeNacreConfig,
     createRenderer: createNacreRenderer,
+    stages: NACRE_STAGES,
+    externalInputs: ["point", "lightVec"],
   });
 })(window);

@@ -10,6 +10,7 @@ const run = (relativePath) => {
 };
 run(path.join("src", "shared", "math_color_palette.js"));
 run(path.join("src", "shared", "cellular.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "bubbleFilm.js"));
 
@@ -31,14 +32,9 @@ assert.match(
   /bubblefilm:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateBubbleFilm/,
 );
 assert.match(html, /function generateBubbleFilm\(/);
-assert.match(html, /getRowsPerFrame\("bubblefilm", config\.preview\)/);
+assert.match(html, /function generateRegisteredNaturalMode\(/);
 assert.match(html, /RadenPixelLoop\.createPixelLoop/);
-assert.match(html, /completeMessage:\s*"Bubble film rendered"/);
-const legacySource = html.match(
-  /function renderBubbleFilmPixel[\s\S]*?(?=\n      function renderRiverDeltaPixel)/,
-)[0];
-vm.runInNewContext(legacySource, context);
-
+assert.match(html, /RadenRenderPipeline\.runPixelRenderer/);
 function legacyCellular(x, y, cellScale, seed) {
   const hash2 = (hx, hy, hs) => {
     const n = Math.sin(hx * 127.1 + hy * 311.7 + hs * 0.0001) * 43758.5453123;
@@ -102,9 +98,9 @@ const zeroConfig = context.window.RadenBubbleFilm.normalizeBubbleFilmConfig({
   naturalWarp: 0,
   naturalTurbulence: 0,
 });
-assert.equal(zeroConfig.naturalScale, 0.008);
-assert.equal(zeroConfig.warp, 0.35);
-assert.equal(zeroConfig.turbulence, 0.62);
+assert.equal(zeroConfig.naturalScale, 0.0005);
+assert.equal(zeroConfig.warp, 0);
+assert.equal(zeroConfig.turbulence, 0);
 assert.equal(zeroConfig.cellScale, 1.06);
 
 const makeSimplex = (offset) => ({
@@ -126,23 +122,11 @@ const profile = {
 };
 
 for (const testCase of [
-  { config: { naturalScale: 0.004, naturalWarp: 0.2, naturalTurbulence: 0.1 }, nx: -0.44, ny: 0.21 },
-  { config: { naturalScale: 0.011, naturalWarp: 0.62, naturalTurbulence: 0.68 }, nx: 0.73, ny: -0.58 },
+  { config: { naturalScale: 0.004, naturalWarp: 0.2, naturalTurbulence: 0.1 }, nx: -0.44, ny: 0.21, expected: [98, 148, 176, 255] },
+  { config: { naturalScale: 0.011, naturalWarp: 0.62, naturalTurbulence: 0.68 }, nx: 0.73, ny: -0.58, expected: [63, 58, 90, 255] },
 ]) {
   const normalized = context.window.RadenBubbleFilm.normalizeBubbleFilmConfig(
     testCase.config,
-  );
-  const legacyRuntime = Object.assign({}, runtime, {
-    naturalScale: normalized.naturalScale,
-    warp: normalized.warp,
-    turbulence: normalized.turbulence,
-  });
-  const expected = context.renderBubbleFilmPixel(
-    testCase.config,
-    profile,
-    legacyRuntime,
-    testCase.nx,
-    testCase.ny,
   );
   const renderer = context.window.RadenBubbleFilm.createBubbleFilmRenderer(
     testCase.config,
@@ -151,13 +135,73 @@ for (const testCase of [
   const actual = renderer.renderPixel({ nx: testCase.nx, ny: testCase.ny });
   assert.deepEqual(
     [actual.r, actual.g, actual.b, actual.a],
-    plain(expected),
+    testCase.expected,
   );
+  const diagnostics = renderer.inspectPixel({ nx: testCase.nx, ny: testCase.ny });
+  assert.deepEqual(plain(diagnostics.pixel), plain(actual));
+  assert.deepEqual(Object.keys(diagnostics.stages), [
+    "pressureWarp",
+    "cellStructure",
+    "thinFilm",
+    "surface",
+    "authoredPalette",
+  ]);
+  const stages = renderer.describeStages().stages;
+  assert.equal(stages.find((stage) => stage.id === "thinFilm").interfaceId, "materialSource");
+  for (const id of ["surface", "authoredPalette"]) {
+    const stage = stages.find((item) => item.id === id);
+    assert.equal(stage.interfaceId, "colorTransform");
+    assert.equal(stage.bypass.type, "identity-color");
+  }
 }
+
+let paletteCalls = 0;
+const mappedRenderer = context.window.RadenBubbleFilm.createBubbleFilmRenderer(
+  { naturalScale: 0.004, naturalWarp: 0.2, naturalTurbulence: 0.1 },
+  Object.assign({}, runtime, {
+    mapAuthoredPalette(pixel) {
+      paletteCalls += 1;
+      return Object.assign({}, pixel, { r: 7 });
+    },
+  }),
+);
+assert.equal(mappedRenderer.renderPixel({ nx: 0.2, ny: -0.1 }).r, 7);
+assert.equal(paletteCalls, 1);
+assert.equal(mappedRenderer.inspectPixel({ nx: 0.2, ny: -0.1 }).pixel.r, 7);
+assert.equal(paletteCalls, 2);
+assert.equal(typeof mappedRenderer.describeStages, "function");
+const bypassedRenderer = context.window.RadenBubbleFilm.createBubbleFilmRenderer(
+  { naturalScale: 0.004, naturalWarp: 0.2, naturalTurbulence: 0.1 },
+  Object.assign({}, runtime, {
+    disabledStageIds: ["surface", "authoredPalette"],
+    mapAuthoredPalette() {
+      throw new Error("Disabled palette stage must not run");
+    },
+  }),
+);
+const bypassed = bypassedRenderer.inspectPixel({ nx: 0.2, ny: -0.1 });
+assert.deepEqual(plain(bypassed.disabledStageIds), ["surface", "authoredPalette"]);
+assert.deepEqual(
+  [bypassed.pixel.r, bypassed.pixel.g, bypassed.pixel.b],
+  [
+    bypassed.stages.thinFilm.r,
+    bypassed.stages.thinFilm.g,
+    bypassed.stages.thinFilm.b,
+  ],
+);
+assert.equal(bypassed.pixel.a, 255);
+assert.throws(
+  () => context.window.RadenBubbleFilm.createBubbleFilmRenderer(
+    {},
+    Object.assign({}, runtime, { disabledStageIds: ["cellStructure"] }),
+  ),
+  /Cannot disable required stage: cellStructure/,
+);
 
 const registered = context.window.RadenModes.getRuntime("bubblefilm");
 assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
+assert.equal(typeof registered.describeStages, "function");
 assert.throws(
   () => context.window.RadenBubbleFilm.createBubbleFilmRenderer({}, {}),
   /simplex samplers/,

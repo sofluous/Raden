@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "marbleInk.js"));
 
@@ -62,11 +63,11 @@ const zero = context.window.RadenMarbleInk.normalizeMarbleConfig({
   marbleInkDrift: 0,
   marbleLightness: 0,
 });
-assert.equal(zero.flowScale, 0.007);
-assert.equal(zero.veinFreq, 1.2);
-assert.equal(zero.contrast, 0.78);
-assert.equal(zero.inkDrift, 0.42);
-assert.equal(zero.stoneLightness, 0.72);
+assert.equal(zero.flowScale, 0.002);
+assert.equal(zero.veinFreq, 0.2);
+assert.equal(zero.contrast, 0);
+assert.equal(zero.inkDrift, 0);
+assert.equal(zero.stoneLightness, 0);
 
 const simplex = {
   noise2D: (x, y) => Math.sin(x * 0.811 + y * 1.037 + 0.52),
@@ -110,6 +111,56 @@ for (const testCase of [
 const runtime = context.window.RadenModes.getRuntime("marbleink");
 assert.equal(typeof runtime.normalizeConfig, "function");
 assert.equal(typeof runtime.createRenderer, "function");
+const stages = runtime.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), [
+  "flowField",
+  "veins",
+  "stone",
+  "authoredPalette",
+]);
+assert.equal(stages.find((stage) => stage.id === "stone").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const paletteRenderer = context.window.RadenMarbleInk.createMarbleRenderer(
+  {},
+  {
+    simplex,
+    mapAuthoredPalette: (pixel) => {
+      paletteCalls += 1;
+      return { ...pixel, g: pixel.g + 1 };
+    },
+  },
+);
+const point = { nx: -0.31, ny: 0.47 };
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), [
+  "flowField",
+  "veins",
+  "stone",
+  "authoredPalette",
+]);
+
+const bypassRenderer = context.window.RadenMarbleInk.createMarbleRenderer(
+  {},
+  {
+    simplex,
+    disabledStageIds: ["authoredPalette"],
+    mapAuthoredPalette: () => {
+      throw new Error("Disabled palette stage must not run.");
+    },
+  },
+);
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.deepEqual(bypassInspection.pixel, bypassInspection.stages.stone);
+assert.throws(
+  () => context.window.RadenMarbleInk.createMarbleRenderer({}, { simplex, disabledStageIds: ["stone"] }),
+  /Cannot disable required stage: stone/,
+);
 assert.throws(
   () => context.window.RadenMarbleInk.createMarbleRenderer({}, {}),
   /simplex sampler/,
@@ -120,7 +171,7 @@ assert.match(
   html,
   /marbleink:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateMarbleInk/,
 );
-assert.match(html, /function generateMarbleInkLegacy\(/);
+assert.doesNotMatch(html, /function generateMarbleInkLegacy\(/);
 assert.match(html, /completeMessage:\s*"Marble rendered"/);
 assert.match(html, /filter:\s*"blur\(5px\)"/);
 

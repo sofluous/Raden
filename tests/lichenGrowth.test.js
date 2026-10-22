@@ -10,6 +10,7 @@ const run = (relativePath) => {
 };
 run(path.join("src", "shared", "math_color_palette.js"));
 run(path.join("src", "shared", "cellular.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "lichenGrowth.js"));
 
@@ -31,13 +32,8 @@ assert.match(
   /lichengrowth:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateLichenGrowth/,
 );
 assert.match(html, /function generateLichenGrowth\(/);
-assert.match(html, /getRowsPerFrame\("lichengrowth", config\.preview\)/);
-assert.match(html, /completeMessage:\s*"Lichen growth rendered"/);
-
-const legacySource = html.match(
-  /function renderLichenGrowthPixel[\s\S]*?(?=\n      function renderBubbleFilmPixel)/,
-)[0];
-vm.runInNewContext(legacySource, context);
+assert.match(html, /function generateRegisteredNaturalMode\(/);
+assert.match(html, /RadenRenderPipeline\.runPixelRenderer/);
 
 const zeroConfig = context.window.RadenLichenGrowth.normalizeLichenConfig({
   naturalScale: 0,
@@ -48,13 +44,13 @@ const zeroConfig = context.window.RadenLichenGrowth.normalizeLichenConfig({
   lichenCoverage: 0,
   lichenMoistureTone: 0,
 });
-assert.equal(zeroConfig.naturalScale, 0.008);
-assert.equal(zeroConfig.warp, 0.35);
-assert.equal(zeroConfig.patchScale, 0.94);
-assert.equal(zeroConfig.branching, 0.46);
-assert.equal(zeroConfig.edgeRoughness, 0.58);
-assert.equal(zeroConfig.coverage, 0.52);
-assert.equal(zeroConfig.moisture, 0.48);
+assert.equal(zeroConfig.naturalScale, 0.0005);
+assert.equal(zeroConfig.warp, 0);
+assert.equal(zeroConfig.patchScale, 0.2);
+assert.equal(zeroConfig.branching, 0);
+assert.equal(zeroConfig.edgeRoughness, 0);
+assert.equal(zeroConfig.coverage, 0);
+assert.equal(zeroConfig.moisture, 0);
 
 const makeSimplex = (offset) => ({
   noise2D: (x, y) => Math.sin(x * 0.731 + y * 1.173 + offset),
@@ -87,6 +83,7 @@ for (const testCase of [
     },
     nx: -0.44,
     ny: 0.21,
+    expected: [64, 69, 56, 255],
   },
   {
     config: {
@@ -100,21 +97,11 @@ for (const testCase of [
     },
     nx: 0.73,
     ny: -0.58,
+    expected: [72, 87, 56, 255],
   },
 ]) {
   const normalized = context.window.RadenLichenGrowth.normalizeLichenConfig(
     testCase.config,
-  );
-  const legacyRuntime = Object.assign({}, runtime, {
-    naturalScale: normalized.naturalScale,
-    warp: normalized.warp,
-  });
-  const expected = context.renderLichenGrowthPixel(
-    testCase.config,
-    profile,
-    legacyRuntime,
-    testCase.nx,
-    testCase.ny,
   );
   const renderer = context.window.RadenLichenGrowth.createLichenRenderer(
     testCase.config,
@@ -123,13 +110,46 @@ for (const testCase of [
   const actual = renderer.renderPixel({ nx: testCase.nx, ny: testCase.ny });
   assert.deepEqual(
     [actual.r, actual.g, actual.b, actual.a],
-    JSON.parse(JSON.stringify(expected)),
+    testCase.expected,
   );
 }
 
 const registered = context.window.RadenModes.getRuntime("lichengrowth");
 assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
+assert.equal(registered.ownsAuthoredPalette, true);
+const stages = registered.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), ["colonyField", "growth", "edges", "moisture", "authoredPalette"]);
+assert.equal(stages.find((stage) => stage.id === "moisture").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const point = { nx: 0.22, ny: -0.41 };
+const paletteRenderer = context.window.RadenLichenGrowth.createLichenRenderer({}, {
+  ...runtime,
+  mapAuthoredPalette: (pixel) => {
+    paletteCalls += 1;
+    return { ...pixel, b: pixel.b + 1 };
+  },
+});
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), ["colonyField", "growth", "edges", "moisture", "authoredPalette"]);
+
+const bypassRenderer = context.window.RadenLichenGrowth.createLichenRenderer({}, {
+  ...runtime,
+  disabledStageIds: ["authoredPalette"],
+  mapAuthoredPalette: () => { throw new Error("Disabled palette stage must not run."); },
+});
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.deepEqual(bypassInspection.pixel, bypassInspection.stages.moisture);
+assert.throws(
+  () => context.window.RadenLichenGrowth.createLichenRenderer({}, { ...runtime, disabledStageIds: ["growth"] }),
+  /Cannot disable required stage: growth/,
+);
 assert.throws(
   () => context.window.RadenLichenGrowth.createLichenRenderer({}, {}),
   /three simplex samplers/,

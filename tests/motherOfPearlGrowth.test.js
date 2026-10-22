@@ -18,6 +18,11 @@ const registrySource = fs.readFileSync(
   "utf8",
 );
 vm.runInNewContext(registrySource, context);
+const stagesSource = fs.readFileSync(
+  path.join(__dirname, "..", "src", "render", "stages.js"),
+  "utf8",
+);
+vm.runInNewContext(stagesSource, context);
 const source = fs.readFileSync(
   path.join(__dirname, "..", "src", "modes", "motherOfPearl.js"),
   "utf8",
@@ -335,6 +340,27 @@ const nacreRenderer = context.window.RadenNacre.createNacreRenderer(
   rendererConfig,
   rendererRuntime,
 );
+const stageDescription = nacreRenderer.describeStages();
+assert.equal(stageDescription.modeId, "motherofpearl");
+assert.deepEqual(
+  plain(stageDescription.stages.map((stage) => stage.id)),
+  ["sampling", "noise", "growth", "family", "palette", "surface", "substrate"],
+);
+assert.equal(
+  stageDescription.stages.find((stage) => stage.id === "palette").interfaceId,
+  "materialSource",
+);
+for (const id of ["surface", "substrate"]) {
+  const stage = stageDescription.stages.find((item) => item.id === id);
+  assert.equal(stage.interfaceId, "colorTransform");
+  assert.equal(stage.bypass.type, "identity-color");
+}
+const stagedControlIds = new Set(
+  stageDescription.stages.flatMap((stage) => Array.from(stage.controlIds)),
+);
+context.window.RadenModes.getMode("motherofpearl").activeControlIds.forEach((id) => {
+  assert.ok(stagedControlIds.has(id), `active control ${id} belongs to a declared stage`);
+});
 const pixelPoint = { x: 31, y: 74, nx: -0.42, ny: 0.67, cx: 50, cy: 50 };
 const firstPixel = nacreRenderer.renderPixel(pixelPoint);
 const secondPixel = nacreRenderer.renderPixel(pixelPoint);
@@ -342,6 +368,25 @@ assert.deepEqual(plain(firstPixel), plain(secondPixel));
 assert.ok(Number.isFinite(firstPixel.r));
 assert.ok(Number.isFinite(firstPixel.g));
 assert.ok(Number.isFinite(firstPixel.b));
+const bypassRenderer = context.window.RadenNacre.createNacreRenderer(
+  rendererConfig,
+  Object.assign({}, rendererRuntime, {
+    disabledStageIds: ["family", "surface", "substrate"],
+  }),
+);
+const bypassPixel = bypassRenderer.renderPixel(pixelPoint);
+assert.equal(bypassPixel.a, 255);
+assert.ok(Number.isFinite(bypassPixel.r));
+assert.ok(Number.isFinite(bypassPixel.g));
+assert.ok(Number.isFinite(bypassPixel.b));
+assert.notDeepEqual(plain(bypassPixel), plain(firstPixel));
+assert.throws(
+  () => context.window.RadenNacre.createNacreRenderer(
+    rendererConfig,
+    Object.assign({}, rendererRuntime, { disabledStageIds: ["growth"] }),
+  ),
+  /Cannot disable required stage: growth/,
+);
 
 for (const flowMode of ["circular", "linear"]) {
   const input = {

@@ -1,5 +1,12 @@
 /* Bubble Film procedural stages and renderer contract. */
 (function registerRadenBubbleFilm(global) {
+  const BUBBLE_FILM_STAGES = Object.freeze([
+    { id: "pressureWarp", label: "Pressure warp", kind: "coordinates", inputs: ["point", "runtime"], outputs: ["warpedPoint"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence"] },
+    { id: "cellStructure", label: "Cell and membrane structure", kind: "geometry", inputs: ["warpedPoint", "runtime"], outputs: ["filmStructure"], controlIds: [] },
+    { id: "thinFilm", label: "Thin-film interference", kind: "material", inputs: ["filmStructure"], outputs: ["filmColor"], controlIds: [], interfaceId: "materialSource" },
+    { id: "surface", label: "Membrane surface", kind: "surface", inputs: ["filmColor", "filmStructure"], outputs: ["nativeColor"], controlIds: [], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "filmColor", output: "nativeColor", description: "Forward thin-film RGB without membrane shading or tear finishing." } },
+    { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return the native Bubble Film color unchanged." } },
+  ]);
   const PROFILE = Object.freeze({
     palette: Object.freeze([
       Object.freeze([78, 50, 97]),
@@ -20,10 +27,17 @@
   function normalizeBubbleFilmConfig(rawConfig) {
     const raw = rawConfig || {};
     return Object.assign({}, raw, BASELINE, {
-      // Preserve legacy truthy fallbacks until the control-honesty batch.
-      naturalScale: Math.max(0.0005, Number(raw.naturalScale) || 0.008),
-      warp: global.RadenShared.clamp01(Number(raw.naturalWarp) || 0.35),
-      turbulence: Math.max(0, Number(raw.naturalTurbulence) || 0.62),
+      naturalScale: Math.max(
+        0.0005,
+        global.RadenShared.finiteOr(raw.naturalScale, 0.008),
+      ),
+      warp: global.RadenShared.clamp01(
+        global.RadenShared.finiteOr(raw.naturalWarp, 0.35),
+      ),
+      turbulence: Math.max(
+        0,
+        global.RadenShared.finiteOr(raw.naturalTurbulence, 0.62),
+      ),
     });
   }
 
@@ -179,7 +193,7 @@
       throw new TypeError("Bubble Film renderer requires three simplex samplers.");
     }
 
-    function renderPixel(point) {
+    function executeStages(point, stageState, diagnostics = false) {
       const warped = samplePressureWarp({
         ...config,
         ...point,
@@ -198,15 +212,49 @@
         cellId: structure.cell.cellId,
         palette: PROFILE.palette,
       });
-      return finishBubbleSurface({
-        ...config,
-        ...structure,
-        ...color,
-        seamColor: PROFILE.seamColor,
-      });
+      const surface = stageState.isEnabled("surface")
+        ? finishBubbleSurface({
+            ...config,
+            ...structure,
+            ...color,
+            seamColor: PROFILE.seamColor,
+          })
+        : { r: color.r, g: color.g, b: color.b, a: 255 };
+      const pixel = stageState.isEnabled("authoredPalette") &&
+        typeof runtime.mapAuthoredPalette === "function"
+        ? runtime.mapAuthoredPalette(surface)
+        : surface;
+      if (!diagnostics) return pixel;
+      return {
+        pixel,
+        disabledStageIds: stageState.disabledStageIds,
+        stages: {
+          pressureWarp: warped,
+          cellStructure: structure,
+          thinFilm: color,
+          surface,
+          authoredPalette: pixel,
+        },
+      };
     }
 
-    return { config, renderPixel };
+    if (!global.RadenStages?.createStagePipeline) {
+      throw new TypeError("Bubble Film renderer requires the procedural-stage contract.");
+    }
+    const stagePipeline = global.RadenStages.createStagePipeline({
+      modeId: "bubblefilm",
+      externalInputs: ["point", "runtime"],
+      stages: BUBBLE_FILM_STAGES,
+      execute: (point, stageState) => executeStages(point, stageState, false),
+      inspect: (point, stageState) => executeStages(point, stageState, true),
+      disabledStageIds: runtime.disabledStageIds,
+    });
+    return {
+      config,
+      renderPixel: stagePipeline.run,
+      inspectPixel: stagePipeline.inspect,
+      describeStages: stagePipeline.describe,
+    };
   }
 
   const api = {
@@ -216,10 +264,13 @@
     computeThinFilmColor,
     finishBubbleSurface,
     createBubbleFilmRenderer,
+    BUBBLE_FILM_STAGES,
   };
   global.RadenBubbleFilm = Object.assign({}, global.RadenBubbleFilm || {}, api);
   global.RadenModes?.registerRuntime?.("bubblefilm", {
     normalizeConfig: normalizeBubbleFilmConfig,
     createRenderer: createBubbleFilmRenderer,
+    stages: BUBBLE_FILM_STAGES,
+    externalInputs: ["point", "runtime"],
   });
 })(window);

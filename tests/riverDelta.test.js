@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "riverDelta.js"));
 
@@ -30,13 +31,8 @@ assert.match(
   /riverdelta:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateRiverDelta/,
 );
 assert.match(html, /function generateRiverDelta\(/);
-assert.match(html, /getRowsPerFrame\("riverdelta", config\.preview\)/);
-assert.match(html, /completeMessage:\s*"River delta rendered"/);
-
-const legacySource = html.match(
-  /function renderRiverDeltaPixel[\s\S]*?(?=\n      function generatePhase4ModePlaceholder)/,
-)[0];
-vm.runInNewContext(legacySource, context);
+assert.match(html, /function generateRegisteredNaturalMode\(/);
+assert.match(html, /RadenRenderPipeline\.runPixelRenderer/);
 
 const zeroConfig = context.window.RadenRiverDelta.normalizeRiverDeltaConfig({
   naturalScale: 0,
@@ -49,15 +45,15 @@ const zeroConfig = context.window.RadenRiverDelta.normalizeRiverDeltaConfig({
   deltaFloodplainSoftness: 0,
   deltaErosion: 0,
 });
-assert.equal(zeroConfig.naturalScale, 0.008);
-assert.equal(zeroConfig.warp, 0.35);
-assert.equal(zeroConfig.turbulence, 0.62);
-assert.equal(zeroConfig.anisotropy, 0.25);
-assert.equal(zeroConfig.channelWidth, 0.48);
-assert.equal(zeroConfig.branchRate, 0.52);
-assert.equal(zeroConfig.sedimentMix, 0.46);
-assert.equal(zeroConfig.floodplainSoftness, 0.56);
-assert.equal(zeroConfig.erosion, 0.38);
+assert.equal(zeroConfig.naturalScale, 0.0005);
+assert.equal(zeroConfig.warp, 0);
+assert.equal(zeroConfig.turbulence, 0);
+assert.equal(zeroConfig.anisotropy, 0);
+assert.equal(zeroConfig.channelWidth, 0.05);
+assert.equal(zeroConfig.branchRate, 0);
+assert.equal(zeroConfig.sedimentMix, 0);
+assert.equal(zeroConfig.floodplainSoftness, 0);
+assert.equal(zeroConfig.erosion, 0);
 
 const makeSimplex = (offset) => ({
   noise2D: (x, y) => Math.sin(x * 0.731 + y * 1.173 + offset),
@@ -92,6 +88,7 @@ for (const testCase of [
     },
     nx: -0.44,
     ny: 0.21,
+    expected: [57, 77, 92, 255],
   },
   {
     config: {
@@ -107,23 +104,11 @@ for (const testCase of [
     },
     nx: 0.73,
     ny: -0.58,
+    expected: [124, 143, 132, 255],
   },
 ]) {
   const normalized = context.window.RadenRiverDelta.normalizeRiverDeltaConfig(
     testCase.config,
-  );
-  const legacyRuntime = Object.assign({}, runtime, {
-    naturalScale: normalized.naturalScale,
-    warp: normalized.warp,
-    turbulence: normalized.turbulence,
-    anisotropy: normalized.anisotropy,
-  });
-  const expected = context.renderRiverDeltaPixel(
-    testCase.config,
-    profile,
-    legacyRuntime,
-    testCase.nx,
-    testCase.ny,
   );
   const renderer = context.window.RadenRiverDelta.createRiverDeltaRenderer(
     testCase.config,
@@ -132,13 +117,49 @@ for (const testCase of [
   const actual = renderer.renderPixel({ nx: testCase.nx, ny: testCase.ny });
   assert.deepEqual(
     [actual.r, actual.g, actual.b, actual.a],
-    JSON.parse(JSON.stringify(expected)),
+    testCase.expected,
   );
 }
 
 const registered = context.window.RadenModes.getRuntime("riverdelta");
 assert.equal(typeof registered.normalizeConfig, "function");
 assert.equal(typeof registered.createRenderer, "function");
+assert.equal(registered.ownsAuthoredPalette, true);
+const stages = registered.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), ["flowField", "channels", "floodplain", "erosion", "authoredPalette"]);
+assert.equal(stages.find((stage) => stage.id === "floodplain").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "erosion").interfaceId, "colorTransform");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const point = { nx: 0.19, ny: -0.36 };
+const paletteRenderer = context.window.RadenRiverDelta.createRiverDeltaRenderer({}, {
+  ...runtime,
+  mapAuthoredPalette: (pixel) => {
+    paletteCalls += 1;
+    return { ...pixel, r: pixel.r + 1 };
+  },
+});
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), ["flowField", "channels", "floodplain", "erosion", "authoredPalette"]);
+
+const bypassRenderer = context.window.RadenRiverDelta.createRiverDeltaRenderer({}, {
+  ...runtime,
+  disabledStageIds: ["erosion", "authoredPalette"],
+  mapAuthoredPalette: () => { throw new Error("Disabled palette stage must not run."); },
+});
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.equal(bypassInspection.pixel.r, bypassInspection.stages.floodplain.r);
+assert.equal(bypassInspection.pixel.g, bypassInspection.stages.floodplain.g);
+assert.equal(bypassInspection.pixel.b, bypassInspection.stages.floodplain.b);
+assert.throws(
+  () => context.window.RadenRiverDelta.createRiverDeltaRenderer({}, { ...runtime, disabledStageIds: ["channels"] }),
+  /Cannot disable required stage: channels/,
+);
 assert.throws(
   () => context.window.RadenRiverDelta.createRiverDeltaRenderer({}, {}),
   /three simplex samplers/,

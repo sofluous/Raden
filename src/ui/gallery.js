@@ -162,18 +162,6 @@
       meta.appendChild(name);
       meta.appendChild(sub);
 
-      const openBtn = document.createElement("button");
-      openBtn.className = "ds-btn ds-btn-sm ds-btn-primary gallery-open-btn";
-      openBtn.type = "button";
-      openBtn.title = "Open snapshot";
-      openBtn.setAttribute("aria-label", `Open snapshot ${item.label}`);
-      openBtn.innerHTML = '<i class="iconoir-refresh"></i><span>Open</span>';
-      openBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        recallGalleryItem(item);
-      };
-
       const menu = document.createElement("details");
       menu.className = "gallery-card-menu";
       const menuSummary = document.createElement("summary");
@@ -183,6 +171,18 @@
       menuSummary.innerHTML = '<i class="iconoir-more-horiz" aria-hidden="true"></i>';
       const menuPopover = document.createElement("div");
       menuPopover.className = "gallery-menu-popover";
+      const openMenuBtn = document.createElement("button");
+      openMenuBtn.className = "ds-btn icon-btn";
+      openMenuBtn.type = "button";
+      openMenuBtn.title = "Open snapshot";
+      openMenuBtn.setAttribute("aria-label", `Open snapshot ${item.label}`);
+      openMenuBtn.innerHTML = '<i class="iconoir-folder"></i><span>Open</span>';
+      openMenuBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.open = false;
+        recallGalleryItem(item);
+      };
       const renameBtn = document.createElement("button");
       renameBtn.className = "ds-btn icon-btn";
       renameBtn.type = "button";
@@ -205,13 +205,13 @@
         e.stopPropagation();
         deleteGalleryItem(item.id);
       };
+      menuPopover.appendChild(openMenuBtn);
       menuPopover.appendChild(renameBtn);
       menuPopover.appendChild(delBtn);
       menu.appendChild(menuSummary);
       menu.appendChild(menuPopover);
       tile.appendChild(img);
       tile.appendChild(meta);
-      tile.appendChild(openBtn);
       tile.appendChild(menu);
       tile.addEventListener("click", (e) => {
         if (e.target.closest("button, details, summary")) return;
@@ -221,6 +221,17 @@
         if (e.key !== "Enter" && e.key !== " ") return;
         e.preventDefault();
         selectGalleryItem(item.id);
+      });
+      tile.addEventListener("dblclick", (e) => {
+        if (e.target.closest("button, details, summary")) return;
+        e.preventDefault();
+        recallGalleryItem(item);
+      });
+      tile.addEventListener("contextmenu", (e) => {
+        if (e.target.closest("button")) return;
+        e.preventDefault();
+        menu.open = true;
+        openMenuBtn.focus();
       });
       grid.appendChild(tile);
     });

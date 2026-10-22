@@ -9,7 +9,8 @@ const source = fs.readFileSync(
   "utf8",
 );
 vm.runInNewContext(source, context);
-const { finalizeCanvasRender, renderMode } = context.window.RadenRenderPipeline;
+const { finalizeCanvasRender, renderMode, runPixelRenderer } =
+  context.window.RadenRenderPipeline;
 
 const runtime = { id: "registered" };
 const registeredCalls = [];
@@ -123,5 +124,101 @@ assert.deepEqual(preview.events.slice(-2), [
 ]);
 assert.equal(preview.scheduled.length, 0);
 assert.equal(preview.events.some(([event]) => event === "applied"), false);
+
+const runnerEvents = [];
+const runnerFrames = [];
+let loopOptions = null;
+const runnerOffscreen = { width: 0, height: 0, id: "runner-offscreen" };
+const runnerTarget = { width: 0, height: 0 };
+runPixelRenderer({
+  renderer: {
+    config: { width: 4, height: 2, preview: true },
+    renderPixel: (point) => ({ r: point.x, g: point.y, b: 3, a: 255 }),
+  },
+  createPixelLoop: (options) => {
+    loopOptions = options;
+    return { start: () => runnerEvents.push(["loop-start"]) };
+  },
+  rowsPerFrame: 3,
+  mapPoint: (x, y) => ({ x: x + 10, y: y + 20 }),
+  isCurrent: () => true,
+  setTask: (task) => runnerEvents.push(["task", typeof task]),
+  clearTask: () => runnerEvents.push(["clear"]),
+  requestFrame: (task) => runnerFrames.push(task),
+  offscreenCanvas: runnerOffscreen,
+  offscreenContext: {
+    createImageData: (width, height) => ({
+      id: "runner-pixels",
+      data: new Uint8ClampedArray(width * height * 4),
+    }),
+    putImageData: () => runnerEvents.push(["put"]),
+  },
+  targetCanvas: runnerTarget,
+  targetContext: {
+    globalAlpha: 1,
+    filter: "none",
+    drawImage: () => runnerEvents.push(["draw"]),
+  },
+  drawPasses: [{ alpha: 1, filter: "none" }],
+  commit: () => runnerEvents.push(["commit"]),
+  setStatus: (state, message) => runnerEvents.push(["status", state, message]),
+  setProgress: (value) => runnerEvents.push(["progress", value]),
+  progressStart: 24,
+  progressSpan: 54,
+  finalizeProgress: 86,
+  completeMessage: "Runner complete",
+  onBusy: () => runnerEvents.push(["busy"]),
+  onComplete: () => runnerEvents.push(["complete"]),
+});
+assert.deepEqual(runnerEvents.slice(0, 4), [
+  ["status", "rendering", "Preview..."],
+  ["busy"],
+  ["progress", 24],
+  ["task", "function"],
+]);
+assert.equal(runnerFrames.length, 1);
+runnerFrames.shift()();
+assert.equal(runnerOffscreen.width, 4);
+assert.equal(runnerOffscreen.height, 2);
+assert.equal(loopOptions.rowsPerFrame, 3);
+assert.deepEqual(loopOptions.renderPixel(2, 1), { r: 12, g: 21, b: 3, a: 255 });
+loopOptions.onProgress(50);
+assert.deepEqual(runnerEvents.at(-1), ["progress", 51]);
+loopOptions.onComplete();
+assert.equal(runnerTarget.width, 4);
+assert.equal(runnerTarget.height, 2);
+assert.deepEqual(runnerEvents.slice(-7), [
+  ["progress", 86],
+  ["put"],
+  ["draw"],
+  ["commit"],
+  ["status", "idle", "Preview ready"],
+  ["complete"],
+  ["progress", 100],
+]);
+
+let allocatedAfterCancellation = false;
+const canceledFrames = [];
+runPixelRenderer({
+  renderer: {
+    config: { width: 1, height: 1, preview: true },
+    renderPixel: () => ({ r: 0, g: 0, b: 0, a: 255 }),
+  },
+  createPixelLoop: () => ({ start() {} }),
+  rowsPerFrame: 1,
+  mapPoint: () => ({}),
+  isCurrent: () => false,
+  requestFrame: (task) => canceledFrames.push(task),
+  offscreenCanvas: {},
+  offscreenContext: {
+    createImageData: () => {
+      allocatedAfterCancellation = true;
+    },
+  },
+  targetCanvas: {},
+  targetContext: {},
+});
+canceledFrames[0]();
+assert.equal(allocatedAfterCancellation, false);
 
 console.log("Render pipeline finalization passed.");

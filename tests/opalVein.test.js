@@ -9,6 +9,7 @@ const run = (relativePath) => {
   vm.runInNewContext(source, context);
 };
 run(path.join("src", "shared", "math_color_palette.js"));
+run(path.join("src", "render", "stages.js"));
 run(path.join("src", "modes", "registry.js"));
 run(path.join("src", "modes", "opalVein.js"));
 
@@ -55,10 +56,10 @@ const zero = context.window.RadenOpalVein.normalizeOpalConfig({
   opalFire: 0,
   opalMatrix: 0,
 });
-assert.equal(zero.cellScale, 0.009);
-assert.equal(zero.veinDensity, 0.85);
-assert.equal(zero.fireIntensity, 1.2);
-assert.equal(zero.matrix, 0.52);
+assert.equal(zero.cellScale, 0.002);
+assert.equal(zero.veinDensity, 0);
+assert.equal(zero.fireIntensity, 0);
+assert.equal(zero.matrix, 0);
 
 const simplex = {
   noise2D: (x, y) => Math.sin(x * 0.713 + y * 1.119 + 0.37),
@@ -90,6 +91,54 @@ for (const testCase of [
 const runtime = context.window.RadenModes.getRuntime("opalvein");
 assert.equal(typeof runtime.normalizeConfig, "function");
 assert.equal(typeof runtime.createRenderer, "function");
+const stages = runtime.describeStages().stages;
+assert.deepEqual(Array.from(stages, (stage) => stage.id), [
+  "cellField",
+  "fire",
+  "matrix",
+  "authoredPalette",
+]);
+assert.equal(stages.find((stage) => stage.id === "fire").interfaceId, "materialSource");
+assert.equal(stages.find((stage) => stage.id === "matrix").interfaceId, "colorTransform");
+assert.equal(stages.find((stage) => stage.id === "authoredPalette").interfaceId, "colorTransform");
+
+let paletteCalls = 0;
+const paletteRenderer = context.window.RadenOpalVein.createOpalRenderer(
+  { opalCellScale: 0.009, opalVeinDensity: 0.85, opalFire: 1.2, opalMatrix: 0.52 },
+  {
+    simplex,
+    mapAuthoredPalette: (pixel) => {
+      paletteCalls += 1;
+      return { ...pixel, r: pixel.r + 1 };
+    },
+  },
+);
+const point = { nx: 0.21, ny: -0.38 };
+const rendered = paletteRenderer.renderPixel(point);
+assert.equal(paletteCalls, 1);
+const inspected = paletteRenderer.inspectPixel(point);
+assert.equal(paletteCalls, 2);
+assert.deepEqual(inspected.pixel, rendered);
+assert.deepEqual(Object.keys(inspected.stages), ["cellField", "fire", "matrix", "authoredPalette"]);
+
+const bypassRenderer = context.window.RadenOpalVein.createOpalRenderer(
+  { opalCellScale: 0.009, opalVeinDensity: 0.85, opalFire: 1.2, opalMatrix: 0.52 },
+  {
+    simplex,
+    disabledStageIds: ["matrix", "authoredPalette"],
+    mapAuthoredPalette: () => {
+      throw new Error("Disabled palette stage must not run.");
+    },
+  },
+);
+const bypassInspection = bypassRenderer.inspectPixel(point);
+assert.equal(bypassInspection.pixel.r, bypassInspection.stages.fire.r);
+assert.equal(bypassInspection.pixel.g, bypassInspection.stages.fire.g);
+assert.equal(bypassInspection.pixel.b, bypassInspection.stages.fire.b);
+assert.throws(
+  () => context.window.RadenOpalVein.createOpalRenderer({}, { simplex, disabledStageIds: ["cellField"] }),
+  /Cannot disable required stage: cellField/,
+);
 assert.throws(
   () => context.window.RadenOpalVein.createOpalRenderer({}, {}),
   /simplex sampler/,
@@ -100,7 +149,7 @@ assert.match(
   html,
   /opalvein:\s*\(runtime, nextForce, nextOptions\)\s*=>\s*generateOpalVein/,
 );
-assert.match(html, /function generateOpalVeinLegacy\(/);
+assert.doesNotMatch(html, /function generateOpalVeinLegacy\(/);
 assert.match(html, /completeMessage:\s*"Opal rendered"/);
 assert.match(html, /filter:\s*"blur\(7px\)"/);
 

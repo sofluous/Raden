@@ -7,6 +7,41 @@
     return Number.isFinite(parsed) ? parsed : fallback;
   }
 
+  function scopeDebugValues(config, context) {
+    const values = config && typeof config === "object" ? config : {};
+    const scope = context && typeof context === "object" ? context : {};
+    const activeControlIds = new Set(scope.activeControlIds || []);
+    const knownModeControlIds = new Set(scope.knownModeControlIds || []);
+    const knownEffectControlIds = new Set(scope.knownEffectControlIds || []);
+    const scoped = {};
+    Object.entries(values).forEach(([key, value]) => {
+      if (knownEffectControlIds.has(key)) return;
+      if (knownModeControlIds.has(key) && !activeControlIds.has(key)) return;
+      scoped[key] = value;
+    });
+    if (scope.modeId) scoped.texture = scope.modeId;
+    (scope.effects || []).forEach((effect, index) => {
+      if (!effect || effect.enabled === false) return;
+      const prefix = `effect.${index + 1}.${effect.effectId || "unknown"}`;
+      scoped[`${prefix}.enabled`] = true;
+      Object.entries(effect.config || {}).forEach(([key, value]) => {
+        scoped[`${prefix}.${key}`] = value;
+      });
+    });
+    return scoped;
+  }
+
+  function formatDebugValue(value) {
+    if (value && typeof value === "object") {
+      try {
+        return JSON.stringify(value);
+      } catch (_error) {
+        return String(value);
+      }
+    }
+    return String(value);
+  }
+
   function createStatusController(opts) {
     const options = opts || {};
     const statusEl = options.statusEl || null;
@@ -37,8 +72,8 @@
       const configValues = config && typeof config === "object" ? config : {};
       const extraValues = extras && typeof extras === "object" ? extras : {};
       const lines = ["Debug Info"];
-      Object.entries(configValues).forEach(([key, val]) => lines.push(`${key}: ${val}`));
-      Object.entries(extraValues).forEach(([key, val]) => lines.push(`${key}: ${val}`));
+      Object.entries(configValues).forEach(([key, val]) => lines.push(`${key}: ${formatDebugValue(val)}`));
+      Object.entries(extraValues).forEach(([key, val]) => lines.push(`${key}: ${formatDebugValue(val)}`));
       debugPanelEl.innerText = lines.join("\n");
       debugPanelEl.style.display = "block";
     }
@@ -73,5 +108,6 @@
 
   global.RadenCoreStatus = Object.assign({}, global.RadenCoreStatus || {}, {
     createStatusController,
+    scopeDebugValues,
   });
 })(window);

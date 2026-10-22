@@ -34,4 +34,25 @@ for (const pointer of [
   assert.equal((cursorY - zoomedPan.y) / zoomRatio, cursorY - pan.y);
 }
 
+const focus = { x: 821.25, y: 614.5 };
+let cumulativePan = { x: -34.75, y: 18.5 };
+let zoom = 1;
+const focusX = focus.x - (viewportRect.left + viewportRect.width * 0.5);
+const focusY = focus.y - (viewportRect.top + viewportRect.height * 0.5);
+const originalWorldPoint = {
+  x: (focusX - cumulativePan.x) / zoom,
+  y: (focusY - cumulativePan.y) / zoom,
+};
+for (const nextZoom of [1.18, 1.319, 1.321, 1.76, 0.84, 2.4, 1]) {
+  cumulativePan = viewport.zoomPanAroundWorkspacePoint(
+    cumulativePan,
+    focus,
+    viewportRect,
+    nextZoom / zoom,
+  );
+  zoom = nextZoom;
+  assert.ok(Math.abs(originalWorldPoint.x - (focusX - cumulativePan.x) / zoom) < 1e-9);
+  assert.ok(Math.abs(originalWorldPoint.y - (focusY - cumulativePan.y) / zoom) < 1e-9);
+}
+
 console.log("Canvas viewport geometry passed.");

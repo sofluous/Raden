@@ -46,6 +46,88 @@
     }, Number(options.completeDelayMs) || 500);
   }
 
+  function runPixelRenderer(options) {
+    const renderer = options.renderer;
+    const config = renderer?.config;
+    if (!renderer || typeof renderer.renderPixel !== "function" || !config) {
+      throw new TypeError("Pixel renderer orchestration requires a renderer contract.");
+    }
+    const pixelLoopFactory =
+      options.createPixelLoop || global.RadenPixelLoop?.createPixelLoop;
+    if (typeof pixelLoopFactory !== "function") {
+      throw new TypeError("Pixel renderer orchestration requires a pixel loop.");
+    }
+    if (typeof options.mapPoint !== "function") {
+      throw new TypeError("Pixel renderer orchestration requires mapPoint().");
+    }
+
+    const parsedProgressStart = Number(options.progressStart);
+    const parsedProgressSpan = Number(options.progressSpan);
+    const progressStart = Number.isFinite(parsedProgressStart)
+      ? parsedProgressStart
+      : 0;
+    const progressSpan = Number.isFinite(parsedProgressSpan)
+      ? parsedProgressSpan
+      : 100;
+    const isCurrent =
+      typeof options.isCurrent === "function" ? options.isCurrent : () => true;
+    options.setStatus?.("rendering", config.preview ? "Preview..." : "Rendering...");
+    options.onBusy?.(config);
+    options.setProgress?.(progressStart);
+
+    function startWork() {
+      if (!isCurrent()) {
+        options.clearTask?.();
+        return;
+      }
+      options.offscreenCanvas.width = config.width;
+      options.offscreenCanvas.height = config.height;
+      const imageData = options.offscreenContext.createImageData(
+        config.width,
+        config.height,
+      );
+      const pixelLoop = pixelLoopFactory({
+        width: config.width,
+        height: config.height,
+        rowsPerFrame: options.rowsPerFrame,
+        buffer: imageData.data,
+        isCurrent,
+        setTask: options.setTask,
+        clearTask: options.clearTask,
+        requestFrame: options.requestFrame,
+        onProgress: (percent) =>
+          options.setProgress?.(progressStart + percent * (progressSpan / 100)),
+        renderPixel: (x, y) => renderer.renderPixel(options.mapPoint(x, y)),
+        onComplete: () => {
+          options.setProgress?.(options.finalizeProgress ?? 100);
+          finalizeCanvasRender({
+            config,
+            imageData,
+            offscreenCanvas: options.offscreenCanvas,
+            offscreenContext: options.offscreenContext,
+            targetCanvas: options.targetCanvas,
+            targetContext: options.targetContext,
+            drawPasses: options.drawPasses,
+            commit: options.commit,
+            setStatus: options.setStatus,
+            completeMessage: options.completeMessage,
+            completeDelayMs: options.completeDelayMs,
+            onReady: options.onReady,
+            markApplied: options.markApplied,
+            schedule: options.schedule,
+          });
+          options.onComplete?.(config);
+          options.setProgress?.(100);
+        },
+      });
+      pixelLoop.start();
+    }
+
+    options.setTask?.(startWork);
+    options.requestFrame(startWork);
+    return { startWork };
+  }
+
   function createRenderPipeline() {
     let animationFrameId = null;
     let currentRunId = 0;
@@ -108,6 +190,7 @@
     {
       createRenderPipeline,
       finalizeCanvasRender,
+      runPixelRenderer,
       renderMode,
     },
   );

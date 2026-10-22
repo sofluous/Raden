@@ -34,4 +34,32 @@ controller.setProgressPercent(240);
 assert.equal(progressEl.style.width, "100%");
 assert.equal(attributes["aria-valuenow"], "100");
 
+const scoped = context.window.RadenCoreStatus.scopeDebugValues(
+  {
+    width: 512,
+    opalFire: 1.2,
+    marbleContrast: 0.8,
+    gaussianBlur: 4,
+    derivedField: 0.42,
+  },
+  {
+    modeId: "opalvein",
+    activeControlIds: ["opalFire"],
+    knownModeControlIds: ["opalFire", "marbleContrast"],
+    knownEffectControlIds: ["gaussianBlur"],
+    effects: [
+      { effectId: "grain", enabled: true, config: { grainAmount: 0.3 } },
+      { effectId: "invert", enabled: false, config: {} },
+    ],
+  },
+);
+assert.deepEqual(JSON.parse(JSON.stringify(scoped)), {
+  width: 512,
+  opalFire: 1.2,
+  derivedField: 0.42,
+  texture: "opalvein",
+  "effect.1.grain.enabled": true,
+  "effect.1.grain.grainAmount": 0.3,
+});
+
 console.log("Status feedback passed.");

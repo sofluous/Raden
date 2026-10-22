@@ -1,5 +1,11 @@
 /* Topography multi-pass renderer contract. */
 (function registerRadenTopography(global) {
+  const TOPOGRAPHY_STAGES = Object.freeze([
+    { id: "terrain", label: "Terrain field", kind: "field", inputs: ["point", "runtime"], outputs: ["heightField"], controlIds: ["scale", "layers", "topoPreset", "topoNoiseType", "topoRidge", "topoWarp"] },
+    { id: "erosion", label: "Terrain erosion", kind: "surface", inputs: ["heightField"], outputs: ["erodedHeightField"], controlIds: ["topoErosion"], optional: true, bypass: { type: "custom", description: "Forward the generated height field without erosion smoothing." } },
+    { id: "contours", label: "Contour rendering", kind: "material", inputs: ["erodedHeightField"], outputs: ["nativeColor"], controlIds: ["topoBandCount", "topoRenderMode"], interfaceId: "materialSource" },
+    { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native grayscale Topography color unchanged." } },
+  ]);
   function numberOr(value, fallback) {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
@@ -26,6 +32,14 @@
       throw new TypeError("Topography renderer requires a base-noise function.");
     }
     const { clamp01 } = global.RadenShared;
+    const mapAuthoredPalette = typeof runtime.mapAuthoredPalette === "function" ? runtime.mapAuthoredPalette : (pixel) => pixel;
+    const pipeline = global.RadenStages.createStagePipeline({
+      modeId: "topography",
+      stages: TOPOGRAPHY_STAGES,
+      externalInputs: ["point", "runtime"],
+      disabledStageIds: runtime.disabledStageIds,
+      execute: (value) => value,
+    });
     const noiseFunc = (x, y) => {
       let total = 0;
       let amplitude = 1;
@@ -71,6 +85,7 @@
     }
 
     function erodeHeightField(heights) {
+      if (!pipeline.isStageEnabled("erosion")) return heights;
       const erosionSteps = config.preview
         ? Math.floor(config.erosionStrength * 2)
         : Math.floor(config.erosionStrength * 4);
@@ -98,7 +113,7 @@
       return heights;
     }
 
-    function renderPixel(x, y, heights) {
+    function renderNativePixel(x, y, heights) {
       const value = heights[y * config.width + x];
       const band = Math.floor(value * config.bandCount);
       let color = 255;
@@ -119,19 +134,46 @@
       return { r: color, g: color, b: color, a: 255 };
     }
 
+    function renderPixel(x, y, heights) {
+      const nativeColor = renderNativePixel(x, y, heights);
+      return pipeline.isStageEnabled("authoredPalette")
+        ? mapAuthoredPalette(nativeColor)
+        : nativeColor;
+    }
+
+    function inspectPixel(x, y, heights) {
+      const nativeColor = renderNativePixel(x, y, heights);
+      const pixel = pipeline.isStageEnabled("authoredPalette")
+        ? mapAuthoredPalette(nativeColor)
+        : nativeColor;
+      return {
+        pixel,
+        stages: {
+          terrain: heights[y * config.width + x],
+          erosion: heights[y * config.width + x],
+          contours: nativeColor,
+          authoredPalette: pixel,
+        },
+      };
+    }
+
     return {
       config,
       sampleTerrain,
       createHeightField,
       erodeHeightField,
       renderPixel,
+      inspectPixel,
+      describeStages: pipeline.describe,
     };
   }
 
-  const api = { normalizeTopographyConfig, createTopographyRenderer };
+  const api = { normalizeTopographyConfig, createTopographyRenderer, stages: TOPOGRAPHY_STAGES };
   global.RadenTopography = Object.assign({}, global.RadenTopography || {}, api);
   global.RadenModes?.registerRuntime?.("topography", {
     normalizeConfig: normalizeTopographyConfig,
     createRenderer: createTopographyRenderer,
+    stages: TOPOGRAPHY_STAGES,
+    externalInputs: ["point", "runtime"],
   });
 })(window);

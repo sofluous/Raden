@@ -28,6 +28,15 @@ const classic = palettes.getPreset("motherofpearl", "classic");
 assert.equal(classic.colors.length, 5);
 assert.deepEqual(plain(classic.colors[0]), { h: 286, s: 26, l: 83 });
 
+[
+  "motherofpearl", "opalvein", "labradorite", "marbleink", "agateband",
+  "malachiteflow", "lichengrowth", "icebloom", "riverdelta", "bubblefilm",
+  "topography",
+].forEach((modeId) => {
+  assert.ok(palettes.listPresets(modeId).length >= 3, `${modeId} has palette choices`);
+  assert.equal(palettes.getPreset(modeId, "classic").colors.length, 5);
+});
+
 classic.colors[0].h = 0;
 assert.equal(
   palettes.getPreset("motherofpearl", "classic").colors[0].h,

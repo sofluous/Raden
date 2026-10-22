@@ -65,6 +65,23 @@
     return nextSettings;
   }
 
+  function buildSourceGraph(modeId, controlState, existingGraph) {
+    const runtime = global.RadenModes?.getRuntime?.(modeId);
+    if (!runtime?.describeStages || !global.RadenGraphs) return null;
+    let disabledStageIds = [];
+    if (existingGraph?.modeId === modeId) {
+      try {
+        disabledStageIds = global.RadenGraphs.getDisabledStageIds(existingGraph);
+      } catch (_error) {
+        disabledStageIds = [];
+      }
+    }
+    return global.RadenGraphs.createGraphFromStageDescription(
+      runtime.describeStages(),
+      { controlState, disabledStageIds },
+    );
+  }
+
   function buildSourceLayerFromFlatState(flatState, opts) {
     const options = opts || {};
     const modeId = options.modeId || flatState?.modeSelector || SOURCE_MODE_FALLBACK;
@@ -80,6 +97,7 @@
       blendMode: "normal",
       modeId: sourceModeId,
       config: clone(flatState || {}),
+      graph: buildSourceGraph(sourceModeId, flatState || {}, options.graph),
       palette: global.RadenPalettes?.normalizePaletteState?.(options.palette, {
         modeId: sourceModeId,
         presetId: flatState?.nacrePalette,
@@ -226,6 +244,50 @@
     return nextState;
   }
 
+  function updateSourceFromFlatState(layerState, flatState, opts) {
+    const options = opts || {};
+    const modeId = options.modeId || flatState?.modeSelector || SOURCE_MODE_FALLBACK;
+    return updateLayerState(layerState, (nextState, layer) => {
+      const sourceModeId = getSourceModeForMode(modeId);
+      const existingGraph = layer.modeId === sourceModeId ? layer.graph : null;
+      layer.sourceType = "generator";
+      layer.label = getModeLabel(sourceModeId);
+      layer.modeId = sourceModeId;
+      layer.config = clone(flatState || {});
+      layer.graph = buildSourceGraph(sourceModeId, flatState || {}, existingGraph);
+      layer.bitmapRef = null;
+      layer.palette = global.RadenPalettes?.normalizePaletteState?.(null, {
+        modeId: sourceModeId,
+        presetId: flatState?.nacrePalette,
+        allowNull: true,
+      }) || null;
+      nextState.legacySettings = clone(flatState || {});
+    });
+  }
+
+  function syncSourceState(layerState, flatState) {
+    return updateLayerState(layerState, (nextState, layer) => {
+      if (layer.sourceType !== "generator") return;
+      const config = clone(flatState || {});
+      layer.config = config;
+      layer.graph = buildSourceGraph(layer.modeId, config, layer.graph);
+      nextState.legacySettings = config;
+    });
+  }
+
+  function setSourceStageEnabled(layerState, stageId, enabled) {
+    return updateLayerState(layerState, (_nextState, layer) => {
+      if (layer.sourceType !== "generator") {
+        throw new TypeError("Only generated source layers have procedural stages.");
+      }
+      const graph = layer.graph || buildSourceGraph(layer.modeId, layer.config || {}, null);
+      if (!graph || !global.RadenGraphs?.setNodeEnabled) {
+        throw new TypeError(`Procedural graph is unavailable for mode: ${layer.modeId}.`);
+      }
+      layer.graph = global.RadenGraphs.setNodeEnabled(graph, stageId, enabled);
+    });
+  }
+
   function selectBaseLayer(layerState) {
     return updateLayerState(layerState, (nextState) => {
       nextState.activeEffectId = null;
@@ -340,6 +402,15 @@
     return nextState;
   }
 
+  function normalizeLayerGraphs(layerState) {
+    const nextState = clone(layerState);
+    (nextState?.layers || []).forEach((layer) => {
+      if (layer.sourceType !== "generator" || !layer.modeId) return;
+      layer.graph = buildSourceGraph(layer.modeId, layer.config || {}, layer.graph);
+    });
+    return nextState;
+  }
+
   function normalizeGalleryItem(item) {
     if (!item || typeof item !== "object") return item;
     if (item.version >= LAYER_STATE_VERSION && item.state) {
@@ -347,7 +418,7 @@
         item.legacySettings || item.settings || getLegacySettingsFromLayerState(item.state) || {},
       );
       return Object.assign({}, item, {
-        state: normalizeLayerPalettes(item.state),
+        state: normalizeLayerGraphs(normalizeLayerPalettes(item.state)),
         legacySettings,
         settings: legacySettings,
       });
@@ -390,6 +461,15 @@
       }
       if (!layer.modeId && layer.sourceType === "generator") {
         issues.push(`Layer ${layer.id} is missing modeId.`);
+      }
+      if (layer.graph != null) {
+        const graphIssues = global.RadenGraphs?.validateGraph?.(layer.graph) || [
+          "Graph validator unavailable.",
+        ];
+        graphIssues.forEach((issue) => issues.push(`Layer ${layer.id} graph: ${issue}`));
+        if (layer.graph.modeId !== layer.modeId) {
+          issues.push(`Layer ${layer.id} graph mode does not match source mode.`);
+        }
       }
       if (layer.palette != null) {
         const normalizedPalette = global.RadenPalettes?.normalizePaletteState?.(
@@ -435,6 +515,9 @@
     classifyMode,
     buildLayerStateFromFlatState,
     getActiveLayer,
+    updateSourceFromFlatState,
+    syncSourceState,
+    setSourceStageEnabled,
     getActiveEffect,
     getLegacySettingsFromLayerState,
     selectBaseLayer,
