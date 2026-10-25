@@ -1,5 +1,19 @@
 /* Bubble Film procedural stages and renderer contract. */
 (function registerRadenBubbleFilm(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "bubblefilm",
+    order: 9,
+    label: "Bubble Film",
+    status: "stable",
+    family: "natural",
+    activeControlIds: [
+      "naturalScale",
+      "naturalWarp",
+      "naturalTurbulence",
+      "nacrePalette",
+    ],
+  });
+
   const BUBBLE_FILM_STAGES = Object.freeze([
     { id: "pressureWarp", label: "Pressure warp", kind: "coordinates", inputs: ["point", "runtime"], outputs: ["warpedPoint"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence"] },
     { id: "cellStructure", label: "Cell and membrane structure", kind: "geometry", inputs: ["warpedPoint", "runtime"], outputs: ["filmStructure"], controlIds: [] },
@@ -7,6 +21,26 @@
     { id: "surface", label: "Membrane surface", kind: "surface", inputs: ["filmColor", "filmStructure"], outputs: ["nativeColor"], controlIds: [], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "filmColor", output: "nativeColor", description: "Forward thin-film RGB without membrane shading or tear finishing." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return the native Bubble Film color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "bubbleFilmStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "pressureWarp", label: "Base Structure", controlIds: ["naturalScale"] },
+      { id: "flow", graphStageId: "pressureWarp", label: "Shape and Flow", controlIds: ["naturalWarp", "naturalTurbulence"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "naturalScale", type: "number", min: 0.002, max: 0.011, decimals: 3 },
+      { controlId: "naturalWarp", type: "number", min: 0.08, max: 0.62, decimals: 2 },
+      { controlId: "naturalTurbulence", type: "number", min: 0.04, max: 0.68, decimals: 2 },
+    ]),
+  });
+  const HELP_DEFINITION = Object.freeze({
+    sectionIntros: Object.freeze({
+      natural: "Bubble Film builds a thin soap-film sheet made of neighboring cells and dark membrane walls. These controls shape cell size, wall thickness, rainbow sheen, and how much the film starts to tear or collapse.",
+    }),
+  });
   const PROFILE = Object.freeze({
     palette: Object.freeze([
       Object.freeze([78, 50, 97]),
@@ -265,12 +299,17 @@
     finishBubbleSurface,
     createBubbleFilmRenderer,
     BUBBLE_FILM_STAGES,
+    INSPECTOR_DEFINITION,
+    RANDOMIZATION_DEFINITION,
   };
   global.RadenBubbleFilm = Object.assign({}, global.RadenBubbleFilm || {}, api);
-  global.RadenModes?.registerRuntime?.("bubblefilm", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeBubbleFilmConfig,
     createRenderer: createBubbleFilmRenderer,
     stages: BUBBLE_FILM_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
+    help: HELP_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

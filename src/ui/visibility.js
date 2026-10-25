@@ -15,8 +15,6 @@
     const activeControlMap = options.activeControlMap || {};
     const modeScopedControlIds = options.modeScopedControlIds || new Set();
     const uiOnlyControlIds = options.uiOnlyControlIds || [];
-    const naturalSharedControlVisibility =
-      options.naturalSharedControlVisibility || {};
     const applyModeControlAttributeOverrides =
       typeof options.applyModeControlAttributeOverrides === "function"
         ? options.applyModeControlAttributeOverrides
@@ -28,17 +26,6 @@
 
     function getActiveControls(mode) {
       return activeControlMap[mode] || null;
-    }
-
-    function updateNaturalSharedControlVisibility(mode) {
-      const allowedControls = naturalSharedControlVisibility[mode] || null;
-      document
-        .querySelectorAll("#naturalGeometrySection .control-row[data-control-id]")
-        .forEach((row) => {
-          const controlId = row.dataset.controlId;
-          if (!allowedControls || !controlId) return;
-          row.hidden = !allowedControls.has(controlId);
-        });
     }
 
     function applyStrictModeControlVisibility(mode) {
@@ -141,7 +128,6 @@
       });
 
       applyModeControlAttributeOverrides(mode);
-      updateNaturalSharedControlVisibility(mode);
       applyStrictModeControlVisibility(mode);
       enforceNaturalModeControlVisibility(mode);
       updateRisoEngineVisibility();

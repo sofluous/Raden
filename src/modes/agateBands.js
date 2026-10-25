@@ -1,5 +1,23 @@
 /* Agate Bands procedural stages and renderer contract. */
 (function registerRadenAgateBands(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "agateband",
+    order: 4,
+    label: "Agate Bands",
+    status: "stable",
+    family: "natural",
+    activeControlIds: [
+      "naturalScale",
+      "naturalWarp",
+      "agateBandFreq",
+      "agateBandJitter",
+      "agateVeinDensity",
+      "agateTranslucency",
+      "agateEdgeDarken",
+      "nacrePalette",
+    ],
+  });
+
   const AGATE_BANDS_STAGES = Object.freeze([
     { id: "stoneField", label: "Warped stone field", kind: "field", inputs: ["point", "runtime"], outputs: ["stoneField"], controlIds: ["naturalScale", "naturalWarp"] },
     { id: "bands", label: "Agate bands", kind: "geometry", inputs: ["stoneField"], outputs: ["bandStructure"], controlIds: ["agateBandFreq", "agateBandJitter"] },
@@ -7,6 +25,32 @@
     { id: "stone", label: "Translucent stone", kind: "material", inputs: ["veinStructure"], outputs: ["nativeColor"], controlIds: ["agateTranslucency"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Agate Bands color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "agateBandsStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "stoneField", label: "Base Structure", controlIds: ["naturalScale", "naturalWarp"] },
+      { id: "flow", graphStageId: "bands", label: "Shape and Flow", controlIds: ["agateBandFreq", "agateBandJitter"] },
+      { id: "veins", label: "Vein Structure", controlIds: ["agateVeinDensity", "agateEdgeDarken"] },
+      { id: "material", graphStageId: "stone", label: "Material Response", controlIds: ["agateTranslucency"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "naturalScale", type: "number", min: 0.003, max: 0.012, decimals: 3 },
+      { controlId: "naturalWarp", type: "number", min: 0.12, max: 0.72, decimals: 2 },
+      { controlId: "agateBandFreq", type: "number", min: 0.65, max: 1.95, decimals: 2 },
+      { controlId: "agateBandJitter", type: "number", min: 0.08, max: 0.7, decimals: 2 },
+      { controlId: "agateVeinDensity", type: "number", min: 0.3, max: 1.2, decimals: 2 },
+      { controlId: "agateTranslucency", type: "number", min: 0.2, max: 0.88, decimals: 2 },
+      { controlId: "agateEdgeDarken", type: "number", min: 0.18, max: 0.82, decimals: 2 },
+    ]),
+  });
+  const HELP_DEFINITION = Object.freeze({
+    sectionIntros: Object.freeze({
+      natural: "Agate Bands builds layered stone bands and mineral seams. These controls shape the band flow, glow through the stone, and the dark edges that separate each layer.",
+    }),
+  });
   const PALETTE = Object.freeze([
     Object.freeze([64, 40, 30]),
     Object.freeze([139, 92, 67]),
@@ -105,12 +149,15 @@
     });
   }
 
-  const api = { normalizeAgateConfig, createAgateRenderer, computeStoneField, computeBands, computeVeins, computeStoneColor, stages: AGATE_BANDS_STAGES };
+  const api = { normalizeAgateConfig, createAgateRenderer, computeStoneField, computeBands, computeVeins, computeStoneColor, stages: AGATE_BANDS_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenAgateBands = Object.assign({}, global.RadenAgateBands || {}, api);
-  global.RadenModes?.registerRuntime?.("agateband", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeAgateConfig,
     createRenderer: createAgateRenderer,
     stages: AGATE_BANDS_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
+    help: HELP_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

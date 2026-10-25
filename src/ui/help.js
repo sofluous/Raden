@@ -39,19 +39,14 @@
       return "Risograph-style separation splits your image into tone-based ink passes. Each layer is a stencil for a tone range: Tone Min/Max chooses what brightness it prints, Angle rotates its screen pattern, and Opacity controls ink strength. Overlap blends neighboring layers for smoother transitions. Layer View lets you inspect all layers, a single layer, or a custom visible set. The current UI is capped to 6 layers for performance and readability, but the concept itself can scale beyond that.";
     }
     if (!titleKey.includes("natural")) return "";
-    return activeMode === "agateband"
-      ? "Agate Bands builds layered stone bands and mineral seams. These controls shape the band flow, glow through the stone, and the dark edges that separate each layer."
-      : activeMode === "malachiteflow"
-        ? "Malachite Flow builds swirling green ring structures like polished stone. These controls shape the curl of the rings, how tightly they pack together, and how dramatic the dark-to-bright transitions feel."
-        : activeMode === "lichengrowth"
-          ? "Lichen Growth builds creeping surface colonies with ragged edges. These controls shape the size of each patch, how much the edges branch outward, and whether the growth feels dry and chalky or darker and damp."
-          : activeMode === "icebloom"
-            ? "Ice Crystal Bloom builds branching frost patterns with pale icy haze. These controls shape how far the crystal branches travel, how much frost fills the gaps, and how sharp or softened the bloom appears."
-            : activeMode === "riverdelta"
-              ? "River Delta builds branching water channels, banks, and sediment spread. These controls shape how the water splits, how wide the channels feel, and how soft the surrounding floodplain becomes."
-              : activeMode === "bubblefilm"
-                ? "Bubble Film builds a thin soap-film sheet made of neighboring cells and dark membrane walls. These controls shape cell size, wall thickness, rainbow sheen, and how much the film starts to tear or collapse."
-                : "Natural modes use the same shared scaffold, then shape it into different organic patterns. These controls change the visible structure, color balance, and fine surface detail.";
+    const registeredIntro = global.RadenModes
+      ?.getHelpDefinition?.(activeMode)
+      ?.sectionIntros?.natural;
+    if (registeredIntro) return registeredIntro;
+    if (activeMode === "icebloom") {
+      return "Ice Crystal Bloom builds branching frost patterns with pale icy haze. These controls shape how far the crystal branches travel, how much frost fills the gaps, and how sharp or softened the bloom appears.";
+    }
+    return "Natural modes use the same shared scaffold, then shape it into different organic patterns. These controls change the visible structure, color balance, and fine surface detail.";
   }
 
   function appendHelpIntro(list, sectionTitle) {
@@ -280,6 +275,7 @@
     DEFAULT_SECTION_COLLAPSE_STORAGE_KEY,
     buildFallbackHelpText,
     getControlHelpText,
+    getSectionIntro,
     openSectionHelpModal,
     loadCollapsedSections,
     saveCollapsedSections,

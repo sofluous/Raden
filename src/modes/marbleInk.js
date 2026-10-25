@@ -1,11 +1,46 @@
 /* Marble Ink procedural stages and renderer contract. */
 (function registerRadenMarbleInk(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "marbleink",
+    order: 3,
+    label: "Marble Ink",
+    status: "stable",
+    family: "procedural",
+    activeControlIds: [
+      "marbleFlowScale",
+      "marbleVeinFreq",
+      "marbleContrast",
+      "marbleInkDrift",
+      "marbleLightness",
+      "nacrePalette",
+    ],
+  });
+
   const MARBLE_INK_STAGES = Object.freeze([
     { id: "flowField", label: "Marble flow field", kind: "field", inputs: ["point", "runtime"], outputs: ["flowField"], controlIds: ["marbleFlowScale", "marbleInkDrift"] },
     { id: "veins", label: "Stone veins", kind: "geometry", inputs: ["flowField"], outputs: ["veinStructure"], controlIds: ["marbleVeinFreq", "marbleContrast"] },
     { id: "stone", label: "Stone material", kind: "material", inputs: ["veinStructure", "runtime"], outputs: ["nativeColor"], controlIds: ["marbleLightness"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Marble Ink color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "marbleInkStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "flowField", label: "Base Structure", controlIds: ["marbleFlowScale"] },
+      { id: "flow", graphStageId: "flowField", label: "Shape and Flow", controlIds: ["marbleInkDrift"] },
+      { id: "veins", label: "Vein Structure", controlIds: ["marbleVeinFreq", "marbleContrast"] },
+      { id: "material", graphStageId: "stone", label: "Material Response", controlIds: ["marbleLightness"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "marbleFlowScale", type: "number", min: 0.003, max: 0.014, decimals: 3 },
+      { controlId: "marbleVeinFreq", type: "number", min: 0.45, max: 2.4, decimals: 2 },
+      { controlId: "marbleContrast", type: "number", min: 0.25, max: 1.3, decimals: 2 },
+      { controlId: "marbleInkDrift", type: "number", min: 0.08, max: 0.92, decimals: 2 },
+      { controlId: "marbleLightness", type: "number", min: 0.45, max: 0.94, decimals: 2 },
+    ]),
+  });
 
   function normalizeMarbleConfig(rawConfig) {
     const raw = rawConfig || {};
@@ -77,12 +112,14 @@
     });
   }
 
-  const api = { normalizeMarbleConfig, createMarbleRenderer, computeFlowField, computeVeins, computeStoneColor, stages: MARBLE_INK_STAGES };
+  const api = { normalizeMarbleConfig, createMarbleRenderer, computeFlowField, computeVeins, computeStoneColor, stages: MARBLE_INK_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenMarbleInk = Object.assign({}, global.RadenMarbleInk || {}, api);
-  global.RadenModes?.registerRuntime?.("marbleink", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeMarbleConfig,
     createRenderer: createMarbleRenderer,
     stages: MARBLE_INK_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

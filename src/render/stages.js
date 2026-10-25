@@ -206,10 +206,68 @@
     return typeof transform === "function" ? transform(color) : color;
   }
 
+  function validateTextureStageDescription(description, options) {
+    const opts = options || {};
+    const modeId = String(description?.modeId || opts.modeId || "texture");
+    const stages = Array.isArray(description?.stages) ? description.stages : [];
+    const issues = [];
+    const materialSources = stages.filter(
+      (stage) => stage.interfaceId === "materialSource",
+    );
+    if (materialSources.length !== 1) {
+      issues.push(
+        `${modeId} requires exactly one materialSource stage; found ${materialSources.length}.`,
+      );
+    }
+
+    const paletteControlId = opts.paletteControlId;
+    if (paletteControlId) {
+      const paletteStages = stages.filter((stage) =>
+        Array.from(stage.controlIds || []).includes(paletteControlId),
+      );
+      if (paletteStages.length !== 1) {
+        issues.push(
+          `${modeId} requires exactly one stage owning ${paletteControlId}; found ${paletteStages.length}.`,
+        );
+      } else {
+        const palette = paletteStages[0];
+        if (!["materialSource", "colorTransform"].includes(palette.interfaceId)) {
+          issues.push(
+            `${modeId} palette owner must implement materialSource or colorTransform.`,
+          );
+        }
+        if (
+          palette.interfaceId === "colorTransform" &&
+          stages[stages.length - 1] !== palette
+        ) {
+          issues.push(`${modeId} palette colorTransform must be the terminal stage.`);
+        }
+      }
+    }
+
+    const ownedControls = new Set(
+      stages.flatMap((stage) => Array.from(stage.controlIds || [])),
+    );
+    Array.from(opts.activeControlIds || []).forEach((controlId) => {
+      if (!ownedControls.has(controlId)) {
+        issues.push(`${modeId} active control has no stage owner: ${controlId}.`);
+      }
+    });
+    return issues;
+  }
+
+  function assertTextureStageDescription(description, options) {
+    const issues = validateTextureStageDescription(description, options);
+    if (issues.length) throw new TypeError(issues.join(" "));
+    return description;
+  }
+
   global.RadenStages = Object.assign({}, global.RadenStages || {}, {
     createStagePipeline,
     createPixelStageRenderer,
     applyOptionalColorTransform,
+    validateTextureStageDescription,
+    assertTextureStageDescription,
     getInterface: (id) => STAGE_INTERFACES[id] || null,
     listInterfaces: () => Object.values(STAGE_INTERFACES),
   });

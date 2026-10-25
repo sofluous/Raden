@@ -27,7 +27,10 @@ run(path.join("src", "ui", "stageInspector.js"));
 
 const runtime = context.window.RadenModes.getRuntime("motherofpearl");
 const stages = runtime.describeStages().stages;
-const groups = context.window.RadenStageInspector.MOTHER_OF_PEARL_GROUPS;
+const definition = context.window.RadenModes.getInspectorDefinition("motherofpearl");
+const groups = definition.groups;
+assert.equal(definition.rootId, "motherOfPearlStageInspector");
+assert.equal(context.window.RadenStageInspector.getInspectorDefinition("motherofpearl"), definition);
 assert.deepEqual(
   Array.from(groups, (group) => group.id),
   ["palette", "iridescence", "family", "noise", "growth", "substrate", "surface", "direction"],
@@ -52,7 +55,9 @@ groups.filter((group) => group.toggleable).forEach((group) => {
 
 const bubbleRuntime = context.window.RadenModes.getRuntime("bubblefilm");
 const bubbleStages = bubbleRuntime.describeStages().stages;
-const bubbleGroups = context.window.RadenStageInspector.BUBBLE_FILM_GROUPS;
+const bubbleDefinition = context.window.RadenModes.getInspectorDefinition("bubblefilm");
+const bubbleGroups = bubbleDefinition.groups;
+assert.equal(bubbleDefinition.rootId, "bubbleFilmStageInspector");
 assert.deepEqual(
   Array.from(bubbleGroups, (group) => group.id),
   ["palette", "base", "flow"],
@@ -79,7 +84,9 @@ assert.deepEqual(
 
 const opalRuntime = context.window.RadenModes.getRuntime("opalvein");
 const opalStages = opalRuntime.describeStages().stages;
-const opalGroups = context.window.RadenStageInspector.OPAL_VEIN_GROUPS;
+const opalDefinition = context.window.RadenModes.getInspectorDefinition("opalvein");
+const opalGroups = opalDefinition.groups;
+assert.equal(opalDefinition.rootId, "opalVeinStageInspector");
 assert.deepEqual(
   Array.from(opalGroups, (group) => group.id),
   ["palette", "base", "flow", "material", "mapping"],
@@ -103,7 +110,9 @@ assert.deepEqual(
 
 const labradoriteRuntime = context.window.RadenModes.getRuntime("labradorite");
 const labradoriteStages = labradoriteRuntime.describeStages().stages;
-const labradoriteGroups = context.window.RadenStageInspector.LABRADORITE_GROUPS;
+const labradoriteDefinition = context.window.RadenModes.getInspectorDefinition("labradorite");
+const labradoriteGroups = labradoriteDefinition.groups;
+assert.equal(labradoriteDefinition.rootId, "labradoriteStageInspector");
 assert.deepEqual(
   Array.from(labradoriteGroups, (group) => group.id),
   ["palette", "base", "flow", "material", "mapping"],
@@ -130,7 +139,9 @@ assert.deepEqual(
 
 const marbleRuntime = context.window.RadenModes.getRuntime("marbleink");
 const marbleStages = marbleRuntime.describeStages().stages;
-const marbleGroups = context.window.RadenStageInspector.MARBLE_INK_GROUPS;
+const marbleDefinition = context.window.RadenModes.getInspectorDefinition("marbleink");
+const marbleGroups = marbleDefinition.groups;
+assert.equal(marbleDefinition.rootId, "marbleInkStageInspector");
 assert.deepEqual(
   Array.from(marbleGroups, (group) => group.id),
   ["palette", "base", "flow", "veins", "material"],
@@ -154,7 +165,9 @@ assert.deepEqual(
 
 const agateRuntime = context.window.RadenModes.getRuntime("agateband");
 const agateStages = agateRuntime.describeStages().stages;
-const agateGroups = context.window.RadenStageInspector.AGATE_BANDS_GROUPS;
+const agateDefinition = context.window.RadenModes.getInspectorDefinition("agateband");
+const agateGroups = agateDefinition.groups;
+assert.equal(agateDefinition.rootId, "agateBandsStageInspector");
 assert.deepEqual(
   Array.from(agateGroups, (group) => group.id),
   ["palette", "base", "flow", "veins", "material"],
@@ -178,7 +191,9 @@ assert.deepEqual(
 
 const malachiteRuntime = context.window.RadenModes.getRuntime("malachiteflow");
 const malachiteStages = malachiteRuntime.describeStages().stages;
-const malachiteGroups = context.window.RadenStageInspector.MALACHITE_FLOW_GROUPS;
+const malachiteDefinition = context.window.RadenModes.getInspectorDefinition("malachiteflow");
+const malachiteGroups = malachiteDefinition.groups;
+assert.equal(malachiteDefinition.rootId, "malachiteFlowStageInspector");
 assert.deepEqual(
   Array.from(malachiteGroups, (group) => group.id),
   ["palette", "base", "flow", "rings", "material"],
@@ -205,7 +220,9 @@ assert.deepEqual(
 
 const lichenRuntime = context.window.RadenModes.getRuntime("lichengrowth");
 const lichenStages = lichenRuntime.describeStages().stages;
-const lichenGroups = context.window.RadenStageInspector.LICHEN_GROWTH_GROUPS;
+const lichenDefinition = context.window.RadenModes.getInspectorDefinition("lichengrowth");
+const lichenGroups = lichenDefinition.groups;
+assert.equal(lichenDefinition.rootId, "lichenGrowthStageInspector");
 assert.deepEqual(
   Array.from(lichenGroups, (group) => group.id),
   ["palette", "base", "flow", "growth", "edges", "material"],
@@ -229,7 +246,9 @@ assert.deepEqual(
 
 const riverRuntime = context.window.RadenModes.getRuntime("riverdelta");
 const riverStages = riverRuntime.describeStages().stages;
-const riverGroups = context.window.RadenStageInspector.RIVER_DELTA_GROUPS;
+const riverDefinition = context.window.RadenModes.getInspectorDefinition("riverdelta");
+const riverGroups = riverDefinition.groups;
+assert.equal(riverDefinition.rootId, "riverDeltaStageInspector");
 assert.deepEqual(
   Array.from(riverGroups, (group) => group.id),
   ["palette", "base", "flow", "channels", "material", "erosion"],
@@ -253,7 +272,9 @@ assert.deepEqual(
 
 const topographyRuntime = context.window.RadenModes.getRuntime("topography");
 const topographyStages = topographyRuntime.describeStages().stages;
-const topographyGroups = context.window.RadenStageInspector.TOPOGRAPHY_GROUPS;
+const topographyDefinition = context.window.RadenModes.getInspectorDefinition("topography");
+const topographyGroups = topographyDefinition.groups;
+assert.equal(topographyDefinition.rootId, "topographyStageInspector");
 assert.deepEqual(
   Array.from(topographyGroups, (group) => group.id),
   ["palette", "base", "flow", "erosion", "contours"],
@@ -279,6 +300,7 @@ assert.deepEqual(
 );
 
 const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+assert.equal("INSPECTOR_DEFINITIONS" in context.window.RadenStageInspector, false);
 assert.match(html, /src\/ui\/stageInspector\.js/);
 assert.match(html, /onSetStageEnabled: setSourceStageEnabledWithHistory/);
 assert.match(html, /stageInspectorController\?\.isControlEnabled/);
@@ -289,4 +311,4 @@ assert.match(html, /compactContextSectionHeaders/);
 assert.match(html, /"nacrePalette",\s*"palette-preset-row"/);
 assert.match(html, /"seed",\s*"seed-header-row"/);
 
-console.log("Mother of Pearl stage inspector contract passed.");
+console.log("Stage inspector contracts passed.");

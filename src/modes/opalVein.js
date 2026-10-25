@@ -1,11 +1,44 @@
 /* Opal Vein procedural stages and renderer contract. */
 (function registerRadenOpalVein(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "opalvein",
+    order: 1,
+    label: "Opal Vein",
+    status: "stable",
+    family: "procedural",
+    activeControlIds: [
+      "opalCellScale",
+      "opalVeinDensity",
+      "opalFire",
+      "opalMatrix",
+      "nacrePalette",
+    ],
+  });
+
   const OPAL_VEIN_STAGES = Object.freeze([
     { id: "cellField", label: "Opal cells and veins", kind: "geometry", inputs: ["point", "runtime"], outputs: ["cellStructure"], controlIds: ["opalCellScale", "opalVeinDensity"] },
     { id: "fire", label: "Opal fire", kind: "material", inputs: ["cellStructure", "runtime"], outputs: ["fireColor"], controlIds: ["opalFire"], interfaceId: "materialSource", interfaceBindings: { outputColor: "fireColor" } },
     { id: "matrix", label: "Host matrix", kind: "composite", inputs: ["fireColor", "cellStructure"], outputs: ["nativeColor"], controlIds: ["opalMatrix"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "fireColor", output: "nativeColor", description: "Forward the opal fire contribution without the host matrix." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Opal Vein color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "opalVeinStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "cellField", label: "Base Structure", controlIds: ["opalCellScale"] },
+      { id: "flow", graphStageId: "cellField", label: "Shape and Flow", controlIds: ["opalVeinDensity"] },
+      { id: "material", graphStageId: "fire", label: "Material Response", controlIds: ["opalFire"] },
+      { id: "mapping", graphStageId: "matrix", label: "Material Mapping", controlIds: ["opalMatrix"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "opalCellScale", type: "number", min: 0.004, max: 0.018, decimals: 3 },
+      { controlId: "opalVeinDensity", type: "number", min: 0.35, max: 1.6, decimals: 2 },
+      { controlId: "opalFire", type: "number", min: 0.65, max: 2.1, decimals: 2 },
+      { controlId: "opalMatrix", type: "number", min: 0.25, max: 0.85, decimals: 2 },
+    ]),
+  });
 
   function normalizeOpalConfig(rawConfig) {
     const raw = rawConfig || {};
@@ -75,12 +108,14 @@
     });
   }
 
-  const api = { normalizeOpalConfig, createOpalRenderer, computeCellField, computeFire, compositeMatrix, stages: OPAL_VEIN_STAGES };
+  const api = { normalizeOpalConfig, createOpalRenderer, computeCellField, computeFire, compositeMatrix, stages: OPAL_VEIN_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenOpalVein = Object.assign({}, global.RadenOpalVein || {}, api);
-  global.RadenModes?.registerRuntime?.("opalvein", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeOpalConfig,
     createRenderer: createOpalRenderer,
     stages: OPAL_VEIN_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

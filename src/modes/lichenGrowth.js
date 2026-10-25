@@ -1,5 +1,23 @@
 /* Lichen Growth procedural stages and renderer contract. */
 (function registerRadenLichenGrowth(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "lichengrowth",
+    order: 6,
+    label: "Lichen Growth",
+    status: "stable",
+    family: "natural",
+    activeControlIds: [
+      "naturalScale",
+      "naturalWarp",
+      "lichenPatchScale",
+      "lichenBranching",
+      "lichenCoverage",
+      "lichenMoistureTone",
+      "lichenEdgeRoughness",
+      "nacrePalette",
+    ],
+  });
+
   const LICHEN_GROWTH_STAGES = Object.freeze([
     { id: "colonyField", label: "Colony field", kind: "field", inputs: ["point", "runtime"], outputs: ["colonyField"], controlIds: ["naturalScale", "naturalWarp", "lichenPatchScale"] },
     { id: "growth", label: "Colony growth", kind: "geometry", inputs: ["colonyField"], outputs: ["growthStructure"], controlIds: ["lichenBranching", "lichenCoverage"] },
@@ -7,6 +25,33 @@
     { id: "moisture", label: "Moisture response", kind: "material", inputs: ["edgeStructure"], outputs: ["nativeColor"], controlIds: ["lichenMoistureTone"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Lichen Growth color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "lichenGrowthStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "colonyField", label: "Base Structure", controlIds: ["naturalScale", "lichenPatchScale"] },
+      { id: "flow", graphStageId: "colonyField", label: "Shape and Flow", controlIds: ["naturalWarp"] },
+      { id: "growth", label: "Growth Structure", controlIds: ["lichenBranching", "lichenCoverage"] },
+      { id: "edges", label: "Surface Detail", controlIds: ["lichenEdgeRoughness"] },
+      { id: "material", graphStageId: "moisture", label: "Material Response", controlIds: ["lichenMoistureTone"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "naturalScale", type: "number", min: 0.003, max: 0.013, decimals: 3 },
+      { controlId: "naturalWarp", type: "number", min: 0.04, max: 0.48, decimals: 2 },
+      { controlId: "lichenPatchScale", type: "number", min: 0.48, max: 1.72, decimals: 2 },
+      { controlId: "lichenBranching", type: "number", min: 0.08, max: 0.82, decimals: 2 },
+      { controlId: "lichenEdgeRoughness", type: "number", min: 0.12, max: 0.92, decimals: 2 },
+      { controlId: "lichenCoverage", type: "number", min: 0.18, max: 0.86, decimals: 2 },
+      { controlId: "lichenMoistureTone", type: "number", min: 0.08, max: 0.86, decimals: 2 },
+    ]),
+  });
+  const HELP_DEFINITION = Object.freeze({
+    sectionIntros: Object.freeze({
+      natural: "Lichen Growth builds creeping surface colonies with ragged edges. These controls shape the size of each patch, how much the edges branch outward, and whether the growth feels dry and chalky or darker and damp.",
+    }),
+  });
   const PALETTE = Object.freeze([[38, 48, 32], [88, 110, 68], [150, 167, 106], [213, 221, 180]].map((color) => Object.freeze(color)));
   const SEAM_COLOR = Object.freeze([30, 39, 26]);
 
@@ -99,7 +144,7 @@
     return global.RadenStages.createPixelStageRenderer({ modeId: "lichengrowth", stages: LICHEN_GROWTH_STAGES, runtime, config, execute });
   }
 
-  const api = { normalizeLichenConfig, createLichenRenderer, computeColonyField, computeGrowth, computeEdges, computeMoistureColor, stages: LICHEN_GROWTH_STAGES };
+  const api = { normalizeLichenConfig, createLichenRenderer, computeColonyField, computeGrowth, computeEdges, computeMoistureColor, stages: LICHEN_GROWTH_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenLichenGrowth = Object.assign({}, global.RadenLichenGrowth || {}, api);
-  global.RadenModes?.registerRuntime?.("lichengrowth", { normalizeConfig: normalizeLichenConfig, createRenderer: createLichenRenderer, stages: LICHEN_GROWTH_STAGES, externalInputs: ["point", "runtime"] });
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, { normalizeConfig: normalizeLichenConfig, createRenderer: createLichenRenderer, stages: LICHEN_GROWTH_STAGES, inspector: INSPECTOR_DEFINITION, randomization: RANDOMIZATION_DEFINITION, help: HELP_DEFINITION, externalInputs: ["point", "runtime"] });
 })(window);

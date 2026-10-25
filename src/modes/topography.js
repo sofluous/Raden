@@ -1,11 +1,52 @@
 /* Topography multi-pass renderer contract. */
 (function registerRadenTopography(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "topography",
+    order: 10,
+    label: "Topography",
+    status: "stable",
+    family: "procedural",
+    activeControlIds: [
+      "scale",
+      "layers",
+      "topoPreset",
+      "topoNoiseType",
+      "topoBandCount",
+      "topoRenderMode",
+      "topoRidge",
+      "topoWarp",
+      "topoErosion",
+      "nacrePalette",
+    ],
+  });
+
   const TOPOGRAPHY_STAGES = Object.freeze([
     { id: "terrain", label: "Terrain field", kind: "field", inputs: ["point", "runtime"], outputs: ["heightField"], controlIds: ["scale", "layers", "topoPreset", "topoNoiseType", "topoRidge", "topoWarp"] },
     { id: "erosion", label: "Terrain erosion", kind: "surface", inputs: ["heightField"], outputs: ["erodedHeightField"], controlIds: ["topoErosion"], optional: true, bypass: { type: "custom", description: "Forward the generated height field without erosion smoothing." } },
     { id: "contours", label: "Contour rendering", kind: "material", inputs: ["erodedHeightField"], outputs: ["nativeColor"], controlIds: ["topoBandCount", "topoRenderMode"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native grayscale Topography color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "topographyStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "terrain", label: "Base Structure", controlIds: ["topoPreset", "topoNoiseType", "scale", "layers"] },
+      { id: "flow", graphStageId: "terrain", label: "Shape and Flow", controlIds: ["topoRidge", "topoWarp"] },
+      { id: "erosion", label: "Terrain Refinement", controlIds: ["topoErosion"] },
+      { id: "contours", label: "Contour Mapping", controlIds: ["topoBandCount", "topoRenderMode"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "topoPreset", type: "choice", values: ["coastal", "alpine", "dunes", "volcanic"] },
+      { controlId: "topoNoiseType", type: "choice", values: ["ridged", "simplex", "perlin", "value"] },
+      { controlId: "topoBandCount", type: "integer", min: 6, max: 18, decimals: 0 },
+      { controlId: "topoRenderMode", type: "choice", values: ["lines", "fill", "gradient"] },
+      { controlId: "topoRidge", type: "number", min: 0.2, max: 0.9, decimals: 2 },
+      { controlId: "topoWarp", type: "number", min: 0.15, max: 0.75, decimals: 2 },
+      { controlId: "topoErosion", type: "number", min: 0.1, max: 0.85, decimals: 2 },
+    ]),
+  });
   function numberOr(value, fallback) {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
@@ -168,12 +209,14 @@
     };
   }
 
-  const api = { normalizeTopographyConfig, createTopographyRenderer, stages: TOPOGRAPHY_STAGES };
+  const api = { normalizeTopographyConfig, createTopographyRenderer, stages: TOPOGRAPHY_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenTopography = Object.assign({}, global.RadenTopography || {}, api);
-  global.RadenModes?.registerRuntime?.("topography", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeTopographyConfig,
     createRenderer: createTopographyRenderer,
     stages: TOPOGRAPHY_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

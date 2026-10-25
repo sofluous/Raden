@@ -1,120 +1,8 @@
 /* Contextual procedural-stage inspector for generated source layers. */
 (function registerRadenStageInspector(global) {
-  const MOTHER_OF_PEARL_GROUPS = Object.freeze([
-    { id: "palette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "iridescence", graphStageId: "palette", label: "Iridescence", controlIds: ["range", "blend", "intensity", "nacreBrilliance", "nacreChromatic"] },
-    { id: "family", label: "Texture Family", controlIds: ["textureFamily"] },
-    { id: "noise", label: "Base Structure", controlIds: ["scale", "layers"] },
-    { id: "growth", label: "Shape and Flow", controlIds: ["flowMode", "layerLength", "ringSpacing", "ringJitter", "seamThickness"] },
-    { id: "substrate", label: "Material Mapping", controlIds: ["substrateTone", "substrateMix"], toggleable: true },
-    { id: "surface", label: "Surface Detail", controlIds: ["seamContrast", "scratchDensity", "scratchAngle", "surfacePolish"], toggleable: true },
-    { id: "direction", graphStageId: "sampling", label: "Directional Modulation", controlIds: ["lightAngle", "lightCurvature", "lightSpread", "highlightStrength"] },
-  ]);
-  const BUBBLE_FILM_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "pressureWarp", label: "Base Structure", controlIds: ["naturalScale"] },
-    { id: "flow", graphStageId: "pressureWarp", label: "Shape and Flow", controlIds: ["naturalWarp", "naturalTurbulence"] },
-  ]);
-  const OPAL_VEIN_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "cellField", label: "Base Structure", controlIds: ["opalCellScale"] },
-    { id: "flow", graphStageId: "cellField", label: "Shape and Flow", controlIds: ["opalVeinDensity"] },
-    { id: "material", graphStageId: "fire", label: "Material Response", controlIds: ["opalFire"] },
-    { id: "mapping", graphStageId: "matrix", label: "Material Mapping", controlIds: ["opalMatrix"] },
-  ]);
-  const LABRADORITE_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "stoneField", label: "Base Structure", controlIds: ["labradoriteScale"] },
-    { id: "flow", graphStageId: "directionalBands", label: "Shape and Flow", controlIds: ["labradoriteDirection", "labradoriteBanding"] },
-    { id: "material", graphStageId: "flash", label: "Material Response", controlIds: ["labradoriteFlash"] },
-    { id: "mapping", graphStageId: "matrix", label: "Material Mapping", controlIds: ["labradoriteDarkness"] },
-  ]);
-  const MARBLE_INK_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "flowField", label: "Base Structure", controlIds: ["marbleFlowScale"] },
-    { id: "flow", graphStageId: "flowField", label: "Shape and Flow", controlIds: ["marbleInkDrift"] },
-    { id: "veins", label: "Vein Structure", controlIds: ["marbleVeinFreq", "marbleContrast"] },
-    { id: "material", graphStageId: "stone", label: "Material Response", controlIds: ["marbleLightness"] },
-  ]);
-  const AGATE_BANDS_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "stoneField", label: "Base Structure", controlIds: ["naturalScale", "naturalWarp"] },
-    { id: "flow", graphStageId: "bands", label: "Shape and Flow", controlIds: ["agateBandFreq", "agateBandJitter"] },
-    { id: "veins", label: "Vein Structure", controlIds: ["agateVeinDensity", "agateEdgeDarken"] },
-    { id: "material", graphStageId: "stone", label: "Material Response", controlIds: ["agateTranslucency"] },
-  ]);
-  const MALACHITE_FLOW_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "stoneField", label: "Base Structure", controlIds: ["naturalScale"] },
-    { id: "flow", graphStageId: "stoneField", label: "Shape and Flow", controlIds: ["naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
-    { id: "rings", label: "Ring Structure", controlIds: ["malachiteSwirl", "malachiteRingTightness", "malachiteRingVariance"] },
-    { id: "material", graphStageId: "stone", label: "Material Response", controlIds: ["malachiteContrast"] },
-  ]);
-  const LICHEN_GROWTH_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "colonyField", label: "Base Structure", controlIds: ["naturalScale", "lichenPatchScale"] },
-    { id: "flow", graphStageId: "colonyField", label: "Shape and Flow", controlIds: ["naturalWarp"] },
-    { id: "growth", label: "Growth Structure", controlIds: ["lichenBranching", "lichenCoverage"] },
-    { id: "edges", label: "Surface Detail", controlIds: ["lichenEdgeRoughness"] },
-    { id: "material", graphStageId: "moisture", label: "Material Response", controlIds: ["lichenMoistureTone"] },
-  ]);
-  const RIVER_DELTA_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "flowField", label: "Base Structure", controlIds: ["naturalScale"] },
-    { id: "flow", graphStageId: "flowField", label: "Shape and Flow", controlIds: ["naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
-    { id: "channels", label: "Channel Structure", controlIds: ["deltaChannelWidth", "deltaBranchRate"] },
-    { id: "material", graphStageId: "floodplain", label: "Material Response", controlIds: ["deltaSedimentMix", "deltaFloodplainSoftness"] },
-    { id: "erosion", label: "Surface Detail", controlIds: ["deltaErosion"] },
-  ]);
-  const TOPOGRAPHY_GROUPS = Object.freeze([
-    { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
-    { id: "base", graphStageId: "terrain", label: "Base Structure", controlIds: ["topoPreset", "topoNoiseType", "scale", "layers"] },
-    { id: "flow", graphStageId: "terrain", label: "Shape and Flow", controlIds: ["topoRidge", "topoWarp"] },
-    { id: "erosion", label: "Terrain Refinement", controlIds: ["topoErosion"] },
-    { id: "contours", label: "Contour Mapping", controlIds: ["topoBandCount", "topoRenderMode"] },
-  ]);
-  const INSPECTOR_DEFINITIONS = Object.freeze({
-    motherofpearl: Object.freeze({
-      rootId: "motherOfPearlStageInspector",
-      groups: MOTHER_OF_PEARL_GROUPS,
-    }),
-    bubblefilm: Object.freeze({
-      rootId: "bubbleFilmStageInspector",
-      groups: BUBBLE_FILM_GROUPS,
-    }),
-    opalvein: Object.freeze({
-      rootId: "opalVeinStageInspector",
-      groups: OPAL_VEIN_GROUPS,
-    }),
-    labradorite: Object.freeze({
-      rootId: "labradoriteStageInspector",
-      groups: LABRADORITE_GROUPS,
-    }),
-    marbleink: Object.freeze({
-      rootId: "marbleInkStageInspector",
-      groups: MARBLE_INK_GROUPS,
-    }),
-    agateband: Object.freeze({
-      rootId: "agateBandsStageInspector",
-      groups: AGATE_BANDS_GROUPS,
-    }),
-    malachiteflow: Object.freeze({
-      rootId: "malachiteFlowStageInspector",
-      groups: MALACHITE_FLOW_GROUPS,
-    }),
-    lichengrowth: Object.freeze({
-      rootId: "lichenGrowthStageInspector",
-      groups: LICHEN_GROWTH_GROUPS,
-    }),
-    riverdelta: Object.freeze({
-      rootId: "riverDeltaStageInspector",
-      groups: RIVER_DELTA_GROUPS,
-    }),
-    topography: Object.freeze({
-      rootId: "topographyStageInspector",
-      groups: TOPOGRAPHY_GROUPS,
-    }),
-  });
+  function getInspectorDefinition(mode) {
+    return global.RadenModes?.getInspectorDefinition?.(mode) || null;
+  }
 
   function createStageInspector(options) {
     const opts = options || {};
@@ -156,7 +44,7 @@
 
     function ensureRoot(mode) {
       if (roots.has(mode)) return roots.get(mode);
-      const definition = INSPECTOR_DEFINITIONS[mode];
+      const definition = getInspectorDefinition(mode);
       if (!definition) return null;
       const tab = document.getElementById("tabGenerate");
       if (!tab) return null;
@@ -185,7 +73,7 @@
     }
 
     function moveControlsIntoInspector(mode) {
-      const definition = INSPECTOR_DEFINITIONS[mode];
+      const definition = getInspectorDefinition(mode);
       const inspector = ensureRoot(mode);
       if (!inspector) return;
       definition.groups.forEach((group) => {
@@ -270,7 +158,7 @@
 
     function update(mode) {
       if (mountedMode && mountedMode !== mode) restoreControls();
-      if (INSPECTOR_DEFINITIONS[mode]) {
+      if (getInspectorDefinition(mode)) {
         moveControlsIntoInspector(mode);
         enhance();
         sync();
@@ -300,17 +188,7 @@
   }
 
   global.RadenStageInspector = Object.assign({}, global.RadenStageInspector || {}, {
-    MOTHER_OF_PEARL_GROUPS,
-    BUBBLE_FILM_GROUPS,
-    OPAL_VEIN_GROUPS,
-    LABRADORITE_GROUPS,
-    MARBLE_INK_GROUPS,
-    AGATE_BANDS_GROUPS,
-    MALACHITE_FLOW_GROUPS,
-    LICHEN_GROWTH_GROUPS,
-    RIVER_DELTA_GROUPS,
-    TOPOGRAPHY_GROUPS,
-    INSPECTOR_DEFINITIONS,
+    getInspectorDefinition,
     createStageInspector,
   });
 })(window);

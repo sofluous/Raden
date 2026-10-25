@@ -1,11 +1,57 @@
 /* Malachite Flow procedural stages and renderer contract. */
 (function registerRadenMalachiteFlow(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "malachiteflow",
+    order: 5,
+    label: "Malachite Flow",
+    status: "stable",
+    family: "natural",
+    activeControlIds: [
+      "naturalScale",
+      "naturalWarp",
+      "naturalTurbulence",
+      "naturalAnisotropy",
+      "malachiteSwirl",
+      "malachiteRingTightness",
+      "malachiteRingVariance",
+      "malachiteContrast",
+      "nacrePalette",
+    ],
+  });
+
   const MALACHITE_FLOW_STAGES = Object.freeze([
     { id: "stoneField", label: "Directional stone field", kind: "field", inputs: ["point"], outputs: ["stoneField"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
     { id: "rings", label: "Malachite rings", kind: "geometry", inputs: ["stoneField", "runtime"], outputs: ["ringStructure"], controlIds: ["malachiteSwirl", "malachiteRingTightness", "malachiteRingVariance"] },
     { id: "stone", label: "Malachite material", kind: "material", inputs: ["ringStructure"], outputs: ["nativeColor"], controlIds: ["malachiteContrast"], interfaceId: "materialSource", interfaceBindings: { outputColor: "nativeColor" } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Malachite Flow color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "malachiteFlowStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "stoneField", label: "Base Structure", controlIds: ["naturalScale"] },
+      { id: "flow", graphStageId: "stoneField", label: "Shape and Flow", controlIds: ["naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
+      { id: "rings", label: "Ring Structure", controlIds: ["malachiteSwirl", "malachiteRingTightness", "malachiteRingVariance"] },
+      { id: "material", graphStageId: "stone", label: "Material Response", controlIds: ["malachiteContrast"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "naturalScale", type: "number", min: 0.002, max: 0.01, decimals: 3 },
+      { controlId: "naturalWarp", type: "number", min: 0.14, max: 0.78, decimals: 2 },
+      { controlId: "naturalTurbulence", type: "number", min: 0.18, max: 0.88, decimals: 2 },
+      { controlId: "naturalAnisotropy", type: "number", min: 0.08, max: 0.44, decimals: 2 },
+      { controlId: "malachiteSwirl", type: "number", min: 0.18, max: 0.9, decimals: 2 },
+      { controlId: "malachiteRingTightness", type: "number", min: 0.62, max: 1.78, decimals: 2 },
+      { controlId: "malachiteRingVariance", type: "number", min: 0.1, max: 0.82, decimals: 2 },
+      { controlId: "malachiteContrast", type: "number", min: 0.68, max: 1.62, decimals: 2 },
+    ]),
+  });
+  const HELP_DEFINITION = Object.freeze({
+    sectionIntros: Object.freeze({
+      natural: "Malachite Flow builds swirling green ring structures like polished stone. These controls shape the curl of the rings, how tightly they pack together, and how dramatic the dark-to-bright transitions feel.",
+    }),
+  });
   const PALETTE = Object.freeze([
     Object.freeze([8, 49, 38]),
     Object.freeze([22, 98, 74]),
@@ -97,12 +143,15 @@
     });
   }
 
-  const api = { normalizeMalachiteConfig, createMalachiteRenderer, computeStoneField, computeRings, computeStoneColor, stages: MALACHITE_FLOW_STAGES };
+  const api = { normalizeMalachiteConfig, createMalachiteRenderer, computeStoneField, computeRings, computeStoneColor, stages: MALACHITE_FLOW_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenMalachiteFlow = Object.assign({}, global.RadenMalachiteFlow || {}, api);
-  global.RadenModes?.registerRuntime?.("malachiteflow", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeMalachiteConfig,
     createRenderer: createMalachiteRenderer,
     stages: MALACHITE_FLOW_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
+    help: HELP_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

@@ -2,6 +2,40 @@
  * Exposed via window.RadenNacre while the renderer remains in the static shell.
  */
 (function registerRadenNacre(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "motherofpearl",
+    order: 0,
+    label: "Mother of Pearl",
+    status: "stable",
+    family: "procedural",
+    activeControlIds: [
+      "scale",
+      "layers",
+      "flowMode",
+      "layerLength",
+      "ringSpacing",
+      "ringJitter",
+      "seamThickness",
+      "seamContrast",
+      "highlightStrength",
+      "lightAngle",
+      "lightCurvature",
+      "lightSpread",
+      "scratchDensity",
+      "scratchAngle",
+      "surfacePolish",
+      "blend",
+      "intensity",
+      "range",
+      "substrateTone",
+      "substrateMix",
+      "nacrePalette",
+      "nacreBrilliance",
+      "nacreChromatic",
+      "textureFamily",
+    ],
+  });
+
   const NACRE_STAGES = Object.freeze([
     {
       id: "sampling",
@@ -70,6 +104,40 @@
       bypass: { type: "identity-color", input: "surfaceColor", output: "pixel", description: "Return surface RGB directly at full opacity." },
     },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "motherOfPearlStageInspector",
+    groups: Object.freeze([
+      { id: "palette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "iridescence", graphStageId: "palette", label: "Iridescence", controlIds: ["range", "blend", "intensity", "nacreBrilliance", "nacreChromatic"] },
+      { id: "family", label: "Texture Family", controlIds: ["textureFamily"] },
+      { id: "noise", label: "Base Structure", controlIds: ["scale", "layers"] },
+      { id: "growth", label: "Shape and Flow", controlIds: ["flowMode", "layerLength", "ringSpacing", "ringJitter", "seamThickness"] },
+      { id: "substrate", label: "Material Mapping", controlIds: ["substrateTone", "substrateMix"], toggleable: true },
+      { id: "surface", label: "Surface Detail", controlIds: ["seamContrast", "scratchDensity", "scratchAngle", "surfacePolish"], toggleable: true },
+      { id: "direction", graphStageId: "sampling", label: "Directional Modulation", controlIds: ["lightAngle", "lightCurvature", "lightSpread", "highlightStrength"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "flowMode", type: "choice", values: ["circular", "linear"] },
+      { controlId: "ringSpacing", type: "number", min: 0.35, max: 1.8, decimals: 2 },
+      { controlId: "ringJitter", type: "number", min: 0.05, max: 0.9, decimals: 2 },
+      { controlId: "seamThickness", type: "number", min: 0.05, max: 0.3, decimals: 2 },
+      { controlId: "seamContrast", type: "number", min: 0.15, max: 0.95, decimals: 2 },
+      { controlId: "highlightStrength", type: "number", min: 0.2, max: 1.5, decimals: 2 },
+      { controlId: "lightAngle", type: "number", min: 0, max: 1, decimals: 2 },
+      { controlId: "lightCurvature", type: "number", min: 0.06, max: 0.95, decimals: 2 },
+      { controlId: "lightSpread", type: "number", min: 0.15, max: 0.95, decimals: 2 },
+      { controlId: "scratchDensity", type: "number", min: 0.05, max: 0.92, decimals: 2 },
+      { controlId: "scratchAngle", type: "number", min: 0, max: 1, decimals: 2 },
+      { controlId: "surfacePolish", type: "number", min: 0.1, max: 0.95, decimals: 2 },
+      { controlId: "nacreBrilliance", type: "number", min: 0.9, max: 1.9, decimals: 2 },
+      { controlId: "nacreChromatic", type: "number", min: 0.5, max: 1.8, decimals: 2 },
+      { controlId: "textureFamily", type: "choice", values: ["classic", "opal", "labradorite"] },
+      { controlId: "substrateTone", type: "choice", values: ["dark", "light"] },
+      { controlId: "substrateMix", type: "number", min: 0.2, max: 0.75, decimals: 2 },
+    ]),
+  });
   const NACRE_DEFAULTS = Object.freeze({
     layers: 3,
     scale: 0.006,
@@ -584,12 +652,16 @@
     applyNacreSurfaceAndScratches,
     compositeNacreSubstrate,
     NACRE_STAGES,
+    INSPECTOR_DEFINITION,
+    RANDOMIZATION_DEFINITION,
   };
   global.RadenNacre = Object.assign({}, global.RadenNacre || {}, api);
-  global.RadenModes?.registerRuntime?.("motherofpearl", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeNacreConfig,
     createRenderer: createNacreRenderer,
     stages: NACRE_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
     externalInputs: ["point", "lightVec"],
   });
 })(window);

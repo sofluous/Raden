@@ -1,5 +1,21 @@
 /* Labradorite Flash procedural stages and renderer contract. */
 (function registerRadenLabradorite(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "labradorite",
+    order: 2,
+    label: "Labradorite Flash",
+    status: "stable",
+    family: "procedural",
+    activeControlIds: [
+      "labradoriteScale",
+      "labradoriteDirection",
+      "labradoriteBanding",
+      "labradoriteFlash",
+      "labradoriteDarkness",
+      "nacrePalette",
+    ],
+  });
+
   const LABRADORITE_STAGES = Object.freeze([
     { id: "stoneField", label: "Stone field", kind: "field", inputs: ["point", "runtime"], outputs: ["stoneField"], controlIds: ["labradoriteScale"] },
     { id: "directionalBands", label: "Directional bands", kind: "geometry", inputs: ["point", "stoneField"], outputs: ["bandStructure"], controlIds: ["labradoriteDirection", "labradoriteBanding"] },
@@ -7,6 +23,25 @@
     { id: "matrix", label: "Dark stone matrix", kind: "composite", inputs: ["flashColor", "bandStructure"], outputs: ["nativeColor"], controlIds: ["labradoriteDarkness"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "flashColor", output: "nativeColor", description: "Forward the labradorescence contribution without the dark stone matrix." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native Labradorite color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "labradoriteStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "stoneField", label: "Base Structure", controlIds: ["labradoriteScale"] },
+      { id: "flow", graphStageId: "directionalBands", label: "Shape and Flow", controlIds: ["labradoriteDirection", "labradoriteBanding"] },
+      { id: "material", graphStageId: "flash", label: "Material Response", controlIds: ["labradoriteFlash"] },
+      { id: "mapping", graphStageId: "matrix", label: "Material Mapping", controlIds: ["labradoriteDarkness"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "labradoriteScale", type: "number", min: 0.003, max: 0.016, decimals: 3 },
+      { controlId: "labradoriteDirection", type: "number", min: 0, max: 1, decimals: 2 },
+      { controlId: "labradoriteBanding", type: "number", min: 0.7, max: 2.6, decimals: 2 },
+      { controlId: "labradoriteFlash", type: "number", min: 0.7, max: 2.2, decimals: 2 },
+      { controlId: "labradoriteDarkness", type: "number", min: 0.45, max: 0.92, decimals: 2 },
+    ]),
+  });
 
   function normalizeLabradoriteConfig(rawConfig) {
     const raw = rawConfig || {};
@@ -94,12 +129,14 @@
     });
   }
 
-  const api = { normalizeLabradoriteConfig, createLabradoriteRenderer, computeStoneField, computeDirectionalBands, computeFlash, compositeMatrix, stages: LABRADORITE_STAGES };
+  const api = { normalizeLabradoriteConfig, createLabradoriteRenderer, computeStoneField, computeDirectionalBands, computeFlash, compositeMatrix, stages: LABRADORITE_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenLabradorite = Object.assign({}, global.RadenLabradorite || {}, api);
-  global.RadenModes?.registerRuntime?.("labradorite", {
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, {
     normalizeConfig: normalizeLabradoriteConfig,
     createRenderer: createLabradoriteRenderer,
     stages: LABRADORITE_STAGES,
+    inspector: INSPECTOR_DEFINITION,
+    randomization: RANDOMIZATION_DEFINITION,
     externalInputs: ["point", "runtime"],
   });
 })(window);

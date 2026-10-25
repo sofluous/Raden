@@ -156,6 +156,52 @@
     return true;
   }
 
+  function getModeOptionModels(modes) {
+    return Array.from(modes || []).map((mode) => ({
+      value: String(mode.id),
+      label: mode.status === "deferred"
+        ? `${mode.label} (Deferred)`
+        : String(mode.label),
+    }));
+  }
+
+  function syncModeSelector(select, modes, preferredModeId) {
+    if (!select) return null;
+    const currentValue = select.value;
+    const options = getModeOptionModels(modes);
+    const optionElements = options.map((item) => {
+      const option = select.ownerDocument.createElement("option");
+      option.value = item.value;
+      option.textContent = item.label;
+      return option;
+    });
+    select.replaceChildren(...optionElements);
+    const available = new Set(options.map((item) => item.value));
+    const candidates = [currentValue, preferredModeId, options[0]?.value];
+    const nextValue = candidates.find((value) => value && available.has(value)) || "";
+    select.value = nextValue;
+    return nextValue;
+  }
+
+  function createRandomizedControlValues(definition, random) {
+    const nextRandom = typeof random === "function" ? random : Math.random;
+    return Array.from(definition?.controls || [], (rule) => {
+      const unit = Math.max(0, Math.min(0.9999999999999999, Number(nextRandom())));
+      if (rule.type === "choice") {
+        return {
+          controlId: rule.controlId,
+          value: rule.values[Math.floor(unit * rule.values.length)],
+        };
+      }
+      const raw = rule.min + unit * (rule.max - rule.min);
+      return {
+        controlId: rule.controlId,
+        value: rule.type === "integer" ? Math.floor(raw) : raw,
+        decimals: rule.decimals,
+      };
+    });
+  }
+
   global.RadenUiControls = Object.assign({}, global.RadenUiControls || {}, {
     formatRangeReadout,
     updateRangeReadout,
@@ -168,5 +214,8 @@
     getControlState,
     applyControlState,
     mountControlRowInSectionHeader,
+    getModeOptionModels,
+    syncModeSelector,
+    createRandomizedControlValues,
   });
 })(window);

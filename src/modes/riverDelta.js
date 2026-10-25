@@ -1,5 +1,25 @@
 /* River Delta procedural stages and renderer contract. */
 (function registerRadenRiverDelta(global) {
+  const MODE_MANIFEST = Object.freeze({
+    id: "riverdelta",
+    order: 8,
+    label: "River Delta",
+    status: "stable",
+    family: "natural",
+    activeControlIds: [
+      "naturalScale",
+      "naturalWarp",
+      "naturalTurbulence",
+      "naturalAnisotropy",
+      "deltaChannelWidth",
+      "deltaBranchRate",
+      "deltaSedimentMix",
+      "deltaFloodplainSoftness",
+      "deltaErosion",
+      "nacrePalette",
+    ],
+  });
+
   const RIVER_DELTA_STAGES = Object.freeze([
     { id: "flowField", label: "Directional flow field", kind: "field", inputs: ["point", "runtime"], outputs: ["flowField"], controlIds: ["naturalScale", "naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
     { id: "channels", label: "River channels", kind: "geometry", inputs: ["flowField", "runtime"], outputs: ["channelStructure"], controlIds: ["deltaChannelWidth", "deltaBranchRate"] },
@@ -7,6 +27,35 @@
     { id: "erosion", label: "Eroded banks", kind: "surface", inputs: ["floodplainColor", "channelStructure"], outputs: ["nativeColor"], controlIds: ["deltaErosion"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "floodplainColor", output: "nativeColor", description: "Forward floodplain and water color without cut-bank erosion." } },
     { id: "authoredPalette", label: "Authored palette mapping", kind: "material", inputs: ["nativeColor"], outputs: ["pixel"], controlIds: ["nacrePalette"], interfaceId: "colorTransform", optional: true, bypass: { type: "identity-color", input: "nativeColor", output: "pixel", description: "Return native River Delta color unchanged." } },
   ]);
+  const INSPECTOR_DEFINITION = Object.freeze({
+    rootId: "riverDeltaStageInspector",
+    groups: Object.freeze([
+      { id: "palette", graphStageId: "authoredPalette", label: "Palette", controlIds: ["nacrePalette"], includePaletteEditor: true },
+      { id: "base", graphStageId: "flowField", label: "Base Structure", controlIds: ["naturalScale"] },
+      { id: "flow", graphStageId: "flowField", label: "Shape and Flow", controlIds: ["naturalWarp", "naturalTurbulence", "naturalAnisotropy"] },
+      { id: "channels", label: "Channel Structure", controlIds: ["deltaChannelWidth", "deltaBranchRate"] },
+      { id: "material", graphStageId: "floodplain", label: "Material Response", controlIds: ["deltaSedimentMix", "deltaFloodplainSoftness"] },
+      { id: "erosion", label: "Surface Detail", controlIds: ["deltaErosion"] },
+    ]),
+  });
+  const RANDOMIZATION_DEFINITION = Object.freeze({
+    controls: Object.freeze([
+      { controlId: "naturalScale", type: "number", min: 0.002, max: 0.009, decimals: 3 },
+      { controlId: "naturalWarp", type: "number", min: 0.1, max: 0.62, decimals: 2 },
+      { controlId: "naturalTurbulence", type: "number", min: 0.18, max: 1.05, decimals: 2 },
+      { controlId: "naturalAnisotropy", type: "number", min: 0.16, max: 0.88, decimals: 2 },
+      { controlId: "deltaChannelWidth", type: "number", min: 0.18, max: 0.95, decimals: 2 },
+      { controlId: "deltaBranchRate", type: "number", min: 0.18, max: 0.86, decimals: 2 },
+      { controlId: "deltaSedimentMix", type: "number", min: 0.12, max: 0.9, decimals: 2 },
+      { controlId: "deltaFloodplainSoftness", type: "number", min: 0.16, max: 0.9, decimals: 2 },
+      { controlId: "deltaErosion", type: "number", min: 0.08, max: 0.82, decimals: 2 },
+    ]),
+  });
+  const HELP_DEFINITION = Object.freeze({
+    sectionIntros: Object.freeze({
+      natural: "River Delta builds branching water channels, banks, and sediment spread. These controls shape how the water splits, how wide the channels feel, and how soft the surrounding floodplain becomes.",
+    }),
+  });
   const PALETTE = Object.freeze([[43, 57, 74], [88, 121, 133], [157, 169, 132], [218, 208, 170]].map((color) => Object.freeze(color)));
   const SEAM_COLOR = Object.freeze([35, 48, 61]);
 
@@ -99,7 +148,7 @@
     return global.RadenStages.createPixelStageRenderer({ modeId: "riverdelta", stages: RIVER_DELTA_STAGES, runtime, config, execute });
   }
 
-  const api = { normalizeRiverDeltaConfig, createRiverDeltaRenderer, computeFlowField, computeChannels, computeFloodplainColor, applyErosion, stages: RIVER_DELTA_STAGES };
+  const api = { normalizeRiverDeltaConfig, createRiverDeltaRenderer, computeFlowField, computeChannels, computeFloodplainColor, applyErosion, stages: RIVER_DELTA_STAGES, INSPECTOR_DEFINITION, RANDOMIZATION_DEFINITION };
   global.RadenRiverDelta = Object.assign({}, global.RadenRiverDelta || {}, api);
-  global.RadenModes?.registerRuntime?.("riverdelta", { normalizeConfig: normalizeRiverDeltaConfig, createRenderer: createRiverDeltaRenderer, stages: RIVER_DELTA_STAGES, externalInputs: ["point", "runtime"] });
+  global.RadenModes?.registerTextureModule?.(MODE_MANIFEST, { normalizeConfig: normalizeRiverDeltaConfig, createRenderer: createRiverDeltaRenderer, stages: RIVER_DELTA_STAGES, inspector: INSPECTOR_DEFINITION, randomization: RANDOMIZATION_DEFINITION, help: HELP_DEFINITION, externalInputs: ["point", "runtime"] });
 })(window);
